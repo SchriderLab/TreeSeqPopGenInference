@@ -1,2 +1,4 @@
 *.nex
 *.trees
+*.samples
+*.tsv
