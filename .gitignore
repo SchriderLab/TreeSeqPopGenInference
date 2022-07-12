@@ -3,3 +3,4 @@
 *.samples
 *.tsv
 msdir/
+pop_gen_cnn
