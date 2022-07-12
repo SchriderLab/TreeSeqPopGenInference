@@ -2,6 +2,7 @@
 
 ### Goals: 
 - Replicate [Flagel et al 2019](https://academic.oup.com/mbe/article/36/2/220/5229930) using both sequence and tree inference methods
+  - [Github link here](https://github.com/flag0010/pop_gen_cnn/tree/master)
 - Use interpretable machine learning approaches to better understand important features to each method type
 
 ---
