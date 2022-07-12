@@ -27,28 +27,28 @@
 
 ## Problems defined in Flagel et al.
 
-### Estimate $\theta$ 
+### 1. Estimate $\theta$ 
 
 - Sort chromosomes by genetic similarity
 - 1DCNN
 
-### Detect introgression
+### 2. Detect introgression
 
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
 
-### Rho estimation
+### 3. Rho estimation
 
 - Uses read fraction per site rather than allelic assignments
 - Similarly to above, do we compare to LDHat?
 - Phased vs unphased? 
 
-### Positive selection
+### 4. Positive selection
 
 - 5-class problem (hard sweep, hard linked, soft sweep, soft linked, neutral)
 - Read counts here? Or just alignments?
 
-### Demographic inference
+### 5. Demographic inference
 
 - Infer pop size and timings of a three-pop model
 
