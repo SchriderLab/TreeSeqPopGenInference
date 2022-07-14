@@ -17,7 +17,7 @@
 ### Treeseq-based approaches
 
 - Summary statistic based
-  - Phylogenetic distance measures (RF, NNI; see [RF pilot study here](/pilot/pilot.ipynb)
+  - Phylogenetic distance measures (RF, NNI; see [RF pilot study here](/pilot/pilot.ipynb))
   - Branch length distributions
   
 - Direct learning approach
