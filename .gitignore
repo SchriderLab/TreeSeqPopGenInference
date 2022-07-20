@@ -4,3 +4,5 @@
 *.tsv
 msdir/
 pop_gen_cnn
+*.gz
+!**/tests/**/*.gz

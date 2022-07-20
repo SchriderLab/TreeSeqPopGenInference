@@ -46,7 +46,7 @@ def worker(args):
 
 
 def main():
-
+    """Simulates replicates from a randomized set of Ne/rho/theta for training a model to predict rho."""
     if len(sys.argv) > 1:
         outdir = sys.argv[1]
     else:
@@ -63,7 +63,7 @@ def main():
     cpus = mp.cpu_count() - 1
 
     # Sim params
-    n_sims = 10
+    n_sims = 100
     Ne_opts = np.array([1000, 2000, 5000, 10000, 15000, 20000, 50000])
     morgans_per_bp = np.power(10, np.random.uniform(-8, -6, n_sims))
     Ne_vals = np.random.choice(Ne_opts, size=n_sims)
