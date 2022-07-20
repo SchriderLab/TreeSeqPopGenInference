@@ -44,11 +44,19 @@ def main():
     
     
     ### get haplotype and sample files
+    
+    logging.info('uncompressing data...')
     ifiles = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if (('.ms' in u) or ('.msOut' in u))]
+    for ifile in ifiles:
+        if '.gz' in ifile:
+            os.system('gzip -d {}'.format(ifile))
+    
     rcmd = 'Rscript src/data/ms2haps.R {0} {1} {2}'
     relate_cmd = 'relate/bin/Relate --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
+        ifile = ifile.replace('.gz', '')
+        
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, ifile.split('.')[0], int(args.L))
@@ -97,6 +105,13 @@ def main():
         
         os.system('rm -rf {}'.format(os.path.join(args.idir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(args.idir, '*.haps')))
+        
+    # compress back
+    logging.info('compressing back...')
+    ifiles = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if (('.ms' in u) or ('.msOut' in u))]
+    for ifile in ifiles:
+        if '.gz' not in ifile:
+            os.system('gzip {}'.format(ifile))
 
 if __name__ == '__main__':
     main()
