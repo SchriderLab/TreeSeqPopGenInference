@@ -3,6 +3,7 @@ import multiprocessing as mp
 import os, sys
 import gzip
 from itertools import cycle
+import argparse
 
 import numpy as np
 from tqdm import tqdm
@@ -46,21 +47,38 @@ def worker(args):
 
 
 def main():
-    """Simulates replicates from a randomized set of Ne/rho/theta for training a model to predict rho."""
-    if len(sys.argv) > 1:
-        outdir = sys.argv[1]
-    else:
-        outdir = "./sims"
+    ap = argparse.ArgumentParser(
+        description="Simulates replicates from a randomized set of Ne/rho/theta for training a model to predict rho."
+    )
+    ap.add_argument(
+        "-o",
+        "--outdir",
+        dest="outdir",
+        default="./sims",
+        help="Directory to create subdirectories in and write simulations to. Defaults to './sims/'.",
+    )
+    ap.add_argument(
+        "-n",
+        "--num-reps",
+        dest="num_reps",
+        default=10000,
+        help="Number of simulation replicates. Defaults to 10,000.",
+    )
+    ap.add_argument(
+        "--threads",
+        dest="threads",
+        default=mp.cpu_count() - 1 or 1,
+        help="Number of threads to parallelize across.",
+    )
+    ua = ap.parse_args()
 
-    msdir = os.path.join(outdir, "ms")
-    treedir = os.path.join(outdir, "trees")
+    msdir = os.path.join(ua.outdir, "ms")
+    treedir = os.path.join(ua.outdir, "trees")
 
     # Make outdir if not present
     if not os.path.exists(msdir):
         os.makedirs(msdir)
         os.makedirs(treedir)
-
-    cpus = mp.cpu_count() - 1
 
     # Sim params
     n_sims = 100
@@ -68,20 +86,20 @@ def main():
     morgans_per_bp = np.power(10, np.random.uniform(-8, -6, n_sims))
     Ne_vals = np.random.choice(Ne_opts, size=n_sims)
 
-    print(f"[Info] Output dir: {outdir}")
+    print(f"[Info] Output dir: {ua.outdir}")
     print(f"[Info] Number of sims: {n_sims}")
     print(f"[Info] Ne options: {Ne_opts}")
-    print(f"[Info] CPUs used: {cpus}")
+    print(f"[Info] CPUs used: {ua.threads}")
 
     # Sim reps
     cmds = [create_sim_cmd(morgans_per_bp[rep], Ne_vals[rep]) for rep in range(n_sims)]
 
     # Write cmds to file
-    with open(f"{outdir}/cmds.txt", "w") as cmdfile:
+    with open(f"{ua.outdir}/cmds.txt", "w") as cmdfile:
         for r in range(n_sims):
             cmdfile.write(f"{r} {cmds[r]}\n")
 
-    pool = mp.Pool(cpus)
+    pool = mp.Pool(ua.threads)
     list(
         tqdm(
             pool.imap(
