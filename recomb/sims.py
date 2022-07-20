@@ -1,7 +1,9 @@
 import subprocess
 import multiprocessing as mp
+import os, sys
+import gzip
+from itertools import cycle
 
-import h5py
 import numpy as np
 from tqdm import tqdm
 
@@ -33,59 +35,61 @@ def create_sim_cmd(morgans_per_bp, Ne, n_chrom=50, mu=1.5e-8, bp=20001):
 
 
 def worker(args):
-    rep, cmd = args
+    rep, cmd, msdir, treedir = args
     ms_output = subprocess.check_output(cmd.split()).decode("utf-8")
     trees, ms = separate_output(ms_output)
 
-    return rep, cmd, trees, ms
+    with gzip.open(os.path.join(msdir, f"{rep}.msOut.gz"), "w") as msfile:
+        msfile.write(bytes(ms, "utf-8"))
+    with gzip.open(os.path.join(treedir, f"{rep}.nwk.gz"), "w") as treefile:
+        treefile.write(bytes(trees, "utf-8"))
 
 
 def main():
-    # Chunk size for faster processing
-    chunk_size = 50
+
+    if len(sys.argv) > 1:
+        outdir = sys.argv[1]
+    else:
+        outdir = "./sims"
+
+    msdir = os.path.join(outdir, "ms")
+    treedir = os.path.join(outdir, "trees")
+
+    # Make outdir if not present
+    if not os.path.exists(msdir):
+        os.makedirs(msdir)
+        os.makedirs(treedir)
+
     cpus = mp.cpu_count() - 1
 
-    # Init fresh hdf5 file
-    filename = "recomb_sims.hdf5"
-    hf = h5py.File(filename, "w")
-    hf.close()
-
     # Sim params
-    n_sims = 1000  # 0000
+    n_sims = 10
     Ne_opts = np.array([1000, 2000, 5000, 10000, 15000, 20000, 50000])
     morgans_per_bp = np.power(10, np.random.uniform(-8, -6, n_sims))
     Ne_vals = np.random.choice(Ne_opts, size=n_sims)
 
-    print(f"[Info] Output file: {filename}")
+    print(f"[Info] Output dir: {outdir}")
     print(f"[Info] Number of sims: {n_sims}")
     print(f"[Info] Ne options: {Ne_opts}")
-    print(f"[Info] Chunk size: {chunk_size}")
     print(f"[Info] CPUs used: {cpus}")
 
     # Sim reps
-    for chunk in tqdm(
-        range(
-            0,
-            n_sims - chunk_size,
-            chunk_size,
-        ),
-        desc=f"Submitting sims in chunks",
-    ):
-        chunk_reps = range(chunk, chunk + chunk_size)
-        cmds = [create_sim_cmd(morgans_per_bp[rep], Ne_vals[rep]) for rep in chunk_reps]
+    cmds = [create_sim_cmd(morgans_per_bp[rep], Ne_vals[rep]) for rep in range(n_sims)]
 
-        pool = mp.Pool(cpus)
-        worker_res = pool.map(worker, zip(chunk_reps, cmds))
+    # Write cmds to file
+    with open(f"{outdir}/cmds.txt", "w") as cmdfile:
+        for r in range(n_sims):
+            cmdfile.write(f"{r} {cmds[r]}\n")
 
-        hf = h5py.File(filename, "a")
-        for res in worker_res:
-            rep, cmd, trees, ms = res
-            rep_group = hf.create_group(str(rep))
-            rep_group.create_dataset("cmd", data=cmd)
-            rep_group.create_dataset("trees", data=trees)
-            rep_group.create_dataset("ms", data=ms)
-
-    hf.close()
+    pool = mp.Pool(cpus)
+    list(
+        tqdm(
+            pool.imap(
+                worker, zip(range(n_sims), cmds, cycle([msdir]), cycle([treedir]))
+            ),
+            total=n_sims,
+        )
+    )
 
 
 if __name__ == "__main__":
