@@ -1,15 +1,14 @@
-import argparse
 import gzip
 import multiprocessing as mp
 import os
-import subprocess
-import sys
 from itertools import cycle
 
 import msprime
 import numpy as np
 import tskit
 from tqdm import tqdm
+
+from ..utils import utils
 
 
 def log_params(outdir, params_list):
@@ -32,17 +31,6 @@ def log_params(outdir, params_list):
         for p in params_list:
             ofile.write("\t".join([str(i) for i in p]))
             ofile.write("\n")
-
-
-def compress_file(file, overwrite=True):
-    with open(file, "r") as ifile:
-        istring = ifile.read()
-
-    with gzip.open(file + ".gz", "w") as ofile:
-        ofile.write(bytes(istring, "utf-8"))
-
-    if overwrite:
-        os.remove(file)
 
 
 def inject_nwk(msfile, nwk_lines, overwrite=True):
@@ -97,7 +85,7 @@ def worker(args):
 
         inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
 
-        compress_file(os.path.join(msdir, f"{rep}.msOut"), overwrite=True)
+        utils.compress_file(os.path.join(msdir, f"{rep}.msOut"), overwrite=True)
 
         with gzip.open(os.path.join(treedir, f"{rep}.nwk.gz"), "w") as treefile:
             treefile.write(bytes("\n".join(ts_nwk), "utf-8"))
@@ -108,54 +96,17 @@ def worker(args):
         print(e)
 
 
-def get_ua():
-    ap = argparse.ArgumentParser(
-        description="Simulates replicates from a randomized set of Ne/rho/theta for training a model to predict rho."
-    )
-    ap.add_argument(
-        "-o",
-        "--outdir",
-        dest="outdir",
-        default="./sims",
-        help="Directory to create subdirectories in and write simulations to. Defaults to './sims/'.",
-    )
-    ap.add_argument(
-        "-n",
-        "--num-reps",
-        dest="num_reps",
-        default=10000,
-        type=int,
-        help="Number of simulation replicates. Defaults to 10,000.",
-    )
-    ap.add_argument(
-        "--threads",
-        dest="threads",
-        default=mp.cpu_count() - 1 or 1,
-        help="Number of threads to parallelize across.",
-    )
-    return ap.parse_args()
-
-
 def main():
-    ua = get_ua()
+    ua = utils.get_ua()
     msdir = os.path.join(ua.outdir, "ms")
     treedir = os.path.join(ua.outdir, "trees")
     dumpdir = os.path.join(ua.outdir, "tsdump")
 
     # Make outdir if not present
-    if not os.path.exists(msdir):
-        os.makedirs(msdir)
-        os.makedirs(treedir)
-        os.makedirs(dumpdir)
+    utils.make_dirs(msdir, treedir, dumpdir)
 
-    print(f"[Info] Output dir: {ua.outdir}")
-    print(f"[Info] Number of sims: {ua.num_reps}")
-    print(f"[Info] CPUs used: {ua.threads}\n")
-
-    # Randomize properly
-    seedseq = np.random.SeedSequence(123456)
-    child_seeds = seedseq.spawn(ua.num_reps)
-    seeds = [np.random.default_rng(s).integers(0, int(1e8)) for s in child_seeds]
+    # Randomize
+    seeds = utils.get_seeds(ua.num_reps)
 
     # Pre-specified params
     Ne_opts = np.array([1000, 2000, 5000, 10000, 15000, 20000, 50000])
