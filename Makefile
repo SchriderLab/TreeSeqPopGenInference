@@ -10,7 +10,7 @@ msmove:
 	git clone git@github.com:genevalab/msmove.git msmove_dir
 	cd msmove_dir; make
 	mv msmove_dir/gccRelease/msmove ./introgression
-	rm -rf msmove
+	rm -rf msmove_dir
 
 pop_gen_cnn:
 	git clone https://github.com/Lswhiteh/pop_gen_cnn.git
