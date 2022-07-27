@@ -1,113 +1,130 @@
-import subprocess
-import multiprocessing as mp
-import os, sys
 import gzip
+import multiprocessing as mp
+import os
 from itertools import cycle
-import argparse
 
+import msprime
 import numpy as np
+import tskit
 from tqdm import tqdm
 
-
-def separate_output(ms_output):
-    """Separates tree sequence from ms output for separated dictionary storage."""
-    _ms = ms_output.split("\n")
-    for idx in range(len(_ms)):
-        if _ms[idx] == "//":
-            start_index = idx
-        elif "segsites:" in _ms[idx]:
-            end_index = idx
-        else:
-            pass
-
-    trees = _ms[start_index + 1 : end_index]
-    ms_out = _ms[: start_index + 1] + _ms[end_index:]
-
-    return "\n".join(trees), "\n".join(ms_out)
+from ..utils import utils
 
 
-def create_sim_cmd(morgans_per_bp, Ne, n_chrom=50, mu=1.5e-8, bp=20001):
-    """Generates an ms-style command for simulating a replicate."""
-    total_gen_dist = morgans_per_bp * (bp - 1)
-    rho = 4 * Ne * total_gen_dist
-    theta = 4 * Ne * mu * bp
+def inject_nwk(msfile, nwk_lines, overwrite=True):
+    combo_name = msfile.replace(".notree", "")
 
-    return f"mspms {n_chrom} 1 -t {theta} -T -r {rho} {bp}"
+    with open(msfile, "r+") as ifile:
+        mslines = ifile.readlines()
+
+    with open(combo_name, "w") as ofile:
+        ofile.writelines(mslines[:4])
+        ofile.write("\n".join(nwk_lines) + "\n")
+        ofile.writelines(mslines[4:])
+
+    if overwrite:
+        os.remove(msfile)
+
+
+def sim_ts(Ne, mu, r, L, seed, n_chrom):
+    """
+    Simulate a single replicate given a set of parameters.
+    Need to explicitly set/log more params than they'll let us oob.
+    """
+    ts = msprime.sim_ancestry(
+        samples=n_chrom,
+        recombination_rate=r,
+        sequence_length=L,
+        ploidy=1,
+        population_size=Ne,
+        random_seed=seed,
+        model="hudson",
+    )
+    mut_ts = msprime.sim_mutations(ts, rate=mu)
+
+    return mut_ts
 
 
 def worker(args):
-    rep, cmd, msdir, treedir = args
-    ms_output = subprocess.check_output(cmd.split()).decode("utf-8")
-    trees, ms = separate_output(ms_output)
+    params, msdir, treedir, dumpdir = args
+    (rep, ne, mu, r, L, seed, n_chrom) = params
 
-    with gzip.open(os.path.join(msdir, f"{rep}.msOut.gz"), "w") as msfile:
-        msfile.write(bytes(ms, "utf-8"))
-    with gzip.open(os.path.join(treedir, f"{rep}.nwk.gz"), "w") as treefile:
-        treefile.write(bytes(trees, "utf-8"))
+    ts = sim_ts(ne, mu, r, L, seed, n_chrom)
+
+    ts_nwk = []
+    for tree in ts.trees():
+        newick = tree.newick()
+        ts_nwk.append(f"[{int(tree.span)}] {newick}")
+
+    try:
+        with open(os.path.join(msdir, f"{rep}.notree.msOut"), "w+") as msfile:
+            # Why is write_ms written like this? Just let me compress with a bytestream
+            tskit.write_ms(ts, output=msfile)
+
+        inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
+
+        utils.compress_file(os.path.join(msdir, f"{rep}.msOut"), overwrite=True)
+
+        with gzip.open(os.path.join(treedir, f"{rep}.nwk.gz"), "w") as treefile:
+            treefile.write(bytes("\n".join(ts_nwk), "utf-8"))
+
+        ts.dump(os.path.join(dumpdir, f"{rep}.dump"))
+
+    except ValueError as e:
+        print(e)
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="Simulates replicates from a randomized set of Ne/rho/theta for training a model to predict rho."
-    )
-    ap.add_argument(
-        "-o",
-        "--outdir",
-        dest="outdir",
-        default="./sims",
-        help="Directory to create subdirectories in and write simulations to. Defaults to './sims/'.",
-    )
-    ap.add_argument(
-        "-n",
-        "--num-reps",
-        dest="num_reps",
-        default=10000,
-        help="Number of simulation replicates. Defaults to 10,000.",
-    )
-    ap.add_argument(
-        "--threads",
-        dest="threads",
-        default=mp.cpu_count() - 1 or 1,
-        help="Number of threads to parallelize across.",
-    )
-    ua = ap.parse_args()
-
+    ua = utils.get_ua()
     msdir = os.path.join(ua.outdir, "ms")
     treedir = os.path.join(ua.outdir, "trees")
+    dumpdir = os.path.join(ua.outdir, "tsdump")
 
     # Make outdir if not present
-    if not os.path.exists(msdir):
-        os.makedirs(msdir)
-        os.makedirs(treedir)
+    utils.make_dirs(msdir, treedir, dumpdir)
 
-    # Sim params
-    n_sims = 100
+    # Randomize
+    seeds = utils.get_seeds(ua.num_reps)
+
+    # Pre-specified params
     Ne_opts = np.array([1000, 2000, 5000, 10000, 15000, 20000, 50000])
-    morgans_per_bp = np.power(10, np.random.uniform(-8, -6, n_sims))
-    Ne_vals = np.random.choice(Ne_opts, size=n_sims)
+    L = 1e6
+    mu = 1.5e-8
+    n_chrom = 50
 
-    print(f"[Info] Output dir: {ua.outdir}")
-    print(f"[Info] Number of sims: {n_sims}")
-    print(f"[Info] Ne options: {Ne_opts}")
-    print(f"[Info] CPUs used: {ua.threads}")
+    # Randomized params
+    Ne = np.random.choice(Ne_opts, size=ua.num_reps)
+    morgans_per_bp = np.power(10, np.random.uniform(-8, -6, ua.num_reps))
 
-    # Sim reps
-    cmds = [create_sim_cmd(morgans_per_bp[rep], Ne_vals[rep]) for rep in range(n_sims)]
+    print("[Info] Calculating parameters")
+    params = [
+        (rep, ne, mu, r, L, seeds[rep], n_chrom)
+        for (rep, r, ne) in zip(range(ua.num_reps), morgans_per_bp, Ne)
+    ]
 
     # Write cmds to file
-    with open(f"{ua.outdir}/cmds.txt", "w") as cmdfile:
-        for r in range(n_sims):
-            cmdfile.write(f"{r} {cmds[r]}\n")
+    print(f"[Info] Logging parameters to {os.path.join(ua.outdir, 'params.txt')}\n")
+    param_names = ["rep", "Ne", "L", "bp", "mu", "r", "seed", "n_chrom"]
+    utils.log_params(ua.outdir, param_names=param_names, params_list=params)
 
+    # Simulate
     pool = mp.Pool(ua.threads)
     list(
         tqdm(
             pool.imap(
-                worker, zip(range(n_sims), cmds, cycle([msdir]), cycle([treedir]))
+                worker,
+                zip(
+                    params,
+                    cycle([msdir]),
+                    cycle([treedir]),
+                    cycle([dumpdir]),
+                ),
             ),
-            total=n_sims,
+            total=ua.num_reps,
+            desc="Simulating",
         )
     )
+    pool.close()
 
 
 if __name__ == "__main__":

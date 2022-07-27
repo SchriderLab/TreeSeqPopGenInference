@@ -1,7 +1,11 @@
-import os, random, sys
-import argparse
 import multiprocessing as mp
+import os
+import random
 import subprocess
+
+import msprime
+import demes, demesdraw
+from ..utils import utils
 
 
 def drawUnif(m, fold=0.5):
@@ -32,24 +36,7 @@ def drawParams(
         migProb = 1 - random.random()
         return theta, rho, nu1, nu2, T, m12, m21, migTime, migProb
     else:
-        return theta, rho, nu1, nu2, T, m12, m21
-
-
-def separate_output(ms_output):
-    """Separates tree sequence from ms output for separated dictionary storage."""
-    _ms = ms_output.split("\n")
-    for idx in range(len(_ms)):
-        if _ms[idx] == "//":
-            start_index = idx
-        elif "segsites:" in _ms[idx]:
-            end_index = idx
-        else:
-            pass
-
-    trees = _ms[start_index + 1 : end_index]
-    ms_out = _ms[: start_index + 1] + _ms[end_index:]
-
-    return "\n".join(trees), "\n".join(ms_out)
+        return theta, rho, nu1, nu2, T, m12, m21, None, None
 
 
 def writeTbsFile(params, outFileName):
@@ -58,40 +45,23 @@ def writeTbsFile(params, outFileName):
             outFile.write(" ".join([str(x) for x in paramVec]) + "\n")
 
 
+def sim_rep(ms_cmd, N0):
+    """https://tskit.dev/tutorials/introgression.html"""
+
+    demo_deme = demes.from_ms(ms_cmd, N0=N0, deme_names=["simulans", "sechelia"])
+    demo = msprime.Demography(demo_deme)
+    ts = msprime.sim_ancestry(demography=demo)
+
+
 def main():
-    ap = argparse.ArgumentParser(
-        description="Simulates replicates from a distribution of parameters found with dadi, look at FILET paper for more details."
-    )
-    ap.add_argument(
-        "-o",
-        "--out_dir",
-        dest="out_dir",
-        default="./sims",
-        help="Directory to create subdirectories in and write simulations to. Defaults to './sims/'.",
-    )
-    ap.add_argument(
-        "-n",
-        "--num-reps",
-        dest="num_reps",
-        default=20000,
-        type=int,
-        help="Number of simulation replicates. Defaults to 10,000.",
-    )
-    ap.add_argument(
-        "--threads",
-        dest="threads",
-        default=mp.cpu_count() - 1 or 1,
-        help="Number of threads to parallelize across.",
-    )
-    ua = ap.parse_args()
+    ua = utils.get_ua()
 
-    msdir = os.path.join(ua.out_dir, "ms")
-    treedir = os.path.join(ua.out_dir, "trees")
+    msdir = os.path.join(ua.outdir, "ms")
+    treedir = os.path.join(ua.outdir, "trees")
+    dumpdir = os.path.join(ua.outdir, "tsdump")
 
-    # Make ua.out_dir if not present
-    if not os.path.exists(msdir):
-        os.makedirs(msdir)
-        os.makedirs(treedir)
+    # Make outdir if not present
+    utils.make_dirs(msdir, treedir, dumpdir)
 
     """
     dadi parameter estimates
@@ -112,6 +82,7 @@ def main():
     numSites = 10000
     (
         thetaMean,
+        rhoMean,
         thetaOverRhoMean,
         nu1Mean,
         nu2Mean,
@@ -120,6 +91,7 @@ def main():
         TMean,
     ) = (
         68.29691232,
+        341.4845616,
         0.2,
         19.022761,
         0.054715,
@@ -133,7 +105,7 @@ def main():
 
     noMigParams, mig12Params, mig21Params = [], [], []
     for rep in range(ua.num_reps):
-        theta, rho, nu1, nu2, splitTime, m12, m21 = drawParams(
+        theta, rho, nu1, nu2, splitTime, m12, m21, _, _ = drawParams(
             thetaMean,
             thetaOverRhoMean,
             nu1Mean,
@@ -141,12 +113,26 @@ def main():
             m12Times2Mean,
             m21Times2Mean,
             TMean,
+            mig=False,
         )
 
         # paramVec = [theta, rho, nu1, nu2, m12, m21, splitTime, splitTime]
         paramVec = [theta, rho, nu1, nu2, 0, 0, splitTime, splitTime]
-        noMigParams.append(paramVec)
 
+        noMigTbsFileName = f"{ua.out_dir}/noMig.tbs"
+        noMigSimCmd = f"./msmove {sampleSize1} {sampleSize2} -t tbs -r tbs {numSites} -I 2 {sampleSize1} {sampleSize2} -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1"
+
+        noMigParams.append(paramVec)
+        print(noMigSimCmd)
+
+        writeTbsFile(noMigParams, noMigTbsFileName)
+        os.system(
+            'echo "%s > %s/noMig.msOut" | ./msmove -o /dev/null -e /dev/null'
+            % (noMigSimCmd, ua.out_dir)
+        )
+        ms_output = subprocess.check_output(cmd.split()).decode("utf-8")
+
+        # Mig 1 -> 2
         theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
             thetaMean,
             thetaOverRhoMean,
@@ -170,7 +156,26 @@ def main():
             migProb,
         ]
         mig12Params.append(paramVec)
+        mig12TbsFileName = "%s/mig12.tbs" % (ua.out_dir)
+        mig12SimCmd = (
+            "./msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s"
+            % (
+                sampleSize1 + sampleSize2,
+                ua.num_reps,
+                numSites,
+                sampleSize1,
+                sampleSize2,
+                mig12TbsFileName,
+            )
+        )
 
+        writeTbsFile(mig12Params, mig12TbsFileName)
+        os.system(
+            'echo "%s > %s/mig12.msOut" |./msmove -o /dev/null -e /dev/null'
+            % (mig12SimCmd, ua.out_dir)
+        )
+
+        # Mig 2 -> 1
         theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
             thetaMean,
             thetaOverRhoMean,
@@ -194,37 +199,6 @@ def main():
             migProb,
         ]
         mig21Params.append(paramVec)
-
-        noMigTbsFileName = "%s/noMig.tbs" % (ua.out_dir)
-        noMigSimCmd = f"./msmove {sampleSize1} {sampleSize2} -t tbs -r tbs {numSites} -I 2 {sampleSize1} {sampleSize2} -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1"
-
-        print(noMigSimCmd)
-
-        writeTbsFile(noMigParams, noMigTbsFileName)
-        os.system(
-            'echo "%s > %s/noMig.msOut" | ./msmove -o /dev/null -e /dev/null'
-            % (noMigSimCmd, ua.out_dir)
-        )
-        ms_output = subprocess.check_output(cmd.split()).decode("utf-8")
-
-        mig12TbsFileName = "%s/mig12.tbs" % (ua.out_dir)
-        mig12SimCmd = (
-            "./msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s"
-            % (
-                sampleSize1 + sampleSize2,
-                ua.num_reps,
-                numSites,
-                sampleSize1,
-                sampleSize2,
-                mig12TbsFileName,
-            )
-        )
-
-        writeTbsFile(mig12Params, mig12TbsFileName)
-        os.system(
-            'echo "%s > %s/mig12.msOut" |./msmove -o /dev/null -e /dev/null'
-            % (mig12SimCmd, ua.out_dir)
-        )
 
         mig21TbsFileName = "%s/mig21.tbs" % (ua.out_dir)
         mig21SimCmd = (

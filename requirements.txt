@@ -2,3 +2,5 @@ msprime
 pytorch
 matplotlib
 numpy
+tqdm
+black
