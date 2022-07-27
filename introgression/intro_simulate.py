@@ -4,7 +4,7 @@ import random
 import subprocess
 
 import msprime
-
+import demes, demesdraw
 from ..utils import utils
 
 
@@ -45,12 +45,12 @@ def writeTbsFile(params, outFileName):
             outFile.write(" ".join([str(x) for x in paramVec]) + "\n")
 
 
-def sim_no_mig():
+def sim_rep(ms_cmd, N0):
     """https://tskit.dev/tutorials/introgression.html"""
-    demography = msprime.Demography()
-    demography.add_population(name="Africa", initial_size=Ne)
-    demography.add_population(name="Eurasia", initial_size=Ne)
-    demography.add_population(name="Neanderthal", initial_size=Ne)
+
+    demo_deme = demes.from_ms(ms_cmd, N0=N0, deme_names=["simulans", "sechelia"])
+    demo = msprime.Demography(demo_deme)
+    ts = msprime.sim_ancestry(demography=demo)
 
 
 def main():
@@ -82,6 +82,7 @@ def main():
     numSites = 10000
     (
         thetaMean,
+        rhoMean,
         thetaOverRhoMean,
         nu1Mean,
         nu2Mean,
@@ -90,6 +91,7 @@ def main():
         TMean,
     ) = (
         68.29691232,
+        341.4845616,
         0.2,
         19.022761,
         0.054715,
