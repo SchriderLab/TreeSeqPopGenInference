@@ -39,23 +39,6 @@ def drawParams(
         return theta, rho, nu1, nu2, T, m12, m21, None, None
 
 
-def separate_output(ms_output):
-    """Separates tree sequence from ms output for separated dictionary storage."""
-    _ms = ms_output.split("\n")
-    for idx in range(len(_ms)):
-        if _ms[idx] == "//":
-            start_index = idx
-        elif "segsites:" in _ms[idx]:
-            end_index = idx
-        else:
-            pass
-
-    trees = _ms[start_index + 1 : end_index]
-    ms_out = _ms[: start_index + 1] + _ms[end_index:]
-
-    return "\n".join(trees), "\n".join(ms_out)
-
-
 def writeTbsFile(params, outFileName):
     with open(outFileName, "w") as outFile:
         for paramVec in params:

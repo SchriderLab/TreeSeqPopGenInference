@@ -11,28 +11,6 @@ from tqdm import tqdm
 from ..utils import utils
 
 
-def log_params(outdir, params_list):
-    with open(os.path.join(outdir, "sim_params.txt"), "w") as ofile:
-        ofile.write(
-            "\t".join(
-                [
-                    "rep",
-                    "Ne",
-                    "L",
-                    "bp",
-                    "mu",
-                    "r",
-                    "seed",
-                    "n_chrom",
-                ]
-            )
-            + "\n",
-        )
-        for p in params_list:
-            ofile.write("\t".join([str(i) for i in p]))
-            ofile.write("\n")
-
-
 def inject_nwk(msfile, nwk_lines, overwrite=True):
     combo_name = msfile.replace(".notree", "")
 
@@ -126,7 +104,8 @@ def main():
 
     # Write cmds to file
     print(f"[Info] Logging parameters to {os.path.join(ua.outdir, 'params.txt')}\n")
-    log_params(ua.outdir, params)
+    param_names = ["rep", "Ne", "L", "bp", "mu", "r", "seed", "n_chrom"]
+    utils.log_params(ua.outdir, param_names=param_names, params_list=params)
 
     # Simulate
     pool = mp.Pool(ua.threads)
