@@ -34,7 +34,17 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    
+    cmd = 'python3 src/data/simulateTrainingAndTestDataFromDadiModel.py {0} {1}'
+    n = int(args.n_replicates_per)
+    
+    for ix in range(int(args.n_jobs)):
+        odir = os.path.join(args.odir, '{0:04d}'.format(ix))
+        
+        cmd_ = cmd.format(odir, n)
+        print(cmd_)
+        os.system(cmd_)
+        
     # ${code_blocks}
 
 if __name__ == '__main__':
