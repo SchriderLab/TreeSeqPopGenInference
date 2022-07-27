@@ -24,7 +24,6 @@ thetaMean, thetaOverRhoMean, nu1Mean, nu2Mean, m12Times2Mean, m21Times2Mean, TMe
 
 #msmove 34 1000 -t 68.29691232 -r 341.4845616 10000 -I 2 20 14 -n 1 19.022761 -n 2 0.054715 -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x 0.025751 0.172334 x -ej 0.664194 2 1 -en 0.664194 1 1
 trainingSampleNumber = sys.argv[2]
-testSampleNumber = 10000
 
 def drawUnif(m, fold=0.5):
     x = m*fold
@@ -71,17 +70,17 @@ if __name__ == '__main__':
             mig21Params.append(paramVec)
             
         noMigTbsFileName = "%s/noMig.tbs" %(outDir)
-        noMigSimCmd = "msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, noMigTbsFileName)
+        noMigSimCmd = "msmove/gccRelease/msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, noMigTbsFileName)
         writeTbsFile(noMigParams, noMigTbsFileName)
         os.system(slurm_cmd.format(noMigSimCmd, os.path.join(outDir, 'noMig.msOut')))
         #os.system("echo \"%s > %s/noMig.msOut\" | qsub -q HP8g7,HPblg7,galaxy -w e -N msmove -o /dev/null -e /dev/null" %(noMigSimCmd, outDir))
     
         mig12TbsFileName = "%s/mig12.tbs" %(outDir)
-        mig12SimCmd = "msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig12TbsFileName)
+        mig12SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig12TbsFileName)
         writeTbsFile(mig12Params, mig12TbsFileName)
         os.system(slurm_cmd.format(mig12SimCmd, os.path.join(outDir, 'mig12.msOut')))
     
         mig21TbsFileName = "%s/mig21.tbs" %(outDir)
-        mig21SimCmd = "msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 2 1 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig21TbsFileName)
+        mig21SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 2 1 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig21TbsFileName)
         writeTbsFile(mig21Params, mig21TbsFileName)
         os.system(slurm_cmd.format(mig12SimCmd, os.path.join(outDir, 'mig21.msOut')))
