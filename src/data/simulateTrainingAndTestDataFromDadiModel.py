@@ -23,7 +23,7 @@ thetaMean, thetaOverRhoMean, nu1Mean, nu2Mean, m12Times2Mean, m21Times2Mean, TMe
 
 
 #msmove 34 1000 -t 68.29691232 -r 341.4845616 10000 -I 2 20 14 -n 1 19.022761 -n 2 0.054715 -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x 0.025751 0.172334 x -ej 0.664194 2 1 -en 0.664194 1 1
-trainingSampleNumber = sys.argv[2]
+trainingSampleNumber = int(sys.argv[2])
 
 def drawUnif(m, fold=0.5):
     x = m*fold
