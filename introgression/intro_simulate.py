@@ -15,8 +15,14 @@ def drawUnif(m, fold=0.5):
 
 
 def rescale_Ne(theta, mu, numsites):
+    """
+    Converts from basewise coalescent units to population size.
+    Formula: theta = 4Ne*mu*numsites
+    """
     return theta / (4 * mu * numsites)
 
+def rescale_T(theta):
+    raise NotImplementedError
 
 def drawParams(
     thetaMean,
