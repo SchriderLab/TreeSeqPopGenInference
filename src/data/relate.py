@@ -47,6 +47,9 @@ def main():
     for idir in idirs:
         logging.info('working on {}...'.format(idir))
         
+        odir = os.path.join(args.odir, idir.split('/')[-1])
+        os.system('mkdir -p {}'.format(odir))
+        
         ### get haplotype and sample files
         logging.info('uncompressing data...')
         ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
@@ -104,7 +107,7 @@ def main():
                                          haps[ix].split('/')[-1].split('.')[0])
                 os.system(cmd_)
             
-                os.system('mv {0}* {1}'.format(haps[ix].split('/')[-1].split('.')[0], args.odir))
+                os.system('mv {0}* {1}'.format(haps[ix].split('/')[-1].split('.')[0], odir))
             
             os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
             os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
