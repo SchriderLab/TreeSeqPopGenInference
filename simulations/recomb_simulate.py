@@ -8,22 +8,8 @@ import numpy as np
 import tskit
 from tqdm import tqdm
 
-from ..utils import utils
-
-
-def inject_nwk(msfile, nwk_lines, overwrite=True):
-    combo_name = msfile.replace(".notree", "")
-
-    with open(msfile, "r+") as ifile:
-        mslines = ifile.readlines()
-
-    with open(combo_name, "w") as ofile:
-        ofile.writelines(mslines[:4])
-        ofile.write("\n".join(nwk_lines) + "\n")
-        ofile.writelines(mslines[4:])
-
-    if overwrite:
-        os.remove(msfile)
+from utils import utils
+from utils import sim_utils
 
 
 def sim_ts(Ne, mu, r, L, seed, n_chrom):
@@ -35,7 +21,7 @@ def sim_ts(Ne, mu, r, L, seed, n_chrom):
         samples=n_chrom,
         recombination_rate=r,
         sequence_length=L,
-        ploidy=1,
+        ploidy=2,
         population_size=Ne,
         random_seed=seed,
         model="hudson",
@@ -61,7 +47,7 @@ def worker(args):
             # Why is write_ms written like this? Just let me compress with a bytestream
             tskit.write_ms(ts, output=msfile)
 
-        inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
+        sim_utils.inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
 
         utils.compress_file(os.path.join(msdir, f"{rep}.msOut"), overwrite=True)
 
@@ -80,11 +66,13 @@ def main():
     treedir = os.path.join(ua.outdir, "trees")
     dumpdir = os.path.join(ua.outdir, "tsdump")
 
+    reps = utils.get_reps(ua)
+
     # Make outdir if not present
     utils.make_dirs(msdir, treedir, dumpdir)
 
     # Randomize
-    seeds = utils.get_seeds(ua.num_reps)
+    seeds = sim_utils.get_seeds(len(reps))
 
     # Pre-specified params
     Ne_opts = np.array([1000, 2000, 5000, 10000, 15000, 20000, 50000])
@@ -93,19 +81,19 @@ def main():
     n_chrom = 50
 
     # Randomized params
-    Ne = np.random.choice(Ne_opts, size=ua.num_reps)
-    morgans_per_bp = np.power(10, np.random.uniform(-8, -6, ua.num_reps))
+    Ne = np.random.choice(Ne_opts, size=len(reps))
+    morgans_per_bp = np.power(10, np.random.uniform(-8, -6, len(reps)))
 
     print("[Info] Calculating parameters")
     params = [
         (rep, ne, mu, r, L, seeds[rep], n_chrom)
-        for (rep, r, ne) in zip(range(ua.num_reps), morgans_per_bp, Ne)
+        for (rep, r, ne) in zip(reps, morgans_per_bp, Ne)
     ]
 
     # Write cmds to file
     print(f"[Info] Logging parameters to {os.path.join(ua.outdir, 'params.txt')}\n")
     param_names = ["rep", "Ne", "L", "bp", "mu", "r", "seed", "n_chrom"]
-    utils.log_params(ua.outdir, param_names=param_names, params_list=params)
+    sim_utils.log_params(ua.outdir, param_names=param_names, params_list=params)
 
     # Simulate
     pool = mp.Pool(ua.threads)
@@ -120,7 +108,7 @@ def main():
                     cycle([dumpdir]),
                 ),
             ),
-            total=ua.num_reps,
+            total=len(reps),
             desc="Simulating",
         )
     )

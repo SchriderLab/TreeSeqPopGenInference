@@ -1,3 +1,4 @@
+import gzip
 import multiprocessing as mp
 import os
 import random
@@ -5,8 +6,10 @@ import random
 import demes
 import demesdraw
 import msprime
+import numpy as np
+import tskit
 
-from ..utils import utils
+from utils import utils, sim_utils
 
 # Parameter handling and utility
 def drawUnif(m, fold=0.5):
@@ -21,8 +24,10 @@ def rescale_Ne(theta, mu, numsites):
     """
     return theta / (4 * mu * numsites)
 
-def rescale_T(theta):
-    raise NotImplementedError
+
+def rescale_T(T, N_anc):
+    return T * 4 * N_anc
+
 
 def drawParams(
     thetaMean,
@@ -79,7 +84,8 @@ def create_param_sets(
         Returns:
             list[dict[list[list[str]]]]: Dictionary of labeled parameter lists,
                 each entry in each list is a set of parameters for a single replicate.
-            list[dict[list[str]]] : Dictionary of labeled msmove cmd lists.
+            list[dict[tuple[int, list[str]]]] : Dictionary of labeled msmove cmd lists.
+                Note that cmds are entered as a tuple in the form of (rep, cmd).
     """
     # Example:
     # ./msmove 34 1000 -t 68.29691232 -r 341.4845616 10000 -I 2 20 14 -n 1 19.022761 -n 2 0.054715 -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x 0.025751 0.172334 x -ej 0.664194 2 1 -en 0.664194 1 1
@@ -186,8 +192,7 @@ def create_param_sets(
             -ma x 0 0 x \
             -ej {splitTime} 2 1 \
             -en {splitTime} 1 1 \
-            -ev {migTime} 2 1 {migProb}
-            """,
+            -ev {migTime} 2 1 {migProb}""",
             )
         )
 
@@ -198,12 +203,45 @@ def create_param_sets(
 
 
 # Simulation
-def sim_rep(ms_cmd, N0):
-    """https://tskit.dev/tutorials/introgression.html"""
+def worker(args):
+    params, msdir, treedir, dumpdir = args
+    (rep, ms_cmd, N_anc, n_samples, r, L, seed) = params
 
-    demo_deme = demes.from_ms(ms_cmd, N0=N0, deme_names=["simulans", "sechelia"])
+    """https://tskit.dev/tutorials/introgression.html"""
+    demo_deme = demes.from_ms(ms_cmd[1], N0=N_anc, deme_names=["simulans", "sechelia"])
     demo = msprime.Demography(demo_deme)
-    ts = msprime.sim_ancestry(demography=demo)
+    ts = msprime.sim_ancestry(
+        demography=demo,
+        samples=n_samples,
+        recombination_rate=r,
+        sequence_length=L,
+        ploidy=2,
+        population_size=N_anc,
+        random_seed=seed,
+        model="hudson",
+    )
+
+    ts_nwk = []
+    for tree in ts.trees():
+        newick = tree.newick()
+        ts_nwk.append(f"[{int(tree.span)}] {newick}")
+
+    try:
+        with open(os.path.join(msdir, f"{rep}.notree.msOut"), "w+") as msfile:
+            # Why is write_ms written like this? Just let me compress with a bytestream
+            tskit.write_ms(ts, output=msfile)
+
+        sim_utils.inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
+
+        utils.compress_file(os.path.join(msdir, f"{rep}.msOut"), overwrite=True)
+
+        with gzip.open(os.path.join(treedir, f"{rep}.nwk.gz"), "w") as treefile:
+            treefile.write(bytes("\n".join(ts_nwk), "utf-8"))
+
+        ts.dump(os.path.join(dumpdir, f"{rep}.dump"))
+
+    except ValueError as e:
+        print(e)
 
 
 def main():
@@ -215,6 +253,8 @@ def main():
 
     # Make outdir if not present
     utils.make_dirs(msdir, treedir, dumpdir)
+
+    reps = utils.get_reps(ua)
 
     # Generate parameter and command sets
     """
@@ -251,28 +291,29 @@ def main():
         0.172334,
         0.664194,
     )
+    rho = thetaMean / 0.2
+    TMean_rescaled = rescale_T(TMean, 487835.088398)
+    Ne_rescaled = rescale_Ne(thetaMean, 3.500000e-09, numSites)
 
     paramsDict, cmdsDict = create_param_sets(
-        ua.um_reps,
+        len(reps),
         thetaMean,
         thetaOverRhoMean,
         nu1Mean,
         nu2Mean,
         m12Times2Mean,
         m21Times2Mean,
-        TMean,
+        TMean_rescaled,
         sampleSize1,
         sampleSize2,
         numSites,
     )
 
     # Log everything
-    for lab, cmd_list in cmdsDict:
-        utils.log_cmds(ua.out_dir, cmd_list, f"{lab}_cmds.txt")
-
-    for lab, params_list in paramsDict:
-        utils.log_params(
-            ua.out_dir,
+    for lab in cmdsDict:
+        sim_utils.log_cmds(ua.outdir, cmdsDict[lab], f"{lab}_cmds.txt")
+        sim_utils.log_params(
+            ua.outdir,
             [
                 "rep",
                 "theta",
@@ -286,11 +327,34 @@ def main():
                 "migTime",
                 "migProb",
             ],
-            params_list,
+            paramsDict[lab],
             f"{lab}_params.txt",
         )
 
     # Simulate
+    # TODO wrap in MP
+    # TODO fix r and L values
+    for scenario in paramsDict.keys():
+        print(scenario)
+        print(paramsDict[scenario])
+        print(cmdsDict[scenario])
+        for rep, cmd in zip(reps, cmdsDict[scenario]):
+            worker(
+                (
+                    (
+                        rep,
+                        cmd,
+                        Ne_rescaled,
+                        sampleSize1 + sampleSize2,
+                        np.power(10, np.random.uniform(-8, -6, 1)),
+                        1e6,
+                        sim_utils.get_seeds(1)[0],
+                    ),
+                    msdir,
+                    treedir,
+                    dumpdir,
+                )
+            )
 
 
 if __name__ == "__main__":
