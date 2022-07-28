@@ -60,6 +60,8 @@ def main():
     for ifile in ifiles:
         ifile = ifile.replace('.gz', '')
         
+        tag = ifile.split('/')[-1].split('_')[0]
+        
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, ifile.split('.')[0], int(args.L))
@@ -108,6 +110,7 @@ def main():
         
         os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
+        os.system('rm -rf {}*'.format(tag))
         
     # compress back
     logging.info('compressing back...')
