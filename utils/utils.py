@@ -89,11 +89,22 @@ def separate_output(ms_output):
     return "\n".join(trees), "\n".join(ms_out)
 
 
-def log_params(outdir, param_names, params_list):
-    with open(os.path.join(outdir, "sim_params.txt"), "w") as ofile:
+def log_params(outdir, param_names, params_list, outfile_name="sim_params.txt"):
+    with open(os.path.join(outdir, outfile_name), "w") as ofile:
         ofile.write(
             "\t".join(param_names) + "\n",
         )
         for p in params_list:
             ofile.write("\t".join([str(i) for i in p]))
             ofile.write("\n")
+
+    print(f"[Info] Params logged to: {os.path.join(outdir, outfile_name)}")
+
+
+def log_cmds(outdir, cmd_list, outfile_name="sim_cmds.txt"):
+    with open(os.path.join(outdir, outfile_name), "w") as ofile:
+        ofile.write("rep\tcmd\n")
+        for c in cmd_list:
+            ofile.write("\t".join([str(i) for i in c]))
+
+    print(f"[Info] Cmds logged to: {os.path.join(outdir, outfile_name)}")
