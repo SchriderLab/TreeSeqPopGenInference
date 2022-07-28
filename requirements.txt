@@ -4,3 +4,5 @@ matplotlib
 numpy
 tqdm
 black
+demes
+demesdraw

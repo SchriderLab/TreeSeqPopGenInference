@@ -1,16 +1,21 @@
 import multiprocessing as mp
 import os
 import random
-import subprocess
 
+import demes
+import demesdraw
 import msprime
-import demes, demesdraw
+
 from ..utils import utils
 
-
+# Parameter handling and utility
 def drawUnif(m, fold=0.5):
     x = m * fold
     return random.uniform(m - x, m + x)
+
+
+def rescale_Ne(theta, mu, numsites):
+    return theta / (4 * mu * numsites)
 
 
 def drawParams(
@@ -23,6 +28,13 @@ def drawParams(
     TMean,
     mig=False,
 ):
+    """
+    Draws parameter sets from a uniform distribution with range {<val>-(<val>*0.5); <val>+(<val>*0.5)}.
+
+    Returns:
+        List(float): Parameters for simulations.
+            If mig=True the final two will be migration time and probability, otherwise None.
+    """
     theta = drawUnif(thetaMean)
     thetaOverRho = drawUnif(thetaOverRhoMean)
     rho = theta / thetaOverRho
@@ -39,12 +51,147 @@ def drawParams(
         return theta, rho, nu1, nu2, T, m12, m21, None, None
 
 
-def writeTbsFile(params, outFileName):
-    with open(outFileName, "w") as outFile:
-        for paramVec in params:
-            outFile.write(" ".join([str(x) for x in paramVec]) + "\n")
+def create_param_sets(
+    num_reps,
+    thetaMean,
+    thetaOverRhoMean,
+    nu1Mean,
+    nu2Mean,
+    m12Times2Mean,
+    m21Times2Mean,
+    TMean,
+    sampleSize1,
+    sampleSize2,
+    numSites,
+):
+    """
+    Creates both parameter sets and commands for all replicates for:
+        - No migration
+        - 1 -> 2 migration
+        - 2 -> 1 migration.
+
+        Returns:
+            list[dict[list[list[str]]]]: Dictionary of labeled parameter lists,
+                each entry in each list is a set of parameters for a single replicate.
+            list[dict[list[str]]] : Dictionary of labeled msmove cmd lists.
+    """
+    # Example:
+    # ./msmove 34 1000 -t 68.29691232 -r 341.4845616 10000 -I 2 20 14 -n 1 19.022761 -n 2 0.054715 -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x 0.025751 0.172334 x -ej 0.664194 2 1 -en 0.664194 1 1
+
+    # Rescale Ne by theta/(numsites*4*mu*)
+
+    # Create parameter sets
+    noMigParams, mig12Params, mig21Params = [], [], []
+    noMigCmds, mig12Cmds, mig21Cmds = [], [], []
+    for rep in range(num_reps):
+        theta, rho, nu1, nu2, splitTime, m12, m21, _, _ = drawParams(
+            thetaMean,
+            thetaOverRhoMean,
+            nu1Mean,
+            nu2Mean,
+            m12Times2Mean,
+            m21Times2Mean,
+            TMean,
+            mig=False,
+        )
+
+        # paramVec = [theta, rho, nu1, nu2, m12, m21, splitTime, splitTime]
+        noMigCmds.append(
+            (
+                rep,
+                f"""msmove {sampleSize1 + sampleSize2} {num_reps} \
+            -t {theta} \
+            -r {rho} {numSites} \
+            -I 2 {sampleSize1} {sampleSize2} \
+            -n 1 {nu1} \
+            -n 2 {nu2} \
+            -eg 0 1 6.576808 \
+            -eg 0 2 -7.841388 \
+            -ma x 0 0 x \
+            -ej {splitTime} 2 1 \
+            -en {splitTime} 1 1
+        """,
+            )
+        )
+        noMigParams.append([rep, theta, rho, nu1, nu2, 0, 0, splitTime, splitTime])
+
+        # Mig 1 -> 2
+        theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
+            thetaMean,
+            thetaOverRhoMean,
+            nu1Mean,
+            nu2Mean,
+            m12Times2Mean,
+            m21Times2Mean,
+            TMean,
+            mig=True,
+        )
+
+        mig12Params.append(
+            [rep, theta, rho, nu1, nu2, 0, 0, splitTime, splitTime, migTime, migProb]
+        )
+
+        mig12Cmds.append(
+            (
+                rep,
+                f"""msmove {sampleSize1 + sampleSize2} {num_reps} \
+            -t {theta} \
+            -r {rho} {numSites} \
+            -I 2 {sampleSize1} {sampleSize2} \
+            -n 1 {nu1} \
+            -n 2 {nu2} \
+            -eg 0 1 6.576808 \
+            -eg 0 2 -7.841388 \
+            -ma x 0 0 x \
+            -ej {splitTime} 2 1 \
+            -en {splitTime} 1 1 \
+            -ev {migTime} 1 2 {migProb}
+            """,
+            )
+        )
+
+        # Mig 2 -> 1
+        theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
+            thetaMean,
+            thetaOverRhoMean,
+            nu1Mean,
+            nu2Mean,
+            m12Times2Mean,
+            m21Times2Mean,
+            TMean,
+            mig=True,
+        )
+
+        mig21Params.append(
+            [rep, theta, rho, nu1, nu2, 0, 0, splitTime, splitTime, migTime, migProb]
+        )
+
+        mig21Cmds.append(
+            (
+                rep,
+                f"""msmove {sampleSize1 + sampleSize2} {num_reps} \
+            -t {theta} \
+            -r {rho} {numSites} \
+            -I 2 {sampleSize1} {sampleSize2} \
+            -n 1 {nu1} \
+            -n 2 {nu2} \
+            -eg 0 1 6.576808 \
+            -eg 0 2 -7.841388 \
+            -ma x 0 0 x \
+            -ej {splitTime} 2 1 \
+            -en {splitTime} 1 1 \
+            -ev {migTime} 2 1 {migProb}
+            """,
+            )
+        )
+
+    return (
+        {"noMig": noMigParams, "mig12": mig12Params, "mig21": mig21Params},
+        {"noMig": noMigCmds, "mig12": mig12Cmds, "mig21": mig21Cmds},
+    )
 
 
+# Simulation
 def sim_rep(ms_cmd, N0):
     """https://tskit.dev/tutorials/introgression.html"""
 
@@ -63,6 +210,7 @@ def main():
     # Make outdir if not present
     utils.make_dirs(msdir, treedir, dumpdir)
 
+    # Generate parameter and command sets
     """
     dadi parameter estimates
     AIC: 10303.1237186
@@ -82,7 +230,6 @@ def main():
     numSites = 10000
     (
         thetaMean,
-        rhoMean,
         thetaOverRhoMean,
         nu1Mean,
         nu2Mean,
@@ -91,7 +238,6 @@ def main():
         TMean,
     ) = (
         68.29691232,
-        341.4845616,
         0.2,
         19.022761,
         0.054715,
@@ -100,123 +246,45 @@ def main():
         0.664194,
     )
 
-    # Example:
-    # ./msmove 34 1000 -t 68.29691232 -r 341.4845616 10000 -I 2 20 14 -n 1 19.022761 -n 2 0.054715 -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x 0.025751 0.172334 x -ej 0.664194 2 1 -en 0.664194 1 1
+    paramsDict, cmdsDict = create_param_sets(
+        ua.um_reps,
+        thetaMean,
+        thetaOverRhoMean,
+        nu1Mean,
+        nu2Mean,
+        m12Times2Mean,
+        m21Times2Mean,
+        TMean,
+        sampleSize1,
+        sampleSize2,
+        numSites,
+    )
 
-    noMigParams, mig12Params, mig21Params = [], [], []
-    for rep in range(ua.num_reps):
-        theta, rho, nu1, nu2, splitTime, m12, m21, _, _ = drawParams(
-            thetaMean,
-            thetaOverRhoMean,
-            nu1Mean,
-            nu2Mean,
-            m12Times2Mean,
-            m21Times2Mean,
-            TMean,
-            mig=False,
+    # Log everything
+    for lab, cmd_list in cmdsDict:
+        utils.log_cmds(ua.out_dir, cmd_list, f"{lab}_cmds.txt")
+
+    for lab, params_list in paramsDict:
+        utils.log_params(
+            ua.out_dir,
+            [
+                "rep",
+                "theta",
+                "rho",
+                "nu1",
+                "nu2",
+                "m12",
+                "m21",
+                "splitTime",
+                "splitTime",
+                "migTime",
+                "migProb",
+            ],
+            params_list,
+            f"{lab}_params.txt",
         )
 
-        # paramVec = [theta, rho, nu1, nu2, m12, m21, splitTime, splitTime]
-        paramVec = [theta, rho, nu1, nu2, 0, 0, splitTime, splitTime]
-
-        noMigTbsFileName = f"{ua.out_dir}/noMig.tbs"
-        noMigSimCmd = f"./msmove {sampleSize1} {sampleSize2} -t tbs -r tbs {numSites} -I 2 {sampleSize1} {sampleSize2} -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1"
-
-        noMigParams.append(paramVec)
-        print(noMigSimCmd)
-
-        writeTbsFile(noMigParams, noMigTbsFileName)
-        os.system(
-            'echo "%s > %s/noMig.msOut" | ./msmove -o /dev/null -e /dev/null'
-            % (noMigSimCmd, ua.out_dir)
-        )
-        ms_output = subprocess.check_output(cmd.split()).decode("utf-8")
-
-        # Mig 1 -> 2
-        theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
-            thetaMean,
-            thetaOverRhoMean,
-            nu1Mean,
-            nu2Mean,
-            m12Times2Mean,
-            m21Times2Mean,
-            TMean,
-            mig=True,
-        )
-        paramVec = [
-            theta,
-            rho,
-            nu1,
-            nu2,
-            0,
-            0,
-            splitTime,
-            splitTime,
-            migTime,
-            migProb,
-        ]
-        mig12Params.append(paramVec)
-        mig12TbsFileName = "%s/mig12.tbs" % (ua.out_dir)
-        mig12SimCmd = (
-            "./msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s"
-            % (
-                sampleSize1 + sampleSize2,
-                ua.num_reps,
-                numSites,
-                sampleSize1,
-                sampleSize2,
-                mig12TbsFileName,
-            )
-        )
-
-        writeTbsFile(mig12Params, mig12TbsFileName)
-        os.system(
-            'echo "%s > %s/mig12.msOut" |./msmove -o /dev/null -e /dev/null'
-            % (mig12SimCmd, ua.out_dir)
-        )
-
-        # Mig 2 -> 1
-        theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
-            thetaMean,
-            thetaOverRhoMean,
-            nu1Mean,
-            nu2Mean,
-            m12Times2Mean,
-            m21Times2Mean,
-            TMean,
-            mig=True,
-        )
-        paramVec = [
-            theta,
-            rho,
-            nu1,
-            nu2,
-            0,
-            0,
-            splitTime,
-            splitTime,
-            migTime,
-            migProb,
-        ]
-        mig21Params.append(paramVec)
-
-        mig21TbsFileName = "%s/mig21.tbs" % (ua.out_dir)
-        mig21SimCmd = (
-            "./msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 2 1 tbs < %s"
-            % (
-                sampleSize1 + sampleSize2,
-                ua.num_reps,
-                numSites,
-                sampleSize1,
-                sampleSize2,
-                mig21TbsFileName,
-            )
-        )
-        writeTbsFile(mig21Params, mig21TbsFileName)
-        os.system(
-            'echo "%s > %s/mig21.msOut" | ./msmove -o /dev/null -e /dev/null'
-            % (mig21SimCmd, ua.out_dir)
-        )
+    # Simulate
 
 
 if __name__ == "__main__":
