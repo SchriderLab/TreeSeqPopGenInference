@@ -9,3 +9,5 @@ pop_gen_cnn
 recomb/sims/cmds.txt
 *.tbs
 msmove
+*.vscode
+*.pyc
