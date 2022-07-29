@@ -11,3 +11,4 @@ recomb/sims/cmds.txt
 msmove
 *.vscode
 *.pyc
+*test*
