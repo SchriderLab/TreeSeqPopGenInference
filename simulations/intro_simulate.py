@@ -85,17 +85,11 @@ def create_param_sets(
         Returns:
             list[dict[list[list[str]]]]: Dictionary of labeled parameter lists,
                 each entry in each list is a set of parameters for a single replicate.
-            list[dict[tuple[int, list[str]]]] : Dictionary of labeled msmove cmd lists.
-                Note that cmds are entered as a tuple in the form of (rep, cmd).
     """
-    # Example:
-    # ./msmove 34 1000 -t 68.29691232 -r 341.4845616 10000 -I 2 20 14 -n 1 19.022761 -n 2 0.054715 -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x 0.025751 0.172334 x -ej 0.664194 2 1 -en 0.664194 1 1
-
     # Rescale Ne by theta/(numsites*4*mu*)
 
     # Create parameter sets
     noMigParams, mig12Params, mig21Params = [], [], []
-    noMigCmds, mig12Cmds, mig21Cmds = [], [], []
     for rep in range(num_reps):
         theta, morgans_pbp, nu1, nu2, splitTime, m12, m21, _, _ = drawParams(
             thetaMean,
@@ -109,24 +103,6 @@ def create_param_sets(
         )
 
         # paramVec = [theta, rho, nu1, nu2, m12, m21, splitTime, splitTime]
-        noMigCmds.append(
-            (
-                rep,
-                (
-                    f"msmove {sampleSize1 + sampleSize2} {num_reps} "
-                    f"-t {theta} "
-                    f"-r {morgans_pbp} {numSites} "
-                    f"-I 2 {sampleSize1} {sampleSize2} "
-                    f"-n 1 {nu1} "
-                    f"-n 2 {nu2} "
-                    f"-eg 0 1 6.576808 "
-                    f"-eg 0 2 -7.841388 "
-                    f"-ma x 0 0 x "
-                    f"-ej {splitTime} 2 1 "
-                    f"-en {splitTime} 1 1 "
-                ),
-            )
-        )
         noMigParams.append(
             [rep, theta, morgans_pbp, nu1, nu2, 0, 0, splitTime, splitTime]
         )
@@ -159,26 +135,6 @@ def create_param_sets(
             ]
         )
 
-        mig12Cmds.append(
-            (
-                rep,
-                (
-                    f"msmove {sampleSize1 + sampleSize2} {num_reps} "
-                    f"-t {theta} "
-                    f"-r {morgans_pbp} {numSites} "
-                    f"-I 2 {sampleSize1} {sampleSize2} "
-                    f"-n 1 {nu1} "
-                    f"-n 2 {nu2} "
-                    f"-eg 0 1 6.576808 "
-                    f"-eg 0 2 -7.841388 "
-                    f"-ma x 0 0 x "
-                    f"-ej {splitTime} 2 1 "
-                    f"-en {splitTime} 1 1 "
-                    f"-ev {migTime} 1 2 {migProb}"
-                ),
-            )
-        )
-
         # Mig 2 -> 1
         theta, rho, nu1, nu2, splitTime, m12, m21, migTime, migProb = drawParams(
             thetaMean,
@@ -207,47 +163,104 @@ def create_param_sets(
             ]
         )
 
-        mig21Cmds.append(
-            (
-                rep,
-                (
-                    f"msmove {sampleSize1 + sampleSize2} {num_reps} "
-                    f"-t {theta} "
-                    f"-r {morgans_pbp} {numSites} "
-                    f"-I 2 {sampleSize1} {sampleSize2} "
-                    f"-n 1 {nu1} "
-                    f"-n 2 {nu2} "
-                    f"-eg 0 1 6.576808 "
-                    f"-eg 0 2 -7.841388 "
-                    f"-ma x 0 0 x "
-                    f"-ej {splitTime} 2 1 "
-                    f"-en {splitTime} 1 1 "
-                    f"-ev {migTime} 2 1 {migProb}"
-                ),
-            )
-        )
-
-    return (
-        {"noMig": noMigParams, "mig12": mig12Params, "mig21": mig21Params},
-        {"noMig": noMigCmds, "mig12": mig12Cmds, "mig21": mig21Cmds},
-    )
+    return {"noMig": noMigParams, "mig12": mig12Params, "mig21": mig21Params}
 
 
 # Simulation
 def worker(args):
     params, msdir, treedir, dumpdir = args
-    (rep, ms_cmd, N_anc, n_samples, morgans_pbp, L, seed) = params
+    (
+        rep,
+        N_anc,
+        nu1,
+        nu2,
+        splitTime,
+        migProb,
+        migTime,
+        n_samples,
+        morgans_pbp,
+        L,
+        seed,
+        mig,
+    ) = params
 
+    """
+    msmove {sampleSize1 + sampleSize2} {num_reps} 
+        -t {theta} 
+        -r {morgans_pbp} {numSites} 
+        -I 2 {sampleSize1} {sampleSize2} 
+        -n 1 {nu1} 
+        -n 2 {nu2} 
+        -eg 0 1 6.576808 
+        -eg 0 2 -7.841388 
+        -ma x 0 0 x 
+        -ej {splitTime} 2 1 
+        -en {splitTime} 1 1 
+    """
+
+
+def create_demo(
+    nu1=9279970.1758,
+    nu2=26691.779717,
+    nu1_0=117605.344694,
+    nu2_0=4878347.23386,
+    N_anc=487835.088398,
+    splitTime=86404.6219829,
+    mig=None,
+    migTime=None,
+    migProb=None,
+    n_samples=32,
+    L=1e6,
+    r=3e-9,
+    seed=42,
+):
     """https://tskit.dev/tutorials/introgression.html"""
-    demo_deme = demes.from_ms(ms_cmd[1], N0=N_anc, deme_names=["simulans", "sechelia"])
-    print("[Debug]", demo_deme)
-    demo = msprime.Demography(demo_deme)
+    demography = msprime.Demography()
+    demography.add_population(
+        name="ancestral",
+        initial_size=N_anc,
+    )
+    demography.add_population(
+        name="simulans",
+        initial_size=nu1,
+        growth_rate=6.576808,
+    )
+    demography.add_population(
+        name="sechelia",
+        initial_size=nu2,
+        growth_rate=-7.841388,
+    )
+    demography.add_population_split(
+        splitTime,
+        derived=["simulans", "sechelia"],
+        ancestral="ancestral",
+    )
+    return demography
+
+    if mig == "mig12":
+        demography.add_mass_migration(
+            migTime,
+            source="simulans",
+            dest="sechelia",
+            proportion=migProb,
+        )
+
+    elif mig == "mig21":
+        demography.add_mass_migration(
+            migTime,
+            source="sechelia",
+            dest="simulans",
+            proportion=migProb,
+        )
+    else:
+        pass
+
     ts = msprime.sim_ancestry(
-        demography=demo,
+        demography=demography,
         samples=n_samples,
-        recombination_rate=morgans_pbp,
+        recombination_rate=r,
         sequence_length=L,
-        ploidy=2,
+        ploidy=1,
         population_size=N_anc,
         random_seed=seed,
         model="hudson",
@@ -306,7 +319,7 @@ def main():
     sampleSize1 = 20
     sampleSize2 = 14
     numSites = 10000
-    (thetaMean, morgans_pbp, nu1Mean, nu2Mean, m12Times2Mean, m21Times2Mean, TMean,) = (
+    (thetaMean, morgans_pbp, nu1Mean, nu2Mean, m12Times2Mean, m21Times2Mean, TMean) = (
         68.29691232,
         0.2,
         19.022761,
@@ -320,7 +333,7 @@ def main():
     TMean_rescaled = rescale_T(TMean, 487835.088398)
     Ne_rescaled = rescale_Ne(thetaMean, 3.500000e-09, numSites)
 
-    paramsDict, cmdsDict = create_param_sets(
+    paramsDict = create_param_sets(
         len(reps),
         thetaMean,
         morgans_pbp,
@@ -335,8 +348,7 @@ def main():
     )
 
     # Log everything
-    for lab in cmdsDict:
-        sim_utils.log_cmds(ua.outdir, cmdsDict[lab], f"{lab}_cmds.txt")
+    for lab in paramsDict:
         sim_utils.log_params(
             ua.outdir,
             [
@@ -362,8 +374,7 @@ def main():
     for scenario in paramsDict.keys():
         print("[Debug]", scenario)
         print("[Debug]", pprint(paramsDict[scenario]))
-        print("[Debug]", pprint(cmdsDict[scenario]))
-        for rep, cmd in zip(reps, cmdsDict[scenario]):
+        for rep, cmd in zip(reps, paramsDict[scenario]):
             worker(
                 (
                     (
