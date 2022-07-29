@@ -21,7 +21,7 @@ def sim_ts(Ne, mu, r, L, seed, n_chrom):
         samples=n_chrom,
         recombination_rate=r,
         sequence_length=L,
-        ploidy=2,
+        ploidy=1,
         population_size=Ne,
         random_seed=seed,
         model="hudson",
