@@ -26,7 +26,7 @@ def sim_ts(Ne, mu, r, L, seed, n_chrom):
         random_seed=seed,
         model="hudson",
     )
-    mut_ts = msprime.sim_mutations(ts, rate=mu)
+    mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
 
     return mut_ts
 
@@ -91,28 +91,34 @@ def main():
     ]
 
     # Write cmds to file
-    print(f"[Info] Logging parameters to {os.path.join(ua.outdir, 'params.txt')}\n")
+    print(f"[Info] Logging parameters to {os.path.join(ua.outdir, 'params.txt')}")
     param_names = ["rep", "Ne", "L", "bp", "mu", "r", "seed", "n_chrom"]
     sim_utils.log_params(ua.outdir, param_names=param_names, params_list=params)
 
     # Simulate
-    pool = mp.Pool(ua.threads)
-    list(
-        tqdm(
-            pool.imap(
-                worker,
-                zip(
-                    params,
-                    cycle([msdir]),
-                    cycle([treedir]),
-                    cycle([dumpdir]),
+    serial = True
+    if serial:
+        for p in tqdm(params, total=len(reps), desc="Simulating"):
+            worker((p, msdir, treedir, dumpdir))
+    else:
+        pool = mp.Pool(ua.threads)
+        list(
+            tqdm(
+                pool.imap(
+                    worker,
+                    zip(
+                        params,
+                        cycle([msdir]),
+                        cycle([treedir]),
+                        cycle([dumpdir]),
+                    ),
                 ),
-            ),
-            total=len(reps),
-            desc="Simulating",
+                total=len(reps),
+                desc="Simulating",
+                chunksize=5,
+            )
         )
-    )
-    pool.close()
+        pool.close()
 
 
 if __name__ == "__main__":
