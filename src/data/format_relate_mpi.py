@@ -348,7 +348,10 @@ def main():
                     n_done += 1
                     
             for key in ofile.keys():
-                count[key] = max(list(map(int, list(ifile[key].keys())))) + 1
+                s = list(ifile[key].keys())
+                s = [u for u in s if u not in ['x_0', 'A']]
+                
+                count[key] = max(list(map(int, s))) + 1
                 
                     
         comm.Barrier()
