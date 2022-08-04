@@ -56,6 +56,8 @@ def main():
     if comm.rank == 0:
         ofile = h5py.File(args.ofile, 'w')
         ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
+        
+        count = dict()
     
     comm.Barrier()
     
@@ -63,6 +65,11 @@ def main():
     ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
     
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
+    if comm.rank == 0:
+        tags_ = list(set(tags))
+        
+        count = dict(zip(tags_, list(np.zeros(len(tags_)))))
+    
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
     for ii in range(len(ifiles)):
@@ -290,7 +297,7 @@ def main():
                 
                 A = np.array(As)
                 
-                comm.send([int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1, A, tag, val], dest = 0)
+                comm.send([ix, int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1, A, tag, val], dest = 0)
                 
             comm.send(["done"], dest = 0)
     
@@ -308,27 +315,41 @@ def main():
                 if len(_) == 7:
                     ix, ij, X, edges, info_vec, tag, val = _
                     
+                    ix = count[tag] + ix
+                    
                     if not val:
+                        ix = count[tag] + ix
+                        
                         ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
                         ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
                         ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
                     else:
-                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
-                        ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                        ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
+                        ix = count[tag] + ix - N
+                        
+                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
+                        ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
+                        ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
                 elif len(_) == 4:
-                    ix, A, tag, val = _
+                    ix, ii, A, tag, val = _
                     
                     if not val:
-                        ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
+                        ix = count[tag] + ix
+                        
+                        ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ii].astype(np.uint8), compression = 'lzf')
                         ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile.flush()
                     else:
-                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
+                        ix = count[tag] + ix - N
+                        
+                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ii].astype(np.uint8), compression = 'lzf')
                         ofile_val.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile_val.flush()
                 else:
                     n_done += 1
+                    
+            for key in ofile.keys():
+                count[key] = max(list(map(int, list(ifile[key].keys())))) + 1
+                
                     
         comm.Barrier()
                 
