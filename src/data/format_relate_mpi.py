@@ -55,7 +55,7 @@ def main():
     
     if comm.rank == 0:
         ofile = h5py.File(args.ofile, 'w')
-        ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
+        ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     comm.Barrier()
     
@@ -290,7 +290,7 @@ def main():
                 
                 A = np.array(As)
                 
-                comm.send([ix, A, tag, val], dest = 0)
+                comm.send([int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1, A, tag, val], dest = 0)
                 
             comm.send(["done"], dest = 0)
     
@@ -306,14 +306,14 @@ def main():
                 
                 
                 if len(_) == 7:
-                    ix, ij, x, edges, info_vec, tag, val = _
+                    ix, ij, X, edges, info_vec, tag, val = _
                     
                     if not val:
-                        ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = x, compression = 'lzf')
+                        ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
                         ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
                         ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
                     else:
-                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = x, compression = 'lzf')
+                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
                         ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
                         ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
                 elif len(_) == 4:
