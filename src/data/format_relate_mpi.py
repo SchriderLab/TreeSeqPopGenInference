@@ -90,6 +90,8 @@ def main():
             logging.info('1: reading data, {}...'.format(ifile))
             x, y, p = load_data(ifile, None)
             del y
+            
+            logging.info('1: finished read...')
         else:
             x = None
             p = None
@@ -102,6 +104,7 @@ def main():
         
         comm.Barrier()
         
+        logging.info('{}: here!'.format(comm.rank))
         if comm.rank != 0:
             if args.n_samples == "None":
                 N = len(x)
