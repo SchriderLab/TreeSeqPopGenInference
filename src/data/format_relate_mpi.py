@@ -319,7 +319,7 @@ def main():
                 elif len(_) == 4:
                     ix, A, tag, val = _
                     
-                    if ix < N:
+                    if not val:
                         ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
                         ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile.flush()
