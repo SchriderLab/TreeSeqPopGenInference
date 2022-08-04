@@ -59,7 +59,7 @@ def main():
     
     comm.Barrier()
     if comm.rank != 0:
-        ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
+        ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
         
         tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
         pop_sizes = list(map(int, args.pop_sizes.split(',')))
@@ -70,12 +70,14 @@ def main():
             tag = tags[ii]
             ifile = ifiles[ii]
             
-            anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and tag in u)])
+            idir = os.path.join(args.idir, ifile.split('/')[-2])
+            
+            anc_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'anc' and tag in u)])
             
             # for now the mutations are un-used...
             # this would have to be formatted as an edge feature would could be done really easily
             # I think we don't read these cause theyre reduntant actually?
-            mut_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'mut' and tag in u)])
+            mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
             
             indices_f = list(range(len(anc_files)))
             random.shuffle(indices_f)
