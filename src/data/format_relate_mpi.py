@@ -94,8 +94,12 @@ def main():
                 x = None
                 p = None
                 
+            comm.Barrier()
+            
             x = comm.gather(x, root = 1)
             p = comm.gather(x, root = 1)
+            
+            comm.Barrier()
             
             if args.n_samples == "None":
                 N = len(x)
