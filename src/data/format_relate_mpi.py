@@ -58,13 +58,12 @@ def main():
         ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     comm.Barrier()
+    
     if comm.rank != 0:
         ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
         
         tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
         pop_sizes = list(map(int, args.pop_sizes.split(',')))
-        
-        comm.Barrier()
         
         for ii in range(len(ifiles)):
             tag = tags[ii]
@@ -87,8 +86,16 @@ def main():
             
             # load the genotype matrices that correspond to the trees
             logging.info('reading data, {}...'.format(ifile))
-            x, y, p = load_data(ifile, None)
-            del y
+            
+            if comm.rank == 1:
+                x, y, p = load_data(ifile, None)
+                del y
+            else:
+                x = None
+                p = None
+                
+            x = comm.gather(x, root = 1)
+            p = comm.gather(x, root = 1)
             
             if args.n_samples == "None":
                 N = len(x)
@@ -102,8 +109,6 @@ def main():
             snp_widths = []
             
             times = []
-            
-            comm.Barrier()
             
             logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
             for ix in range(comm.rank - 1, N + N_val, comm.size - 1):
@@ -305,9 +310,7 @@ def main():
                 A = np.array(As)
                 
                 comm.send([ix, Xg, A, tag, val], dest = 0)
-        
-        comm.Barrier()
-        
+                
         comm.send(["done"], dest = 0)
     
     else:
