@@ -324,8 +324,8 @@ def main():
                         ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile.flush()
                     else:
-                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
-                        ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
+                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
+                        ofile_val.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile_val.flush()
                 else:
                     n_done += 1
