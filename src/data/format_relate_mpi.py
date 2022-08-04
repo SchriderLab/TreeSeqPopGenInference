@@ -59,48 +59,50 @@ def main():
     
     comm.Barrier()
     
-    if comm.rank != 0:
-        ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
+    
+    ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
+    
+    tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
+    pop_sizes = list(map(int, args.pop_sizes.split(',')))
+    
+    for ii in range(len(ifiles)):
+        tag = tags[ii]
+        ifile = ifiles[ii]
         
-        tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
-        pop_sizes = list(map(int, args.pop_sizes.split(',')))
+        idir = os.path.join(args.idir, ifile.split('/')[-2])
         
-        for ii in range(len(ifiles)):
-            tag = tags[ii]
-            ifile = ifiles[ii]
-            
-            idir = os.path.join(args.idir, ifile.split('/')[-2])
-            
-            anc_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'anc' and tag in u)])
-            
-            # for now the mutations are un-used...
-            # this would have to be formatted as an edge feature would could be done really easily
-            # I think we don't read these cause theyre reduntant actually?
-            mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
-            
-            indices_f = list(range(len(anc_files)))
-            random.shuffle(indices_f)
-            
-            anc_files = [anc_files[u] for u in indices_f]
-            mut_files = [mut_files[u] for u in indices_f]
-            
+        anc_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'anc' and tag in u)])
+        
+        # for now the mutations are un-used...
+        # this would have to be formatted as an edge feature would could be done really easily
+        # I think we don't read these cause theyre reduntant actually?
+        mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
+        
+        indices_f = list(range(len(anc_files)))
+        random.shuffle(indices_f)
+        
+        anc_files = [anc_files[u] for u in indices_f]
+        mut_files = [mut_files[u] for u in indices_f]
+        
+        
+        if comm.rank == 1:
             # load the genotype matrices that correspond to the trees
-            logging.info('reading data, {}...'.format(ifile))
-            
-            if comm.rank == 1:
-                x, y, p = load_data(ifile, None)
-                del y
-            else:
-                x = None
-                p = None
+            logging.info('1: reading data, {}...'.format(ifile))
+            x, y, p = load_data(ifile, None)
+            del y
+        else:
+            x = None
+            p = None
                 
-            comm.Barrier()
-            
+        comm.Barrier()
+        
+        if comm.rank != 0:
             x = comm.gather(x, root = 1)
             p = comm.gather(x, root = 1)
-            
-            comm.Barrier()
-            
+        
+        comm.Barrier()
+        
+        if comm.rank != 0:
             if args.n_samples == "None":
                 N = len(x)
             else:
@@ -113,8 +115,8 @@ def main():
             snp_widths = []
             
             times = []
-            
-            logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
+            if comm.rank == 1:
+                logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
             for ix in range(comm.rank - 1, N + N_val, comm.size - 1):
                 #if (ix + 1) % 100 == 0:
                 #    print(ix)
@@ -314,43 +316,44 @@ def main():
                 A = np.array(As)
                 
                 comm.send([ix, Xg, A, tag, val], dest = 0)
-                
-        comm.send(["done"], dest = 0)
+            
+            comm.send(["done"], dest = 0)
+            
     
-    else:
-        n_done = 0
-        
-        while n_done != comm.size - 1:
-            _ = comm.recv(source = MPI.ANY_SOURCE)
+        else:
+            n_done = 0
             
-            
-            if len(_) == 7:
-                ix, ij, x, edges, info_vec, tag, val = _
+            while n_done != comm.size - 1:
+                _ = comm.recv(source = MPI.ANY_SOURCE)
                 
-                if not val:
-                    ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
-                    ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                    ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
+                
+                if len(_) == 7:
+                    ix, ij, x, edges, info_vec, tag, val = _
+                    
+                    if not val:
+                        ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
+                        ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
+                        ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
+                    else:
+                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
+                        ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
+                        ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
+                elif len(_) == 5:
+                    ix, Xg, A, tag, val = _
+                    
+                    if ix < N:
+                        ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
+                        ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
+                        ofile.flush()
+                    else:
+                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = Xg.astype(np.uint8), compression = 'lzf')
+                        ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
+                        ofile_val.flush()
                 else:
-                    ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
-                    ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                    ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
-            elif len(_) == 5:
-                ix, Xg, A, tag, val = _
-                
-                if ix < N:
-                    ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                    ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
-                    ofile.flush()
-                else:
-                    ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                    ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
-                    ofile_val.flush()
-            else:
-                n_done += 1
+                    n_done += 1
                 
             
-                
+    if comm.rank == 0:        
         ofile.close()
         ofile_val.close()
     
