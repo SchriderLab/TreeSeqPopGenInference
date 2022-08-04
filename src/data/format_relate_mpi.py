@@ -59,55 +59,37 @@ def main():
     
     comm.Barrier()
     
-    
-    ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
-    
-    tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
-    pop_sizes = list(map(int, args.pop_sizes.split(',')))
-    
-    for ii in range(len(ifiles)):
-        tag = tags[ii]
-        ifile = ifiles[ii]
+    if comm.rank != 0:
+        ifiles = glob.glob(os.path.join(args.ms_dir, '*/*.msOut.gz'))
         
-        idir = os.path.join(args.idir, ifile.split('/')[-2])
+        tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
+        pop_sizes = list(map(int, args.pop_sizes.split(',')))
         
-        anc_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'anc' and tag in u)])
-        
-        # for now the mutations are un-used...
-        # this would have to be formatted as an edge feature would could be done really easily
-        # I think we don't read these cause theyre reduntant actually?
-        mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
-        
-        indices_f = list(range(len(anc_files)))
-        random.shuffle(indices_f)
-        
-        anc_files = [anc_files[u] for u in indices_f]
-        mut_files = [mut_files[u] for u in indices_f]
-        
-        
-        if comm.rank == 1:
-            # load the genotype matrices that correspond to the trees
-            logging.info('1: reading data, {}...'.format(ifile))
-            x, y, p = load_data(ifile, None)
-            del y
+        for ii in range(len(ifiles)):
+            tag = tags[ii]
+            ifile = ifiles[ii]
             
-            logging.info('1: finished read...')
-        else:
-            x = None
-            p = None
-                
-        comm.Barrier()
-        
-        if comm.rank != 0:
-            x = comm.gather(x, root = 1)
-            p = comm.gather(x, root = 1)
-        
-        comm.Barrier()
-        
-        logging.info('{}: here!'.format(comm.rank))
-        if comm.rank != 0:
+            idir = os.path.join(args.idir, ifile.split('/')[-2])
+            
+            anc_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'anc' and tag in u)])
+            
+            # for now the mutations are un-used...
+            # this would have to be formatted as an edge feature would could be done really easily
+            # I think we don't read these cause theyre reduntant actually?
+            mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
+            
+            indices_f = list(range(len(anc_files)))
+            random.shuffle(indices_f)
+            
+            anc_files = [anc_files[u] for u in indices_f]
+            mut_files = [mut_files[u] for u in indices_f]
+            
+            # load the genotype matrices that correspond to the trees
+            logging.info('reading data, {}...'.format(ifile))
+            
+
             if args.n_samples == "None":
-                N = len(x)
+                N = len(anc_files)
             else:
                 N = int(args.n_samples)
                 
@@ -118,8 +100,8 @@ def main():
             snp_widths = []
             
             times = []
-            if comm.rank == 1:
-                logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
+            
+            logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
             for ix in range(comm.rank - 1, N + N_val, comm.size - 1):
                 #if (ix + 1) % 100 == 0:
                 #    print(ix)
@@ -132,9 +114,6 @@ def main():
                 anc_file = open(anc_files[ix], 'r')
                 
                 lines = anc_file.readlines()[2:]
-                
-                l = x[ix].shape[1]
-                snp_widths.append(l)
                 
                 As = []
                 for ij in range(len(lines)):
@@ -158,12 +137,8 @@ def main():
                         next_line = next_line.split(' ')[:-1]
                     
                         end_snp = int(next_line[0])
-                    else:
-                        end_snp = x[ix].shape[1]
-        
-                    start_snp = int(line[0])
-                    l_ = end_snp - start_snp
-                    
+
+    
                     sk_nodes = dict()
                     for j in range(2, len(line), 5):
                         nodes.append((j - 1) // 5)
@@ -299,11 +274,10 @@ def main():
                     skew_branch_length = skew(lengths)
                     max_branch_length = np.max(lengths)
                     min_branch_length = np.min(lengths)
-                    position = ((start_snp + end_snp) / 2.) / l
-                    w = l_ / l
+        
                     
                     info_vec = np.array([t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length, min_branch_length,
-                                         position, w, l])
+                                         ])
                     
                     # change the edge indexes to topologically (levelorder) ordered
                     # as we ordered the node features
@@ -313,50 +287,50 @@ def main():
                     edges = edges + [(v,u) for u,v in edges]
                     edges = np.array(edges).T
                     
-                    comm.send([ix, ij, x, edges, info_vec, tag, val], dest = 0)
+                    comm.send([ix, ij, X, edges, info_vec, tag, val], dest = 0)
                 
-                Xg = x[indices_f[ix]]
                 A = np.array(As)
                 
-                comm.send([ix, Xg, A, tag, val], dest = 0)
-            
-            comm.send(["done"], dest = 0)
-            
+                comm.send([ix, A, tag, val], dest = 0)
+                
+        comm.send(["done"], dest = 0)
     
-        else:
-            n_done = 0
+    else:
+        n_done = 0
+        
+        x, y, p = load_data(ifile, None)
+        
+        while n_done != comm.size - 1:
+            _ = comm.recv(source = MPI.ANY_SOURCE)
             
-            while n_done != comm.size - 1:
-                _ = comm.recv(source = MPI.ANY_SOURCE)
+            
+            if len(_) == 7:
+                ix, ij, x, edges, info_vec, tag, val = _
                 
-                
-                if len(_) == 7:
-                    ix, ij, x, edges, info_vec, tag, val = _
-                    
-                    if not val:
-                        ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
-                        ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                        ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
-                    else:
-                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
-                        ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                        ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
-                elif len(_) == 5:
-                    ix, Xg, A, tag, val = _
-                    
-                    if ix < N:
-                        ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                        ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
-                        ofile.flush()
-                    else:
-                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                        ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
-                        ofile_val.flush()
+                if not val:
+                    ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
+                    ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
+                    ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
                 else:
-                    n_done += 1
+                    ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
+                    ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
+                    ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
+            elif len(_) == 4:
+                ix, A, tag, val = _
+                
+                if ix < N:
+                    ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
+                    ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
+                    ofile.flush()
+                else:
+                    ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = x[ix].astype(np.uint8), compression = 'lzf')
+                    ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
+                    ofile_val.flush()
+            else:
+                n_done += 1
                 
             
-    if comm.rank == 0:        
+                
         ofile.close()
         ofile_val.close()
     
