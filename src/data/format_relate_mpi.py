@@ -309,11 +309,11 @@ def main():
                     ix, ij, x, edges, info_vec, tag, val = _
                     
                     if not val:
-                        ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
+                        ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = x, compression = 'lzf')
                         ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
                         ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
                     else:
-                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
+                        ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = x, compression = 'lzf')
                         ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
                         ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
                 elif len(_) == 4:
@@ -329,6 +329,8 @@ def main():
                         ofile_val.flush()
                 else:
                     n_done += 1
+                    
+        comm.Barrier()
                 
             
     if comm.rank == 0:        
