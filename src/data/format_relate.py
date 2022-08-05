@@ -75,7 +75,7 @@ def main():
         del y
         
         if args.n_samples == "None":
-            N = len(x)
+            N = len(anc_files)
         else:
             N = int(args.n_samples)
             
