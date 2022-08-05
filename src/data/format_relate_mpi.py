@@ -79,12 +79,6 @@ def main():
         idir = os.path.join(args.idir, ifile.split('/')[-2])
         
         anc_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'anc' and tag in u)])
-        
-        # for now the mutations are un-used...
-        # this would have to be formatted as an edge feature would could be done really easily
-        # I think we don't read these cause theyre reduntant actually?
-        mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
-        
         if comm.rank == 0:
             indices_f = list(range(len(anc_files)))
             random.shuffle(indices_f)
@@ -98,9 +92,6 @@ def main():
         comm.Barrier()
         
         anc_files = [anc_files[u] for u in indices_f]
-        mut_files = [mut_files[u] for u in indices_f]
-        
-        
 
         if args.n_samples == "None":
             N = len(anc_files)
@@ -315,13 +306,9 @@ def main():
         else:
             n_done = 0
    
-            # load the genotype matrices that correspond to the trees
-            logging.info('0: reading data, {}...'.format(ifile))
-            x, y, p = load_data(ifile, None)
    
             while n_done != comm.size - 1:
                 _ = comm.recv(source = MPI.ANY_SOURCE)
-                
                 
                 if len(_) == 7:
                     ix, ij, X, edges, info_vec, tag, val = _
@@ -343,15 +330,15 @@ def main():
                     
                     if not val:
                         ix = count[tag] + ix
-                        
-                        ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ii].astype(np.uint8), compression = 'lzf')
-                        ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
+
+                        if A.shape[0] > 0:
+                            ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile.flush()
                     else:
                         ix = count[tag] + ix - N
-                        
-                        ofile_val.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = x[ii].astype(np.uint8), compression = 'lzf')
-                        ofile_val.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
+
+                        if A.shape[0] > 0:
+                            ofile_val.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
                         ofile_val.flush()
                 else:
                     n_done += 1
