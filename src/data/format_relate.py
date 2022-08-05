@@ -69,10 +69,14 @@ def main():
         
         anc_files = [anc_files[u] for u in indices_f]
         
-        # load the genotype matrices that correspond to the trees
-        logging.info('reading data, {}...'.format(ifile))
-        x, y, p = load_data(ifile, None)
-        del y
+        try:
+            # load the genotype matrices that correspond to the trees
+            logging.info('reading data, {}...'.format(ifile))
+            x, y, p = load_data(ifile, None)
+            del y
+        except:
+            logging.info('couldnt read it...moving on...')
+            continue
         
         if args.n_samples == "None":
             N = len(anc_files)
@@ -102,6 +106,10 @@ def main():
             
             l = x[ix].shape[1]
             snp_widths.append(l)
+            
+            Xs = []
+            Edges = []
+            infos = []
             
             As = []
             for ij in range(len(lines)):
@@ -290,14 +298,15 @@ def main():
                 edges = edges + [(v,u) for u,v in edges]
                 edges = np.array(edges).T
                 
+            if len(Xs) > 0:
                 if ix < N:
-                    ofile.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
-                    ofile.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                    ofile.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
+                    ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
+                    ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
+                    ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
                 else:
-                    ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix - N, ij, tag), data = X, compression = 'lzf')
-                    ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix - N, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
-                    ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix - N, ij, tag), data = info_vec, compression = 'lzf')
+                    ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
+                    ofile_val.create_dataset('{1}/{0}/edge_index'.format(ix - N, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
+                    ofile_val.create_dataset('{1}/{0}/info'.format(ix - N, tag), data = np.array(infos), compression = 'lzf')
             
             Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
             A = np.array(As)
