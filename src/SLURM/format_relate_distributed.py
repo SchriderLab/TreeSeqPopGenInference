@@ -40,7 +40,7 @@ def main():
     ms_dirs = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u])
     
     
-    for ix in range(len(idirs)):
+    for ix in range(1):
         cmd_ = cmd.format(idirs[ix], ms_dirs[ix], os.path.join(args.odir, '{0:04d}.hdf5'.format(ix)))
         print(cmd_)
         os.system(cmd_)

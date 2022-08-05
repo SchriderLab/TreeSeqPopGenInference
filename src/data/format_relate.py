@@ -53,6 +53,7 @@ def main():
     ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
+    print(ifiles)
     
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
