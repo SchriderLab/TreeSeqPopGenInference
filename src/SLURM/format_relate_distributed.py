@@ -35,7 +35,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=16G -t 1-00:00:00 --wrap "python3 src/data/format_relate.py --idir {0} --ms_dir {1} --ofile {2}"'
+    cmd = 'sbatch --mem=16G -t 1-00:00:00 -o {3} --wrap "python3 src/data/format_relate.py --idir {0} --ms_dir {1} --ofile {2}"'
     idirs = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u])
     
     
@@ -44,7 +44,7 @@ def main():
         ms_dir = os.path.join(args.ms_dir, idirs[ix].split('/')[-1])
         
         if os.path.exists(ms_dir):
-            cmd_ = cmd.format(idirs[ix], ms_dir, os.path.join(args.odir, '{0:04d}.hdf5'.format(ix)))
+            cmd_ = cmd.format(idirs[ix], ms_dir, os.path.join(args.odir, '{0:04d}.hdf5'.format(ix)), os.path.join(args.odir, '{0:04d}_slurm.out'.format(ix)))
             print(cmd_)
             os.system(cmd_)
         
