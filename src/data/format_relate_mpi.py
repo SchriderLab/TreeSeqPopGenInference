@@ -335,7 +335,7 @@ def main():
                         ofile_val.create_dataset('{2}/{0}/{1}/x'.format(ix, ij, tag), data = X, compression = 'lzf')
                         ofile_val.create_dataset('{2}/{0}/{1}/edge_index'.format(ix, ij, tag), data = edges.astype(np.int32), compression = 'lzf')
                         ofile_val.create_dataset('{2}/{0}/{1}/info'.format(ix, ij, tag), data = info_vec, compression = 'lzf')
-                elif len(_) == 4:
+                elif len(_) == 5:
                     ix, ii, A, tag, val = _
                     
                     if not val:
@@ -357,7 +357,8 @@ def main():
             s = [u for u in s if u not in ['x_0', 'A']]
             
             count[tag] = max(list(map(int, s))) + 1
-                
+        
+        comm.Barrier()
             
     if comm.rank == 0:        
         ofile.close()
