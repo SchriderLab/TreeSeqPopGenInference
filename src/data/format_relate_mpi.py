@@ -307,7 +307,6 @@ def main():
         else:
             n_done = 0
    
-   
             while n_done != comm.size - 1:
                 _ = comm.recv(source = MPI.ANY_SOURCE)
                 
