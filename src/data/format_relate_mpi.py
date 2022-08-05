@@ -68,7 +68,7 @@ def main():
     if comm.rank == 0:
         tags_ = list(set(tags))
         
-        count = dict(zip(tags_, list(np.zeros(len(tags_)))))
+        count = dict(zip(tags_, list(np.zeros(len(tags_), dtype = np.int32))))
     
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
@@ -315,8 +315,6 @@ def main():
                 if len(_) == 7:
                     ix, ij, X, edges, info_vec, tag, val = _
                     
-                    ix = count[tag] + ix
-                    
                     if not val:
                         ix = count[tag] + ix
                         
@@ -349,6 +347,7 @@ def main():
 
             s = list(ofile[tag].keys())
             s = [u for u in s if u not in ['x_0', 'A']]
+            print(s)
             
             count[tag] = max(list(map(int, s))) + 1
                 
