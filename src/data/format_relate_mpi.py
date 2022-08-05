@@ -347,7 +347,7 @@ def main():
                 else:
                     n_done += 1
 
-            s = list(ifile[tag].keys())
+            s = list(ofile[tag].keys())
             s = [u for u in s if u not in ['x_0', 'A']]
             
             count[tag] = max(list(map(int, s))) + 1
