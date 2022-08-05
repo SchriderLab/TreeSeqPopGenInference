@@ -358,9 +358,6 @@ def main():
             
             count[tag] = max(list(map(int, s))) + 1
                 
-                    
-        comm.Barrier()
-                
             
     if comm.rank == 0:        
         ofile.close()
