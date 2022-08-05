@@ -85,12 +85,20 @@ def main():
         # I think we don't read these cause theyre reduntant actually?
         mut_files = sorted([os.path.join(idir, u) for u in os.listdir(idir) if (u.split('.')[-1] == 'mut' and tag in u)])
         
-        indices_f = list(range(len(anc_files)))
-        random.shuffle(indices_f)
+        if comm.rank == 0:
+            indices_f = list(range(len(anc_files)))
+            random.shuffle(indices_f)
+        else:
+            indices_f = None
+            
+        comm.Barrier()
+        
+        indices_f = comm.gather(indices_f, root = 0)
+        
+        comm.Barrier()
         
         anc_files = [anc_files[u] for u in indices_f]
         mut_files = [mut_files[u] for u in indices_f]
-        
         
         
 
@@ -347,7 +355,6 @@ def main():
 
             s = list(ofile[tag].keys())
             s = [u for u in s if u not in ['x_0', 'A']]
-            print(s)
             
             count[tag] = max(list(map(int, s))) + 1
                 
