@@ -106,7 +106,8 @@ def main():
         
         times = []
         if comm.rank != 0:
-            logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
+            if comm.rank == 1:
+                logging.info('{2}: have {0} training examples to send and {1} validation samples...'.format(N, N_val, comm.rank))
             for ix in range(comm.rank - 1, N + N_val, comm.size - 1):
                 #if (ix + 1) % 100 == 0:
                 #    print(ix)
@@ -347,6 +348,8 @@ def main():
             s = [u for u in s if u not in ['x_0', 'A']]
             
             count[tag] = max(list(map(int, s))) + 1
+            
+            logging.info('0: wrote data for {}...'.format(ifile))
         
         comm.Barrier()
             
