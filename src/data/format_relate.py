@@ -64,16 +64,10 @@ def main():
         
         anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and tag in u)])
         
-        # for now the mutations are un-used...
-        # this would have to be formatted as an edge feature would could be done really easily
-        # I think we don't read these cause theyre reduntant actually?
-        mut_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'mut' and tag in u)])
-        
         indices_f = list(range(len(anc_files)))
         random.shuffle(indices_f)
         
         anc_files = [anc_files[u] for u in indices_f]
-        mut_files = [mut_files[u] for u in indices_f]
         
         # load the genotype matrices that correspond to the trees
         logging.info('reading data, {}...'.format(ifile))
