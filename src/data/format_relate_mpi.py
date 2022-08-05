@@ -154,30 +154,33 @@ def main():
     
     
                     sk_nodes = dict()
-                    for j in range(2, len(line), 5):
-                        nodes.append((j - 1) // 5)
-                        
-                        p = int(line[j])
-                        if p not in sk_nodes.keys():
-                            sk_nodes[p] = TreeNode(name = p)
+                    try:
+                        for j in range(2, len(line), 5):
+                            nodes.append((j - 1) // 5)
                             
-                        length = float(line[j + 1])
-                        
-                        if (j - 1) // 5 not in sk_nodes.keys():
-                            sk_nodes[(j - 1) // 5] = TreeNode(name = (j - 1) // 5, parent = sk_nodes[p], length = length)
-                            sk_nodes[p].children.append(sk_nodes[(j - 1) // 5])
-                        else:
-                            sk_nodes[(j - 1) // 5].parent = sk_nodes[p]
-                            sk_nodes[(j - 1) // 5].length = length
-                            sk_nodes[p].children.append(sk_nodes[(j - 1) // 5])
+                            p = int(line[j])
+                            if p not in sk_nodes.keys():
+                                sk_nodes[p] = TreeNode(name = p)
+                                
+                            length = float(line[j + 1])
                             
-                        parents.append(p)
-                        lengths.append(float(line[j + 1]))
-                        n_mutations.append(float(line[j + 2]))
-                        regions.append((int(line[j + 3]), int(line[j + 4])))
-                        
-                        edges.append((parents[-1], nodes[-1]))
-                        
+                            if (j - 1) // 5 not in sk_nodes.keys():
+                                sk_nodes[(j - 1) // 5] = TreeNode(name = (j - 1) // 5, parent = sk_nodes[p], length = length)
+                                sk_nodes[p].children.append(sk_nodes[(j - 1) // 5])
+                            else:
+                                sk_nodes[(j - 1) // 5].parent = sk_nodes[p]
+                                sk_nodes[(j - 1) // 5].length = length
+                                sk_nodes[p].children.append(sk_nodes[(j - 1) // 5])
+                                
+                            parents.append(p)
+                            lengths.append(float(line[j + 1]))
+                            n_mutations.append(float(line[j + 2]))
+                            regions.append((int(line[j + 3]), int(line[j + 4])))
+                            
+                            edges.append((parents[-1], nodes[-1]))
+                    except:
+                        break
+                    
                     nodes.append(-1)
                     lengths.append(0.)
                     
