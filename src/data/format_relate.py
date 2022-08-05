@@ -93,6 +93,9 @@ def main():
             #if (ix + 1) % 100 == 0:
             #    print(ix)
             
+            if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
+                continue
+            
             anc_file = open(anc_files[ix], 'r')
             
             lines = anc_file.readlines()[2:]
@@ -116,14 +119,17 @@ def main():
                 line = line.replace(':', ' ').replace('(', '').replace(')', '').replace('\n', '')
                 line = line.split(' ')[:-1]
                 
-                if ij != len(lines) - 1:
-                    next_line = lines[ij + 1]
-                    next_line = next_line.replace(':', ' ').replace('(', '').replace(')', '').replace('\n', '')
-                    next_line = next_line.split(' ')[:-1]
-                
-                    end_snp = int(next_line[0])
-                else:
-                    end_snp = x[ix].shape[1]
+                try:
+                    if ij != len(lines) - 1:
+                        next_line = lines[ij + 1]
+                        next_line = next_line.replace(':', ' ').replace('(', '').replace(')', '').replace('\n', '')
+                        next_line = next_line.split(' ')[:-1]
+                    
+                        end_snp = int(next_line[0])
+                    else:
+                        end_snp = x[ix].shape[1]
+                except:
+                    break
     
                 start_snp = int(line[0])
                 l_ = end_snp - start_snp
