@@ -250,7 +250,10 @@ def main():
                 lengths = np.log(lengths[lengths > 0])
                 
                 # for stats to save later
-                branch_lengths.extend(np.random.choice(lengths, 10, replace = False))
+                if len(lengths) > 10:
+                    branch_lengths.extend(np.random.choice(lengths, 10, replace = False))
+                else:
+                    break
                 
                 ii = list(np.where(X[:,0] > 0)[0])
                 
