@@ -93,7 +93,7 @@ def main():
             
         comm.Barrier()
         
-        indices_f = comm.gather(indices_f, root = 0)
+        indices_f = comm.bcast(indices_f, root = 0)
         
         comm.Barrier()
         
