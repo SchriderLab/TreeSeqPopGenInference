@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 import os
 import argparse
 import logging
@@ -35,7 +34,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=4G -t 02:00:00 --wrap "python3 src/data/relate.py --idir {0} --odir {1}"'
+    cmd = 'sbatch --mem=16G -t 04:00:00 --wrap "python3 src/data/relate.py --idir {0} --odir {1}"'
     idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u]
     
     for idir in idirs:
