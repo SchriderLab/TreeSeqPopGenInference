@@ -21,6 +21,7 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--ifile", default = "demography_trees.hdf5")
+    parser.add_argument("--ofile", default = "hists.png")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -51,6 +52,8 @@ def main():
     n_keys = 100
     
     data = dict()
+    times = []
+    
     for c in classes:
         data[c] = dict()
         
@@ -65,29 +68,27 @@ def main():
         random.shuffle(keys)
 
         for key in keys[:n_keys]:
-            skeys = [u for u in list(ifile[c][key].keys()) if ('x' not in u) and ('A' not in u)]
             
-            for skey in skeys:
-                iv = np.array(ifile[c][key][skey]['info'])
-                X = np.array(ifile[c][key][skey]['x'])
-                
-                data[c]['t_coal'].append(iv[0])
-                data[c]['mean_branch_length'].append(iv[4])
-                data[c]['median_branch_length'].append(iv[5])
-                data[c]['std_branch_length'].append(iv[6])
-                data[c]['mean_time'].append(iv[1])
-                data[c]['std_time'].append(iv[2])
+            iv = np.array(ifile[c][key]['info'])
+            x = np.array(ifile[c][key]['x'])[:,0]
+            
+            data[c]['t_coal'].extend(iv[:,0])
+            data[c]['mean_branch_length'].extend(iv[:,4])
+            data[c]['median_branch_length'].extend(iv[:,5])
+            data[c]['std_branch_length'].extend(iv[:,6])
+            data[c]['mean_time'].extend(iv[:,1])
+            data[c]['std_time'].extend(iv[:,2])
+
+            times.extend(list(x[x > 0]))
                 
     quants = ['t_coal', 'mean_branch_length', 'median_branch_length', 'std_branch_length']
     
-    mean_times = []
-    std_times = []
-    for c in classes:
-        mean_times = mean_times + data[c]['mean_time']
-        std_times = std_times + data[c]['std_time']
+    times = np.array(times)
+    times = np.log(times)
     
-    print(np.mean(mean_times), np.mean(std_times))
-    
+    print(np.mean(times))
+    print(np.std(times))
+        
     fig, axes = plt.subplots(nrows = 3, ncols = 4, sharex = True)
     for ix in range(3):
         for ij in range(4):
