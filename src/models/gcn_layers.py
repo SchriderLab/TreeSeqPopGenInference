@@ -755,7 +755,7 @@ class GATSeqClassifier(nn.Module):
         
         self.n_gcn_iter = n_gcn_iter
         
-        self.embedding = nn.Linear(in_dim, gcn_dim + in_dim, bias = True)
+        self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
         gcn_dim += in_dim
         
         self.embedding_norm = nn.LayerNorm((gcn_dim, ))
@@ -786,7 +786,6 @@ class GATSeqClassifier(nn.Module):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         
         for ix in range(self.n_gcn_iter):
-            print(ix, x.shape)
             x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
             x = self.act(x)
             
