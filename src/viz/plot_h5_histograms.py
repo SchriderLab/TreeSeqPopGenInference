@@ -70,7 +70,10 @@ def main():
         for key in keys[:n_keys]:
             if 'info' in list(ifile[c][key].keys()):
                 iv = np.array(ifile[c][key]['info'])
-                print(iv.shape)
+                #print(iv.shape)
+                
+                if iv.shape[0] == 0:
+                    continue
                 
                 x = np.array(ifile[c][key]['x'])[:,0]
                 
