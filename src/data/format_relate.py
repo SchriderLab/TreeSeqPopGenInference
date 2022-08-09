@@ -260,6 +260,7 @@ def main():
                 # topologically order nodes
                 X = X[indices,:]
                 
+                
                 Xs.append(X)
                 
                 lengths = np.array(lengths)
@@ -272,6 +273,7 @@ def main():
                     break
                 
                 ii = list(np.where(X[:,0] > 0)[0])
+                X[ii,0] = np.log(X[ii,0])
                 
                 times.extend(X[ii,0])
                 
