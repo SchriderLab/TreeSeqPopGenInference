@@ -53,12 +53,13 @@ class TreeSeqGenerator(object):
     
                     del self.keys[model][0]
                     skeys = sorted(list(self.ifile[model][key].keys()))
+                    print(skeys)
                     
                     if not 'x' in skeys:
                         continue
                     
                     X_ = np.array(self.ifile[model][key]['x'])
-                    
+                    print(X_.shape)                    
                     if len(X_) > self.s_length:
                         ii = np.random.choice(range(len(X_) - self.s_length))
                         ii = range(ii, ii + self.s_length)
