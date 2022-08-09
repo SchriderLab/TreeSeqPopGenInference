@@ -68,18 +68,18 @@ def main():
         random.shuffle(keys)
 
         for key in keys[:n_keys]:
-            
-            iv = np.array(ifile[c][key]['info'])
-            x = np.array(ifile[c][key]['x'])[:,0]
-            
-            data[c]['t_coal'].extend(iv[:,0])
-            data[c]['mean_branch_length'].extend(iv[:,4])
-            data[c]['median_branch_length'].extend(iv[:,5])
-            data[c]['std_branch_length'].extend(iv[:,6])
-            data[c]['mean_time'].extend(iv[:,1])
-            data[c]['std_time'].extend(iv[:,2])
-
-            times.extend(list(x[x > 0]))
+            if 'info' in list(ifile[c][key].keys()):
+                iv = np.array(ifile[c][key]['info'])
+                x = np.array(ifile[c][key]['x'])[:,0]
+                
+                data[c]['t_coal'].extend(iv[:,0])
+                data[c]['mean_branch_length'].extend(iv[:,4])
+                data[c]['median_branch_length'].extend(iv[:,5])
+                data[c]['std_branch_length'].extend(iv[:,6])
+                data[c]['mean_time'].extend(iv[:,1])
+                data[c]['std_time'].extend(iv[:,2])
+    
+                times.extend(list(x[x > 0]))
                 
     quants = ['t_coal', 'mean_branch_length', 'median_branch_length', 'std_branch_length']
     
