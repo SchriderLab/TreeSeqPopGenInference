@@ -13,7 +13,7 @@ import random
 
 from prettytable import PrettyTable
 
-def count_parameters(model, f):
+def count_parameters(model):
     table = PrettyTable(["Modules", "Parameters"])
     total_params = 0
     for name, parameter in model.named_parameters():
@@ -21,8 +21,8 @@ def count_parameters(model, f):
         param = parameter.numel()
         table.add_row([name, param])
         total_params+=param
-    print(table, file = f)
-    print(f"Total Trainable Params: {total_params}", file = f)
+    print(table)
+    print(f"Total Trainable Params: {total_params}")
     return total_params
 
 def gaussian(window_size, sigma):
