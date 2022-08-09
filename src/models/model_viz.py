@@ -12,6 +12,7 @@ import pandas as pd
 import random
 
 from prettytable import PrettyTable
+import numpy as np 
 
 def count_parameters(model):
     table = PrettyTable(["Modules", "Parameters"])
