@@ -746,7 +746,7 @@ class MLP(nn.Module):
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 58, n_gcn_layers = 4, 
-                             num_gru_layers = 1, hidden_size = 256, L = 24, n_heads = 2, n_gcn_iter = 10):
+                             num_gru_layers = 1, hidden_size = 256, L = 24, n_heads = 2, n_gcn_iter = 6):
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
