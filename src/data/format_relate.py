@@ -300,6 +300,9 @@ def main():
                 edges = edges + [(v,u) for u,v in edges]
                 edges = np.array(edges).T
                 
+                Edges.append(edges)
+                infos.append(info_vec)
+                
             if len(Xs) > 0:
                 if ix < N:
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
