@@ -260,6 +260,8 @@ def main():
                 # topologically order nodes
                 X = X[indices,:]
                 
+                Xs.append(X)
+                
                 lengths = np.array(lengths)
                 lengths = np.log(lengths[lengths > 0])
                 
