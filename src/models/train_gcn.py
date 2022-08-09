@@ -19,7 +19,7 @@ import logging, os
 
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument("--config", default="None")
     parser.add_argument("--odir", default="None")
     parser.add_argument("--n_epochs", default="100")
-    parser.add_argument("--lr", default="0.00001") # lr is specified in configs file
+    parser.add_argument("--lr", default="0.0001") # lr is specified in configs file
     parser.add_argument("--weight_decay", default="None")
     parser.add_argument("--predict_sequences", action="store_true", help="Whether to predict on entire sequences")
     parser.add_argument("--n_early", default = "10")
@@ -84,6 +84,8 @@ def main():
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
     criterion = NLLLoss()
+    
+    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.98)
     
     min_val_loss = np.inf
     
@@ -191,6 +193,21 @@ def main():
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
         
+        lr_scheduler.step()
+        
+        
+    """
+    plt.rc('font', family = 'Helvetica', size = 12)
+    plt.rcParams.update({'figure.autolayout': True})
+    fig = plt.figure(figsize=(12, 8), dpi=100)
+    
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_xlabel('epoch')
+    ax.set_ylabel('negative ll loss')
+    ax.set_title('training loss history')
+    
+    ax
+    """  
 
 if __name__ == "__main__":
     main()

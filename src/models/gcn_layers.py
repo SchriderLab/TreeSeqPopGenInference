@@ -745,8 +745,8 @@ class MLP(nn.Module):
         return self.model(x.view(x.size(0), -1))
     
 class GATSeqClassifier(nn.Module):
-    def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 32, n_gcn_layers = 4, 
-                             num_gru_layers = 1, hidden_size = 256, L = 24, n_heads = 1, n_gcn_iter = 10):
+    def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 58, n_gcn_layers = 4, 
+                             num_gru_layers = 1, hidden_size = 256, L = 24, n_heads = 2, n_gcn_iter = 10):
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -755,7 +755,9 @@ class GATSeqClassifier(nn.Module):
         
         self.n_gcn_iter = n_gcn_iter
         
-        self.embedding = nn.Linear(in_dim, gcn_dim, bias = False)
+        self.embedding = nn.Linear(in_dim, gcn_dim + in_dim, bias = True)
+        gcn_dim += in_dim
+        
         self.embedding_norm = nn.LayerNorm((gcn_dim, ))
         self.dropout = nn.Dropout(0.15)
         
@@ -781,7 +783,7 @@ class GATSeqClassifier(nn.Module):
         self.soft = nn.LogSoftmax(dim = -1)
         
     def forward(self, x0, edge_index, batch, bl):
-        x = self.embedding(x0)
+        x = torch.cat([self.embedding(x0), x0], dim = -1)
         
         for ix in range(self.n_gcn_iter):
             x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
