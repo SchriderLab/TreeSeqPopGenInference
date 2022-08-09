@@ -168,10 +168,12 @@ def main():
         result['loss'].append(train_loss)
         result['acc'].append(train_acc)
         
+        logging.info('root: Epoch {}, Val Loss: {:.3f}, Val Acc: {:.3f}'.format(epoch + 1, val_loss, val_acc))
+        
         if val_loss < min_val_loss:
             min_val_loss = val_loss
             print('saving weights...')
-            torch.save(model.state_dict(), os.path.join(args.odir, '{0}.weights'.format(args.tag)))
+            torch.save(model.state_dict(), os.path.join(args.odir, 'best.weights'))
             
             # do this for all the examples:
             cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
@@ -183,8 +185,6 @@ def main():
             # early stop criteria
             if early_count > int(args.n_early):
                 break
-
-        logging.info('root: Epoch {}, Val Loss: {:.3f}, Val Acc: {:.3f}'.format(epoch + 1, val_loss, val_acc))
         
         validation_generator.on_epoch_end()
     
