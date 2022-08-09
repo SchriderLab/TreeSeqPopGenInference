@@ -65,7 +65,7 @@ class TreeSeqGenerator(object):
                         break
                     
                 if len(self.keys[model]) == 0:
-                    break
+                    return None, None, None
                 
                 edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
                 
