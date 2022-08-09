@@ -14,11 +14,7 @@ import copy
 import scipy.signal
 import scipy.optimize
 import torch
-from torch_utils import misc
-from torch_utils import persistence
-from torch_utils.ops import conv2d_gradfix
-from torch_utils.ops import filtered_lrelu
-from torch_utils.ops import bias_act
+
 
 from torch import autograd
 from typing import Callable, Any, Optional, Tuple, List
@@ -32,10 +28,9 @@ from torch_scatter import scatter_max, scatter, scatter_mean, scatter_std
 from sparsenn.models.gcn.layers import DynamicGraphResBlock, GraphCyclicGRUBlock, GraphInceptionBlock
 from torch_geometric.nn import global_mean_pool, MessageNorm
 from torch_geometric.nn import MessagePassing
-from torch_geometric.utils import add_self_loops, degree, softmax
+from torch_geometric.utils import add_self_loops, degree, softmax, remove_self_loops
 
-from torch_geometric.nn.inits import glorot
-from torch_utils.ops import filtered_lrelu
+from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.nn import LayerNorm
 
 from torch.nn import Parameter
@@ -184,8 +179,7 @@ class Linear(torch.nn.Module):
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.in_channels}, '
                 f'{self.out_channels}, bias={self.bias is not None})')
-
-# patched to have message norm.
+    
 class GATConv(MessagePassing):
     r"""The graph attentional operator from the `"Graph Attention Networks"
     <https://arxiv.org/abs/1710.10903>`_ paper
@@ -269,21 +263,18 @@ class GATConv(MessagePassing):
           or :math:`((|\mathcal{V_t}|, H * F_{out}), ((2, |\mathcal{E}|),
           (|\mathcal{E}|, H)))` if bipartite
     """
-    _alpha: OptTensor
-
     def __init__(
         self,
         in_channels: Union[int, Tuple[int, int]],
         out_channels: int,
         heads: int = 1,
         concat: bool = True,
-        activation: str = 'softmax',
         negative_slope: float = 0.2,
-        dropout: float = 0.,
+        dropout: float = 0.0,
         add_self_loops: bool = True,
         edge_dim: Optional[int] = None,
         fill_value: Union[float, Tensor, str] = 'mean',
-        bias: bool = False,
+        bias: bool = True,
         **kwargs,
     ):
         kwargs.setdefault('aggr', 'add')
@@ -298,13 +289,29 @@ class GATConv(MessagePassing):
         self.add_self_loops = add_self_loops
         self.edge_dim = edge_dim
         self.fill_value = fill_value
-
+        
         self.norm = MessageNorm(True)
 
+        # In case we are operating in bipartite graphs, we apply separate
+        # transformations 'lin_src' and 'lin_dst' to source and target nodes:
+        if isinstance(in_channels, int):
+            self.lin_src = Linear(in_channels, heads * out_channels,
+                                  bias=False, weight_initializer='glorot')
+            self.lin_dst = self.lin_src
+        else:
+            self.lin_src = Linear(in_channels[0], heads * out_channels, False,
+                                  weight_initializer='glorot')
+            self.lin_dst = Linear(in_channels[1], heads * out_channels, False,
+                                  weight_initializer='glorot')
+
+        # The learnable parameters to compute attention coefficients:
+        self.att_src = Parameter(torch.Tensor(1, heads, out_channels))
+        self.att_dst = Parameter(torch.Tensor(1, heads, out_channels))
+
         if edge_dim is not None:
-            self.lin_edge = nn.Sequential(Linear(edge_dim, heads * 2, weight_initializer='glorot'), nn.LayerNorm(heads * 2), nn.ReLU(),
-                                          Linear(heads * 2, heads, bias = False, weight_initializer='glorot'))
-            self.att_edge = Parameter(torch.Tensor(1, heads, 1))
+            self.lin_edge = Linear(edge_dim, heads * out_channels, bias=False,
+                                   weight_initializer='glorot')
+            self.att_edge = Parameter(torch.Tensor(1, heads, out_channels))
         else:
             self.lin_edge = None
             self.register_parameter('att_edge', None)
@@ -312,17 +319,22 @@ class GATConv(MessagePassing):
         if bias and concat:
             self.bias = Parameter(torch.Tensor(heads * out_channels))
         elif bias and not concat:
-            self.bias = Parameter(torch.zeros(out_channels))
+            self.bias = Parameter(torch.Tensor(out_channels))
         else:
             self.register_parameter('bias', None)
 
-        self._alpha = None
-        self.activation = activation
-
         self.reset_parameters()
 
+
     def reset_parameters(self):
+        self.lin_src.reset_parameters()
+        self.lin_dst.reset_parameters()
+        if self.lin_edge is not None:
+            self.lin_edge.reset_parameters()
+        glorot(self.att_src)
+        glorot(self.att_dst)
         glorot(self.att_edge)
+        zeros(self.bias)
 
     def forward(self, x: Union[Tensor, OptPairTensor], edge_index: Adj,
                 edge_attr: OptTensor = None, size: Size = None,
@@ -348,16 +360,53 @@ class GATConv(MessagePassing):
 
         H, C = self.heads, self.out_channels
 
-        x_src = x_dst = x.view(-1, H, C)
+        # We first transform the input node features. If a tuple is passed, we
+        # transform source and target node features via separate weights:
+        if isinstance(x, Tensor):
+            assert x.dim() == 2, "Static graphs not supported in 'GATConv'"
+            x_src = x_dst = self.lin_src(x).view(-1, H, C)
+        else:  # Tuple of source and target node features:
+            x_src, x_dst = x
+            assert x_src.dim() == 2, "Static graphs not supported in 'GATConv'"
+            x_src = self.lin_src(x_src).view(-1, H, C)
+            if x_dst is not None:
+                x_dst = self.lin_dst(x_dst).view(-1, H, C)
+
         x = (x_src, x_dst)
 
-        # propagate_type: (x: OptPairTensor, alpha: OptPairTensor, edge_attr: OptTensor)  # noqa
-        out = self.propagate(edge_index, x=x, edge_attr=edge_attr,
-                             size=size)
+        # Next, we compute node-level attention coefficients, both for source
+        # and target nodes (if present):
+        alpha_src = (x_src * self.att_src).sum(dim=-1)
+        alpha_dst = None if x_dst is None else (x_dst * self.att_dst).sum(-1)
+        alpha = (alpha_src, alpha_dst)
 
-        alpha = self._alpha
-        assert alpha is not None
-        self._alpha = None
+        if self.add_self_loops:
+            if isinstance(edge_index, Tensor):
+                # We only want to add self-loops for nodes that appear both as
+                # source and target nodes:
+                num_nodes = x_src.size(0)
+                if x_dst is not None:
+                    num_nodes = min(num_nodes, x_dst.size(0))
+                num_nodes = min(size) if size is not None else num_nodes
+                edge_index, edge_attr = remove_self_loops(
+                    edge_index, edge_attr)
+                edge_index, edge_attr = add_self_loops(
+                    edge_index, edge_attr, fill_value=self.fill_value,
+                    num_nodes=num_nodes)
+            elif isinstance(edge_index, SparseTensor):
+                if self.edge_dim is None:
+                    edge_index = set_diag(edge_index)
+                else:
+                    raise NotImplementedError(
+                        "The usage of 'edge_attr' and 'add_self_loops' "
+                        "simultaneously is currently not yet supported for "
+                        "'edge_index' in a 'SparseTensor' form")
+
+        # edge_updater_type: (alpha: OptPairTensor, edge_attr: OptTensor)
+        alpha = self.edge_updater(edge_index, alpha=alpha, edge_attr=edge_attr)
+
+        # propagate_type: (x: OptPairTensor, alpha: Tensor)
+        out = self.propagate(edge_index, x=x, alpha=alpha, size=size)
 
         if self.concat:
             out = out.view(-1, self.heads * self.out_channels)
@@ -374,37 +423,385 @@ class GATConv(MessagePassing):
                 return out, edge_index.set_value(alpha, layout='coo')
         else:
             return out
-        
+
+    def edge_update(self, alpha_j: Tensor, alpha_i: OptTensor,
+                    edge_attr: OptTensor, index: Tensor, ptr: OptTensor,
+                    size_i: Optional[int]) -> Tensor:
+        # Given edge-level attention coefficients for source and target nodes,
+        # we simply need to sum them up to "emulate" concatenation:
+        alpha = alpha_j if alpha_i is None else alpha_j + alpha_i
+
+        if edge_attr is not None and self.lin_edge is not None:
+            if edge_attr.dim() == 1:
+                edge_attr = edge_attr.view(-1, 1)
+            edge_attr = self.lin_edge(edge_attr)
+            edge_attr = edge_attr.view(-1, self.heads, self.out_channels)
+            alpha_edge = (edge_attr * self.att_edge).sum(dim=-1)
+            alpha = alpha + alpha_edge
+
+        alpha = F.leaky_relu(alpha, self.negative_slope)
+        alpha = softmax(alpha, index, ptr, size_i)
+        alpha = F.dropout(alpha, p=self.dropout, training=self.training)
+        return alpha
+
+
+    def message(self, x_j: Tensor, alpha: Tensor) -> Tensor:
+        return alpha.unsqueeze(-1) * x_j
+    
     def update(self, inputs, x):
         return self.norm(x[0], inputs)
 
-    def message(self, x_j: Tensor,
-                edge_attr: OptTensor, index: Tensor, ptr: OptTensor,
-                size_i: Optional[int]) -> Tensor:
-        # Given edge-level attention coefficients for source and target nodes,
-        # we simply need to sum them up to "emulate" concatenation:
-        
-        if edge_attr.dim() == 1:
-            edge_attr = edge_attr.view(-1, 1)
-        assert self.lin_edge is not None
-        edge_attr = self.lin_edge(edge_attr)
-        edge_attr = edge_attr.view(-1, self.heads, 1)
-        alpha_edge = (edge_attr * self.att_edge).sum(dim=-1)
-        alpha = alpha_edge
-
-        if self.activation == 'sigmoid':
-            alpha = torch.sigmoid(F.leaky_relu(alpha, self.negative_slope))
-        elif self.activation == 'softmax':
-            alpha = softmax(alpha, index, ptr, size_i)
-        
-        self._alpha = alpha  # Save for later use.
-        alpha = F.dropout(alpha, p=self.dropout, training=self.training)
-        
-        return x_j * alpha.unsqueeze(-1)
-    
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.in_channels}, '
                 f'{self.out_channels}, heads={self.heads})')
+    
+from torch_geometric.typing import Adj, OptTensor, PairTensor
+    
+class GATv2Conv(MessagePassing):
+    r"""The GATv2 operator from the `"How Attentive are Graph Attention Networks?"
+    <https://arxiv.org/abs/2105.14491>`_ paper, which fixes the static
+    attention problem of the standard :class:`~torch_geometric.conv.GATConv`
+    layer: since the linear layers in the standard GAT are applied right after
+    each other, the ranking of attended nodes is unconditioned on the query
+    node. In contrast, in GATv2, every node can attend to any other node.
+
+    .. math::
+        \mathbf{x}^{\prime}_i = \alpha_{i,i}\mathbf{\Theta}\mathbf{x}_{i} +
+        \sum_{j \in \mathcal{N}(i)} \alpha_{i,j}\mathbf{\Theta}\mathbf{x}_{j},
+
+    where the attention coefficients :math:`\alpha_{i,j}` are computed as
+
+    .. math::
+        \alpha_{i,j} =
+        \frac{
+        \exp\left(\mathbf{a}^{\top}\mathrm{LeakyReLU}\left(\mathbf{\Theta}
+        [\mathbf{x}_i \, \Vert \, \mathbf{x}_j]
+        \right)\right)}
+        {\sum_{k \in \mathcal{N}(i) \cup \{ i \}}
+        \exp\left(\mathbf{a}^{\top}\mathrm{LeakyReLU}\left(\mathbf{\Theta}
+        [\mathbf{x}_i \, \Vert \, \mathbf{x}_k]
+        \right)\right)}.
+
+    If the graph has multi-dimensional edge features :math:`\mathbf{e}_{i,j}`,
+    the attention coefficients :math:`\alpha_{i,j}` are computed as
+
+    .. math::
+        \alpha_{i,j} =
+        \frac{
+        \exp\left(\mathbf{a}^{\top}\mathrm{LeakyReLU}\left(\mathbf{\Theta}
+        [\mathbf{x}_i \, \Vert \, \mathbf{x}_j \, \Vert \, \mathbf{e}_{i,j}]
+        \right)\right)}
+        {\sum_{k \in \mathcal{N}(i) \cup \{ i \}}
+        \exp\left(\mathbf{a}^{\top}\mathrm{LeakyReLU}\left(\mathbf{\Theta}
+        [\mathbf{x}_i \, \Vert \, \mathbf{x}_k \, \Vert \, \mathbf{e}_{i,k}]
+        \right)\right)}.
+
+    Args:
+        in_channels (int or tuple): Size of each input sample, or :obj:`-1` to
+            derive the size from the first input(s) to the forward method.
+            A tuple corresponds to the sizes of source and target
+            dimensionalities.
+        out_channels (int): Size of each output sample.
+        heads (int, optional): Number of multi-head-attentions.
+            (default: :obj:`1`)
+        concat (bool, optional): If set to :obj:`False`, the multi-head
+            attentions are averaged instead of concatenated.
+            (default: :obj:`True`)
+        negative_slope (float, optional): LeakyReLU angle of the negative
+            slope. (default: :obj:`0.2`)
+        dropout (float, optional): Dropout probability of the normalized
+            attention coefficients which exposes each node to a stochastically
+            sampled neighborhood during training. (default: :obj:`0`)
+        add_self_loops (bool, optional): If set to :obj:`False`, will not add
+            self-loops to the input graph. (default: :obj:`True`)
+        edge_dim (int, optional): Edge feature dimensionality (in case
+            there are any). (default: :obj:`None`)
+        fill_value (float or Tensor or str, optional): The way to generate
+            edge features of self-loops (in case :obj:`edge_dim != None`).
+            If given as :obj:`float` or :class:`torch.Tensor`, edge features of
+            self-loops will be directly given by :obj:`fill_value`.
+            If given as :obj:`str`, edge features of self-loops are computed by
+            aggregating all features of edges that point to the specific node,
+            according to a reduce operation. (:obj:`"add"`, :obj:`"mean"`,
+            :obj:`"min"`, :obj:`"max"`, :obj:`"mul"`). (default: :obj:`"mean"`)
+        bias (bool, optional): If set to :obj:`False`, the layer will not learn
+            an additive bias. (default: :obj:`True`)
+        share_weights (bool, optional): If set to :obj:`True`, the same matrix
+            will be applied to the source and the target node of every edge.
+            (default: :obj:`False`)
+        **kwargs (optional): Additional arguments of
+            :class:`torch_geometric.nn.conv.MessagePassing`.
+
+    Shapes:
+        - **input:**
+          node features :math:`(|\mathcal{V}|, F_{in})` or
+          :math:`((|\mathcal{V_s}|, F_{s}), (|\mathcal{V_t}|, F_{t}))`
+          if bipartite,
+          edge indices :math:`(2, |\mathcal{E}|)`,
+          edge features :math:`(|\mathcal{E}|, D)` *(optional)*
+        - **output:** node features :math:`(|\mathcal{V}|, H * F_{out})` or
+          :math:`((|\mathcal{V}_t|, H * F_{out})` if bipartite.
+          If :obj:`return_attention_weights=True`, then
+          :math:`((|\mathcal{V}|, H * F_{out}),
+          ((2, |\mathcal{E}|), (|\mathcal{E}|, H)))`
+          or :math:`((|\mathcal{V_t}|, H * F_{out}), ((2, |\mathcal{E}|),
+          (|\mathcal{E}|, H)))` if bipartite
+    """
+    _alpha: OptTensor
+
+    def __init__(
+        self,
+        in_channels: Union[int, Tuple[int, int]],
+        out_channels: int,
+        heads: int = 1,
+        concat: bool = True,
+        negative_slope: float = 0.2,
+        dropout: float = 0.0,
+        add_self_loops: bool = True,
+        edge_dim: Optional[int] = None,
+        fill_value: Union[float, Tensor, str] = 'mean',
+        bias: bool = True,
+        share_weights: bool = False,
+        **kwargs,
+    ):
+        super().__init__(node_dim=0, **kwargs)
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.heads = heads
+        self.concat = concat
+        self.negative_slope = negative_slope
+        self.dropout = dropout
+        self.add_self_loops = add_self_loops
+        self.edge_dim = edge_dim
+        self.fill_value = fill_value
+        self.share_weights = share_weights
+
+        if isinstance(in_channels, int):
+            self.lin_l = Linear(in_channels, heads * out_channels, bias=bias,
+                                weight_initializer='glorot')
+            if share_weights:
+                self.lin_r = self.lin_l
+            else:
+                self.lin_r = Linear(in_channels, heads * out_channels,
+                                    bias=bias, weight_initializer='glorot')
+        else:
+            self.lin_l = Linear(in_channels[0], heads * out_channels,
+                                bias=bias, weight_initializer='glorot')
+            if share_weights:
+                self.lin_r = self.lin_l
+            else:
+                self.lin_r = Linear(in_channels[1], heads * out_channels,
+                                    bias=bias, weight_initializer='glorot')
+
+        self.att = Parameter(torch.Tensor(1, heads, out_channels))
+
+        if edge_dim is not None:
+            self.lin_edge = Linear(edge_dim, heads * out_channels, bias=False,
+                                   weight_initializer='glorot')
+        else:
+            self.lin_edge = None
+
+        if bias and concat:
+            self.bias = Parameter(torch.Tensor(heads * out_channels))
+        elif bias and not concat:
+            self.bias = Parameter(torch.Tensor(out_channels))
+        else:
+            self.register_parameter('bias', None)
+
+        self._alpha = None
+        self.norm = MessageNorm(True)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.lin_l.reset_parameters()
+        self.lin_r.reset_parameters()
+        if self.lin_edge is not None:
+            self.lin_edge.reset_parameters()
+        glorot(self.att)
+        zeros(self.bias)
+
+
+    def forward(self, x: Union[Tensor, PairTensor], edge_index: Adj,
+                edge_attr: OptTensor = None,
+                return_attention_weights: bool = None):
+        # type: (Union[Tensor, PairTensor], Tensor, OptTensor, NoneType) -> Tensor  # noqa
+        # type: (Union[Tensor, PairTensor], SparseTensor, OptTensor, NoneType) -> Tensor  # noqa
+        # type: (Union[Tensor, PairTensor], Tensor, OptTensor, bool) -> Tuple[Tensor, Tuple[Tensor, Tensor]]  # noqa
+        # type: (Union[Tensor, PairTensor], SparseTensor, OptTensor, bool) -> Tuple[Tensor, SparseTensor]  # noqa
+        r"""
+        Args:
+            return_attention_weights (bool, optional): If set to :obj:`True`,
+                will additionally return the tuple
+                :obj:`(edge_index, attention_weights)`, holding the computed
+                attention weights for each edge. (default: :obj:`None`)
+        """
+        H, C = self.heads, self.out_channels
+
+        x_l: OptTensor = None
+        x_r: OptTensor = None
+        if isinstance(x, Tensor):
+            assert x.dim() == 2
+            x_l = self.lin_l(x).view(-1, H, C)
+            if self.share_weights:
+                x_r = x_l
+            else:
+                x_r = self.lin_r(x).view(-1, H, C)
+        else:
+            x_l, x_r = x[0], x[1]
+            assert x[0].dim() == 2
+            x_l = self.lin_l(x_l).view(-1, H, C)
+            if x_r is not None:
+                x_r = self.lin_r(x_r).view(-1, H, C)
+
+        assert x_l is not None
+        assert x_r is not None
+
+        if self.add_self_loops:
+            if isinstance(edge_index, Tensor):
+                num_nodes = x_l.size(0)
+                if x_r is not None:
+                    num_nodes = min(num_nodes, x_r.size(0))
+                edge_index, edge_attr = remove_self_loops(
+                    edge_index, edge_attr)
+                edge_index, edge_attr = add_self_loops(
+                    edge_index, edge_attr, fill_value=self.fill_value,
+                    num_nodes=num_nodes)
+            elif isinstance(edge_index, SparseTensor):
+                if self.edge_dim is None:
+                    edge_index = set_diag(edge_index)
+                else:
+                    raise NotImplementedError(
+                        "The usage of 'edge_attr' and 'add_self_loops' "
+                        "simultaneously is currently not yet supported for "
+                        "'edge_index' in a 'SparseTensor' form")
+
+        # propagate_type: (x: PairTensor, edge_attr: OptTensor)
+        out = self.propagate(edge_index, x=(x_l, x_r), edge_attr=edge_attr,
+                             size=None)
+
+        alpha = self._alpha
+        self._alpha = None
+
+        if self.concat:
+            out = out.view(-1, self.heads * self.out_channels)
+        else:
+            out = out.mean(dim=1)
+
+        if self.bias is not None:
+            out += self.bias
+
+        if isinstance(return_attention_weights, bool):
+            assert alpha is not None
+            if isinstance(edge_index, Tensor):
+                return out, (edge_index, alpha)
+            elif isinstance(edge_index, SparseTensor):
+                return out, edge_index.set_value(alpha, layout='coo')
+        else:
+            return out
+
+
+    def message(self, x_j: Tensor, x_i: Tensor, edge_attr: OptTensor,
+                index: Tensor, ptr: OptTensor,
+                size_i: Optional[int]) -> Tensor:
+        x = x_i + x_j
+
+        if edge_attr is not None:
+            if edge_attr.dim() == 1:
+                edge_attr = edge_attr.view(-1, 1)
+            assert self.lin_edge is not None
+            edge_attr = self.lin_edge(edge_attr)
+            edge_attr = edge_attr.view(-1, self.heads, self.out_channels)
+            x += edge_attr
+
+        x = F.leaky_relu(x, self.negative_slope)
+        alpha = (x * self.att).sum(dim=-1)
+        alpha = softmax(alpha, index, ptr, size_i)
+        self._alpha = alpha
+        alpha = F.dropout(alpha, p=self.dropout, training=self.training)
+        return x_j * alpha.unsqueeze(-1)
+
+    def __repr__(self) -> str:
+        return (f'{self.__class__.__name__}({self.in_channels}, '
+                f'{self.out_channels}, heads={self.heads})')
+    
+    def update(self, inputs, x):
+        return self.norm(x[0], inputs)
+
+
+    
+# a basic MLP module
+class MLP(nn.Module):
+    def __init__(self, input_dim, output_dim, dim=256, n_blk=3):
+        super(MLP, self).__init__()
+        layers = [nn.Linear(input_dim, dim), nn.BatchNorm1d(dim), nn.Dropout(0.1), nn.ReLU(inplace=True)]
+        for _ in range(n_blk - 2):
+            layers += [nn.Linear(dim, dim), nn.BatchNorm1d(dim), nn.Dropout(0.1), nn.ReLU(inplace=True)]
+        layers += [nn.Linear(dim, output_dim)]
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.model(x.view(x.size(0), -1))
+    
+class GATSeqClassifier(nn.Module):
+    def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 32, n_gcn_layers = 4, 
+                             num_gru_layers = 1, hidden_size = 256, L = 24, n_heads = 1, n_gcn_iter = 10):
+        super(GATSeqClassifier, self).__init__()
+
+        self.gcns = nn.ModuleList()
+        self.norms = nn.ModuleList()
+        self.act = nn.ReLU()
+        
+        self.n_gcn_iter = n_gcn_iter
+        
+        self.embedding = nn.Linear(in_dim, gcn_dim, bias = False)
+        self.embedding_norm = nn.LayerNorm((gcn_dim, ))
+        self.dropout = nn.Dropout(0.15)
+        
+        self.L = L
+        
+        self.gcn = GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads)
+        
+        for ix in range(n_gcn_iter):    
+            self.norms.append(nn.LayerNorm((gcn_dim, )))
+        
+        """
+        for ix in range(1, n_gcn_layers):
+            self.gcns.extend([GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads)])
+            self.norms.append(nn.LayerNorm((gcn_dim, )))
+            
+        self.final_gat = GATv2Conv(gcn_dim, gcn_dim)
+        """  
+        # we'll give it mean, max, min, std of GCN features per graph
+        self.gru = nn.GRU(hidden_size * num_gru_layers * 2, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        
+        self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
+        self.soft = nn.LogSoftmax(dim = -1)
+        
+    def forward(self, x0, edge_index, batch, bl):
+        x = self.embedding(x0)
+        
+        for ix in range(self.n_gcn_iter):
+            x = self.norms[ix](self.gcn(x, edge_index) + x)    
+            x = self.act(x)
+            
+        x = torch.cat([x0, x], dim = -1)
+       
+        x = to_dense_batch(x, batch)[0]
+        _, h = self.graph_gru(x)
+        x = torch.flatten(h.transpose(0, 1), 1, 2)
+        
+        n_batch = max(bl) + 1
+        
+        x = x.view((n_batch, self.L, x.shape[-1]))
+        #print(x.shape)
+        _, h = self.gru(x)
+        h = torch.flatten(h.transpose(0, 1), 1, 2)
+        
+        return self.soft(self.out(h))
+        
 
 class Res1dGraphBlock(nn.Module):
     def __init__(self, in_shape, out_channels, n_layers, gcn_channels = 4,

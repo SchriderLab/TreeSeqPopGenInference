@@ -1,13 +1,16 @@
 import argparse
+from model_viz import cm_analysis
+
 import torch
 import torch.nn.functional as F
 import h5py
 import configparser
-from data_on_the_fly_classes import DataGenerator
-from gcn import GCN, Classifier, SequenceClassifier
+from data_loaders import TreeSeqGenerator
+#from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
+from gcn_layers import GATSeqClassifier
 
-from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel
+from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel, BCEWithLogitsLoss
 from collections import deque
 
 from sklearn.metrics import accuracy_score
@@ -15,6 +18,7 @@ from sklearn.metrics import accuracy_score
 import logging, os
 
 import numpy as np
+import pandas as pd
 
 
 def parse_args():
@@ -25,10 +29,11 @@ def parse_args():
     parser.add_argument("--ifile_val", default="None")
     parser.add_argument("--config", default="None")
     parser.add_argument("--odir", default="None")
-    parser.add_argument("--n_epochs", default="5")
-    parser.add_argument("--lr", default="None") # lr is specified in configs file
+    parser.add_argument("--n_epochs", default="100")
+    parser.add_argument("--lr", default="0.00001") # lr is specified in configs file
     parser.add_argument("--weight_decay", default="None")
     parser.add_argument("--predict_sequences", action="store_true", help="Whether to predict on entire sequences")
+    parser.add_argument("--n_early", default = "10")
 
     args = parser.parse_args()
 
@@ -51,41 +56,44 @@ def parse_args():
 def main():
     args = parse_args()
 
-    config = configparser.ConfigParser()
-    config.read(args.config)
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using " + str(device) + " as device")
     # model = Classifier(config)
-    batch_size = 5 * int(config.get("mlp_params", "channels").split(",")[-1]) # 5 is num tree sequences per class for a batch
-    input_size = int(config.get("encoder_params", "out_channels").split(",")[-1])
 
-    # data generator objects for training and validation respectively
-    if args.predict_sequences:
-        generator = DataGenerator(h5py.File(args.ifile, 'r'), sequences=True)
-        validation_generator = DataGenerator(h5py.File(args.ifile_val, 'r'), sequences=True)
-        model = SequenceClassifier(config, batch_size, input_size)
-    else:
-        generator = DataGenerator(h5py.File(args.ifile, 'r'))
-        validation_generator = DataGenerator(h5py.File(args.ifile_val, 'r'))
-        model = Classifier(config)
+    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'))
+    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'))
+    model = GATSeqClassifier()
+    
+    classes = generator.models
+
 
     model = model.to(device)
     print(model)
 
-    # default optimizer for now
-    if args.lr != "None":
-        optimizer = torch.optim.Adam(model.parameters(), lr=float(args.lr))
-    else:
-        optimizer = torch.optim.Adam(model.parameters(), lr=float(config.get("learning_params", "lr")))
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=float(args.lr))
+    
+    # for writing the training 
+    result = dict()
+    result['epoch'] = []
+    result['loss'] = []
+    result['acc'] = []
+    result['val_loss'] = []
+    result['val_acc'] = []
 
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
-
+    criterion = NLLLoss()
+    
+    min_val_loss = np.inf
+    
     for epoch in range(int(args.n_epochs)):
         model.train()
         for j in range(len(generator)):
-            batch, y = generator[j]
+            batch, y, bl = generator[j]
+            
+            if batch is None:
+                break
             
             #print(batch.edge_index.shape, batch.x.shape, batch.edge_index.max())
             batch = batch.to(device)
@@ -93,9 +101,9 @@ def main():
 
             optimizer.zero_grad()
 
-            y_pred = model(batch.x, batch.edge_index, batch.batch)
+            y_pred = model(batch.x, batch.edge_index, batch.batch, bl)
 
-            loss = F.nll_loss(y_pred, y)
+            loss = criterion(y_pred, y)
 
             y_pred = y_pred.detach().cpu().numpy()
             y_pred = np.argmax(y_pred, axis=1)
@@ -109,39 +117,80 @@ def main():
             optimizer.step()
 
             # change back to 100
-            if (j + 1) % 100 == 0:
-                logging.info("root: Epoch: {}/{}, Step: {}, Loss: {:.3f}, Acc: {:.3f}".format(epoch+1,
+            if (j + 1) % 25 == 0:
+                logging.info("root: Epoch: {}/{}, Step: {}, Loss: {}, Acc: {}".format(epoch+1,
                                                                        args.n_epochs, j + 1,
                                                                         np.mean(losses), np.mean(accuracies)))
 
         generator.on_epoch_end()
-
+        
+        train_loss = np.mean(losses)
+        train_acc = np.mean(accuracies)
+        
         val_losses = []
         val_accs = []
 
+        logging.info('validating...')
         model.eval()
-
+        
+        Y = []
+        Y_pred = []
         with torch.no_grad():
             for j in range(len(validation_generator)):
-                batch, y = validation_generator[j]
+                batch, y, bl = validation_generator[j]
+                
+                if batch is None:
+                    break
+                
                 batch = batch.to(device)
                 y = y.to(device)
 
-                y_pred = model(batch.x, batch.edge_index, batch.batch)
+                y_pred = model(batch.x, batch.edge_index, batch.batch, bl)
 
-                loss = F.nll_loss(y_pred, y)
+                loss = criterion(y_pred, y)
 
                 y_pred = y_pred.detach().cpu().numpy()
                 y = y.detach().cpu().numpy()
                 y_pred = np.argmax(y_pred, axis=1)
+                
+                Y.extend(y)
+                Y_pred.extend(y_pred)
 
                 val_accs.append(accuracy_score(y, y_pred))
                 val_losses.append(loss.detach().item())
+                
+        val_loss = np.mean(val_losses)
+        val_acc = np.mean(val_accs)
+        
+        result['epoch'].append(epoch)
+        result['val_loss'].append(val_loss)
+        result['val_acc'].append(val_acc)
+        result['loss'].append(train_loss)
+        result['acc'].append(train_acc)
+        
+        if val_loss < min_val_loss:
+            min_val_loss = val_loss
+            print('saving weights...')
+            torch.save(model.state_dict(), os.path.join(args.odir, '{0}.weights'.format(args.tag)))
+            
+            # do this for all the examples:
+            cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
 
-        logging.info('root: Epoch {}, Val Loss: {:.3f}, Val Acc: {:.3f}'.format(epoch + 1, np.mean(val_losses), np.mean(val_accs)))
+            early_count = 0
+        else:
+            early_count += 1
+
+            # early stop criteria
+            if early_count > int(args.n_early):
+                break
+
+        logging.info('root: Epoch {}, Val Loss: {:.3f}, Val Acc: {:.3f}'.format(epoch + 1, val_loss, val_acc))
         
         validation_generator.on_epoch_end()
-
+    
+        df = pd.DataFrame(result)
+        df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
+        
 
 if __name__ == "__main__":
     main()
