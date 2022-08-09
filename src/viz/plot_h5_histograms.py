@@ -49,7 +49,7 @@ def main():
     # t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length, min_branch_length, ...
     
     categories = np.array([[0.,1.], [1., 1.], [0., 1.]])
-    n_keys = 100
+    n_keys = 1000
     
     data = dict()
     times = []
