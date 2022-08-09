@@ -55,7 +55,7 @@ def main():
         
         for case in cases:
             if case not in list(counts.keys()):
-                counts[case] = 0
+                counts[case] = [0, 0]
                 
             keys = list(ifile[case].keys())
             
@@ -64,10 +64,17 @@ def main():
                 
                 for skey in skeys:
                     if not val:
-                        ofile.create_dataset('{1}/{0}/{2}'.format(key, case, skey), data = np.array(ifile[case][key][skey]), compression = 'lzf')
-                    else:
-                        ofile_val.create_dataset('{1}/{0}/{2}'.format(key, case, skey), data = np.array(ifile[case][key][skey]), compression = 'lzf')
+                        ofile.create_dataset('{1}/{0}/{2}'.format(counts[case][0], case, skey), data = np.array(ifile[case][key][skey]), compression = 'lzf')
                         
+                    
+                    else:
+                        ofile_val.create_dataset('{1}/{0}/{2}'.format(counts[case][1], case, skey), data = np.array(ifile[case][key][skey]), compression = 'lzf')
+                    
+                if val:
+                    counts[case][1] += 1
+                else:
+                    counts[case][0] += 1
+
                 ofile.flush()
                 ofile_val.flush()
                 
