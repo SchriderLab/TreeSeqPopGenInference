@@ -1,5 +1,5 @@
 import argparse
-from model_viz import cm_analysis
+from model_viz import cm_analysis, count_parameters
 
 import torch
 import torch.nn.functional as F
@@ -45,7 +45,7 @@ def parse_args():
 
     if args.odir != "None":
         if not os.path.exists(args.odir):
-            os.mkdir(args.odir)
+            os.system('mkdir -p {}'.format(args.odir))
             logging.debug('root: made output directory {0}'.format(args.odir))
         else:
             os.system('rm -rf {0}'.format(os.path.join(args.odir, '*')))
@@ -69,7 +69,7 @@ def main():
 
     model = model.to(device)
     print(model)
-
+    count_parameters(model)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=float(args.lr))
     
