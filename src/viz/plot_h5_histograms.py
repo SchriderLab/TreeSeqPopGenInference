@@ -70,6 +70,8 @@ def main():
         for key in keys[:n_keys]:
             if 'info' in list(ifile[c][key].keys()):
                 iv = np.array(ifile[c][key]['info'])
+                print(iv.shape)
+                
                 x = np.array(ifile[c][key]['x'])[:,0]
                 
                 data[c]['t_coal'].extend(iv[:,0])
@@ -84,8 +86,9 @@ def main():
     quants = ['t_coal', 'mean_branch_length', 'median_branch_length', 'std_branch_length']
     
     times = np.array(times)
-    times = np.log(times)
     
+    print(np.mean(np.log(times)))
+    print(np.std(np.log(times)))
     print(np.mean(times))
     print(np.std(times))
         
