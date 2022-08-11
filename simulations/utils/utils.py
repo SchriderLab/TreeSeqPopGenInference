@@ -38,6 +38,7 @@ def get_ua():
         "-o",
         "--outdir",
         dest="outdir",
+        required=True,
         help="Directory to create subdirectories in and write simulations to.",
     )
     ap.add_argument(
