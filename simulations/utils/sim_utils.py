@@ -2,7 +2,7 @@
 import os
 import numpy as np
 
-#Sim utils
+# Sim utils
 def inject_nwk(msfile, nwk_lines, overwrite=True):
     combo_name = msfile.replace(".notree", "")
 
@@ -20,11 +20,11 @@ def inject_nwk(msfile, nwk_lines, overwrite=True):
 
 def get_seeds(num_reps):
     """Generates an array of random seeds using numpy rng streams."""
-    seedseq = np.random.SeedSequence(123456)
-    child_seeds = seedseq.spawn(num_reps)
-    seeds = [np.random.default_rng(s).integers(0, int(1e8)) for s in child_seeds]
+    rng = np.random.default_rng(
+        np.random.seed(int.from_bytes(os.urandom(4), byteorder="little"))
+    )
 
-    return seeds
+    return rng.integers(0, int(1e8), num_reps)
 
 
 def separate_output(ms_output):

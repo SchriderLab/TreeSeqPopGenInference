@@ -1,14 +1,15 @@
 import gzip
 import multiprocessing as mp
-import os, sys
+import os
 import random
-from pprint import pprint
+from itertools import cycle
 
 import demes
 import demesdraw
 import msprime
 import numpy as np
 import tskit
+from tqdm import tqdm
 
 from utils import sim_utils, utils
 
@@ -94,6 +95,7 @@ def create_param_sets(
                 nu1,
                 nu2,
                 T_gens,
+                "noMig",
                 migTime,
                 migProb,
                 sim_utils.get_seeds(1)[0],
@@ -113,6 +115,7 @@ def create_param_sets(
                 nu1,
                 nu2,
                 T_gens,
+                "mig12",
                 migTime,
                 migProb,
                 sim_utils.get_seeds(1)[0],
@@ -132,6 +135,7 @@ def create_param_sets(
                 nu1,
                 nu2,
                 T_gens,
+                "mig21",
                 migTime,
                 migProb,
                 sim_utils.get_seeds(1)[0],
@@ -147,6 +151,7 @@ def worker(args):
         params,
         Nref,
         L,
+        mu,
         sampleSize1,
         sampleSize2,
         growth_rate_1,
@@ -161,7 +166,7 @@ def worker(args):
         nu1, nu2, growth_rate_1, growth_rate_2, Nref, T_gens, mig, migTime, migProb
     )
 
-    sim(rep, msdir, treedir, dumpdir, demo, sampleSize1, sampleSize1, r, L, seed)
+    sim(rep, msdir, treedir, dumpdir, demo, sampleSize1, sampleSize2, r, mu, L, seed)
 
 
 def create_demo(
@@ -220,7 +225,7 @@ def create_demo(
     return demography
 
 
-def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, L, seed):
+def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, mu, L, seed):
     ts = msprime.sim_ancestry(
         demography=demography,
         samples={"simulans": n_samps_1, "sechelia": n_samps_2},
@@ -230,16 +235,17 @@ def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, L, se
         random_seed=seed,
         model="hudson",
     )
+    mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
 
     ts_nwk = []
-    for tree in ts.trees():
+    for tree in mut_ts.trees():
         newick = tree.newick()
         ts_nwk.append(f"[{int(tree.span)}] {newick}")
 
     try:
         with open(os.path.join(msdir, f"{rep}.notree.msOut"), "w+") as msfile:
             # Why is write_ms written like this? Just let me compress with a bytestream
-            tskit.write_ms(ts, output=msfile)
+            tskit.write_ms(mut_ts, output=msfile)
 
         sim_utils.inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
 
@@ -248,7 +254,7 @@ def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, L, se
         with gzip.open(os.path.join(treedir, f"{rep}.nwk.gz"), "w") as treefile:
             treefile.write(bytes("\n".join(ts_nwk), "utf-8"))
 
-        ts.dump(os.path.join(dumpdir, f"{rep}.dump"))
+        mut_ts.dump(os.path.join(dumpdir, f"{rep}.dump"))
 
     except ValueError as e:
         print(f"[Error] {e}")
@@ -256,14 +262,7 @@ def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, L, se
 
 def main():
     ua = utils.get_ua()
-
-    msdir = os.path.join(ua.outdir, "ms")
-    treedir = os.path.join(ua.outdir, "trees")
-    dumpdir = os.path.join(ua.outdir, "tsdump")
-
-    # Make outdir if not present
-    utils.make_dirs(msdir, treedir, dumpdir)
-
+    os.makedirs(ua.outdir, exist_ok=True)
     reps = utils.get_reps(ua)
 
     # Generate parameter and command sets
@@ -336,29 +335,66 @@ def main():
                 "seed",
             ],
             paramsDict[lab],
-            f"{lab}_params.txt",
+            f"{lab}_{reps[0]}-{reps[-1]}_params.txt",
         )
 
     # Simulate
     # TODO wrap in MP
     # TODO fix r and L values
     for scenario in paramsDict.keys():
-        print("[Debug]", scenario)
-        print("[Debug]", pprint(paramsDict[scenario]))
-        for rep, pset in zip(reps, paramsDict[scenario]):
-            worker(
-                (
-                    pset,
-                    Nref,
-                    sampleSize1,
-                    sampleSize2,
-                    growth_rate_1,
-                    growth_rate_2,
-                    msdir,
-                    treedir,
-                    dumpdir,
+
+        msdir = os.path.join(ua.outdir, scenario, "ms")
+        treedir = os.path.join(ua.outdir, scenario, "trees")
+        dumpdir = os.path.join(ua.outdir, scenario, "tsdump")
+
+        # Make outdir if not present
+        utils.make_dirs(msdir, treedir, dumpdir)
+
+        # Simulate
+        serial = True
+        if serial:
+            for p in tqdm(
+                paramsDict[scenario], total=len(reps), desc=f"Simulating {scenario}"
+            ):
+                worker(
+                    (
+                        p,
+                        Nref,
+                        L,
+                        mu,
+                        sampleSize1,
+                        sampleSize2,
+                        growth_rate_1,
+                        growth_rate_2,
+                        msdir,
+                        treedir,
+                        dumpdir,
+                    )
                 )
+        else:
+            pool = mp.Pool(ua.threads)
+            tqdm(
+                pool.map(
+                    worker,
+                    zip(
+                        paramsDict[scenario],
+                        cycle([Nref]),
+                        cycle([L]),
+                        cycle([mu]),
+                        cycle([sampleSize1]),
+                        cycle([sampleSize2]),
+                        cycle([growth_rate_1]),
+                        cycle([growth_rate_2]),
+                        cycle([msdir]),
+                        cycle([treedir]),
+                        cycle([dumpdir]),
+                    ),
+                ),
+                total=len(reps),
+                desc="Simulating",
+                chunksize=5,
             )
+            pool.close()
 
 
 if __name__ == "__main__":
