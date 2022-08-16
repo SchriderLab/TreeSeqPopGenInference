@@ -225,16 +225,19 @@ def create_demo(
 
 
 def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, mu, L, seed):
-    ts = msprime.sim_ancestry(
-        demography=demography,
-        samples={"simulans": n_samps_1, "sechelia": n_samps_2},
-        recombination_rate=r,
-        sequence_length=L,
-        ploidy=1,
-        random_seed=seed,
-        model="hudson",
-    )
-    mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
+    try:
+        ts = msprime.sim_ancestry(
+            demography=demography,
+            samples={"simulans": n_samps_1, "sechelia": n_samps_2},
+            recombination_rate=r,
+            sequence_length=L,
+            ploidy=1,
+            random_seed=seed,
+            model="hudson",
+        )
+        mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
+    except:
+        return
 
     ts_nwk = []
     for tree in mut_ts.trees():
