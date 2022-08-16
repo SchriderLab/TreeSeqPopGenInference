@@ -167,7 +167,7 @@ def worker(args):
         nu1, nu2, growth_rate_1, growth_rate_2, Nref, T_gens, mig, migTime, migProb
     )
 
-    print(rep, theta, r, nu1, nu2, T_gens, mig, migTime, migProb, seed)
+    #print(rep, theta, r, nu1, nu2, T_gens, mig, migTime, migProb, seed)
     sim(rep, msdir, treedir, dumpdir, demo, sampleSize1, sampleSize2, r, mu, L, seed)
 
 
