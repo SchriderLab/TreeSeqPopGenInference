@@ -37,13 +37,13 @@ def main():
     cmd = 'sbatch --mem=16G -t 04:00:00 -o {2} --wrap "python3 src/data/relate.py --idir {0} --odir {1}"'
     idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u]
     
-    for idir in idirs:
+    for idir in idirs[:1]:
         log_file = os.path.join(args.odir, '{}_slurm.out'.format(idir.split('/')[-1]))
-        odir = os.path.join(args.odir, )
+        odir = os.path.join(args.odir, idir.split('/')[-1])
         
         cmd_ = cmd.format(idir, odir, log_file)
         print(cmd_)
-        os.system(cmd_)
+        #os.system(cmd_)
         
     # ${code_blocks}
 

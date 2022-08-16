@@ -106,7 +106,9 @@ def main():
                                      haps[ix].split('/')[-1].split('.')[0])
             os.system(cmd_)
         
-            os.system('mv {0}* {1}'.format(haps[ix].split('/')[-1].split('.')[0], odir))
+            os.system('mv {0}.anc {1}'.format(haps[ix].split('/')[-1].split('.')[0], odir))
+            os.system('mv {0}.mut {1}'.format(haps[ix].split('/')[-1].split('.')[0], odir))
+            os.system('rm -rf {}*'.format(haps[ix].split('/')[-1].split('.')[0]))
         
         os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
