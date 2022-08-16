@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from utils import sim_utils, utils
 
-
 # Parameter handling and utility
 def drawUnif(m, fold=0.5):
     x = m * fold
@@ -243,11 +242,11 @@ def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, mu, L
         ts_nwk.append(f"[{int(tree.span)}] {newick}")
 
     try:
-        with open(os.path.join(msdir, f"{rep}.notree.msOut"), "w+") as msfile:
+        with open(os.path.join(msdir, f"{rep}.msOut"), "w+") as msfile:
             # Why is write_ms written like this? Just let me compress with a bytestream
             tskit.write_ms(mut_ts, output=msfile)
 
-        sim_utils.inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
+        #sim_utils.inject_nwk(os.path.join(msdir, f"{rep}.notree.msOut"), ts_nwk)
 
         utils.compress_file(os.path.join(msdir, f"{rep}.msOut"), overwrite=True)
 
@@ -300,7 +299,7 @@ def main():
 
     # Derived params
     T_gens = T / gen_time
-    theta = 4 * Nref * mu
+    theta = 4 * Nref * mu * L
     rho = 1 / (theta / thetaOverRho)
     morgans_pbp = rho / (4 * Nref * L)
     growth_rate_1 = np.log(nu1 / nu1_0) / T_gens  # Growth rates constant based on means
