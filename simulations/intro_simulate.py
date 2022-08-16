@@ -225,20 +225,18 @@ def create_demo(
 
 
 def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, mu, L, seed):
-    try:
-        ts = msprime.sim_ancestry(
-            demography=demography,
-            samples={"simulans": n_samps_1, "sechelia": n_samps_2},
-            recombination_rate=r,
-            sequence_length=L,
-            ploidy=1,
-            random_seed=seed,
-            model="hudson",
-        )
-        mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
-    except:
-        print('model failed....')
-        return
+    
+    ts = msprime.sim_ancestry(
+        demography=demography,
+        samples={"simulans": n_samps_1, "sechelia": n_samps_2},
+        recombination_rate=r,
+        sequence_length=L,
+        ploidy=1,
+        random_seed=seed,
+        model="hudson",
+    )
+    mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
+    
 
     ts_nwk = []
     for tree in mut_ts.trees():
@@ -283,7 +281,7 @@ def main():
     2Nref_m21 : 0.0861669095413
     """
     # Assumed params
-    gen_time = 1 / 15  # 15 gens/year
+    gen_time = 15.  # 15 gens/year
     L = 10000
     sampleSize1 = 20
     sampleSize2 = 14
@@ -302,7 +300,7 @@ def main():
     T = 86404.6219829  # Split time
 
     # Derived params
-    T_gens = T / gen_time
+    T_gens = T / (4 * Nref / gen_time)
     theta = 4 * Nref * mu * L
     rho = 1 / (theta / thetaOverRho)
     morgans_pbp = rho / (4 * Nref * L)
