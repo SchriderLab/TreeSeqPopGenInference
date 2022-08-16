@@ -44,7 +44,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    idirs = [u for u in os.listdir(args.idir) if os.path.isdir(os.path.join(args.idir, u))]
+    idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if os.path.isdir(os.path.join(args.idir, u))]
 
     for idir in idirs:
         logging.info('working on {}...'.format(idir))
