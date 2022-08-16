@@ -70,14 +70,10 @@ def main():
         # read the ms file for the mutation rate and number of sites
         msf = open(ifile, 'r')
         lines = msf.readlines()
-
-        l = lines[3].replace('//', '').replace('*', '').split('\t')
         
         L = float(args.L)  
         r = float(args.r)
         mu = float(args.mu)
-        
-        n_sites = int(lines[4].split(':')[-1].replace('\n',''))
         
         ofile = open(ifile.split('.')[0] + '.map', 'w')
         ofile.write('pos COMBINED_rate Genetic_Map\n')
