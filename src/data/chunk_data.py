@@ -46,6 +46,7 @@ def main():
     
     idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if os.path.isdir(os.path.join(args.idir, u))]
 
+    counter = 0
     for idir in idirs:
         logging.info('working on {}...'.format(idir))
         
@@ -58,7 +59,7 @@ def main():
         for ix in range(len(ifile_chunks)):
             ifiles = ifile_chunks[ix]
             
-            odir = os.path.join(args.odir, '{0:05d}'.format(ix))
+            odir = os.path.join(args.odir, '{0:05d}'.format(counter))
             os.system('mkdir -p {}'.format(odir))
             
             for ifile in ifiles:
@@ -66,6 +67,7 @@ def main():
                 
                 os.system('cp {0} {1}'.format(ifile, os.path.join(odir, ifile_)))
             
+            counter += 1
 
 if __name__ == '__main__':
     main()
