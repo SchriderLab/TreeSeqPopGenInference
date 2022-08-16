@@ -47,6 +47,8 @@ def main():
     idirs = [u for u in os.listdir(args.idir) if os.path.isdir(os.path.join(args.idir, u))]
 
     for idir in idirs:
+        logging.info('working on {}...'.format(idir))
+        
         tag = idir.split('/')[-1]
         idir = os.path.join(idir, 'ms')
         
