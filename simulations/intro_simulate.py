@@ -237,6 +237,7 @@ def sim(rep, msdir, treedir, dumpdir, demography, n_samps_1, n_samps_2, r, mu, L
         )
         mut_ts = msprime.sim_mutations(ts, rate=mu, discrete_genome=False)
     except:
+        print('model failed....')
         return
 
     ts_nwk = []
