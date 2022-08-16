@@ -48,10 +48,12 @@ def drawParams(
         List(float): Parameters for simulations.
             If mig=True the final two will be migration time and probability, otherwise None.
     """
+    
+    
     theta = drawUnif(thetaMean)
     rho = theta / thetaOverRho
-    mean_morgans_pbp = rho / (4 * Nref * L)
-    morgans_pbp = drawUnif(mean_morgans_pbp)
+    morgans_pbp = rho / (4 * Nref * L)
+    #morgans_pbp = drawUnif(mean_morgans_pbp)
     nu1 = drawUnif(nu1Mean)
     nu2 = drawUnif(nu2Mean)
     T = drawUnif(TMean)
@@ -82,18 +84,18 @@ def create_param_sets(
     # Create parameter sets
     noMigParams, mig12Params, mig21Params = [], [], []
     for rep in reps:
-        theta, morgans_pbp, nu1, nu2, T_gens, migTime, migProb = drawParams(
+        theta_, morgans_pbp_, nu1_, nu2_, T_gens_, migTime, migProb = drawParams(
             Nref, L, thetaOverRho, theta, nu1, nu2, T_gens, False
         )
 
         noMigParams.append(
             [
                 rep,
-                theta,
-                morgans_pbp,
-                nu1,
-                nu2,
-                T_gens,
+                theta_,
+                morgans_pbp_,
+                nu1_,
+                nu2_,
+                T_gens_,
                 "noMig",
                 migTime,
                 migProb,
@@ -102,19 +104,19 @@ def create_param_sets(
         )
 
         # Mig 1 -> 2
-        theta, morgans_pbp, nu1, nu2, T_gens, migTime, migProb = drawParams(
+        theta_, morgans_pbp_, nu1_, nu2_, T_gens_, migTime, migProb = drawParams(
             Nref, L, thetaOverRho, theta, nu1, nu2, T_gens, True
         )
 
         mig12Params.append(
             [
                 rep,
-                theta,
-                morgans_pbp,
-                nu1,
-                nu2,
-                T_gens,
-                "mig12",
+                theta_,
+                morgans_pbp_,
+                nu1_,
+                nu2_,
+                T_gens_,
+                "noMig",
                 migTime,
                 migProb,
                 sim_utils.get_seeds(1)[0],
@@ -122,19 +124,19 @@ def create_param_sets(
         )
 
         # Mig 2 -> 1
-        theta, morgans_pbp, nu1, nu2, T_gens, migTime, migProb = drawParams(
+        theta_, morgans_pbp_, nu1_, nu2_, T_gens_, migTime, migProb = drawParams(
             Nref, L, thetaOverRho, theta, nu1, nu2, T_gens, True
         )
 
         mig21Params.append(
             [
                 rep,
-                theta,
-                morgans_pbp,
-                nu1,
-                nu2,
-                T_gens,
-                "mig21",
+                theta_,
+                morgans_pbp_,
+                nu1_,
+                nu2_,
+                T_gens_,
+                "noMig",
                 migTime,
                 migProb,
                 sim_utils.get_seeds(1)[0],
@@ -165,6 +167,7 @@ def worker(args):
         nu1, nu2, growth_rate_1, growth_rate_2, Nref, T_gens, mig, migTime, migProb
     )
 
+    print(rep, theta, r, nu1, nu2, T_gens, mig, migTime, migProb, seed)
     sim(rep, msdir, treedir, dumpdir, demo, sampleSize1, sampleSize2, r, mu, L, seed)
 
 
