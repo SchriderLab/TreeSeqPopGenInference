@@ -12,6 +12,8 @@ def chunks(lst, n):
         
     return ret
 
+import random
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -23,6 +25,7 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--n_per", default = "250")
+    parser.add_argument("--n_per_class", default = "100000")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -54,6 +57,9 @@ def main():
         idir = os.path.join(idir, 'ms')
         
         ifiles = glob.glob(os.path.join(idir, '*.msOut.gz'))
+        random.shuffle(ifiles)
+        
+        ifiles = ifiles[:int(args.n_per_class)]
         
         ifile_chunks = chunks(ifiles, int(args.n_per))
         for ix in range(len(ifile_chunks)):
@@ -64,6 +70,7 @@ def main():
             
             for ifile in ifiles:
                 ifile_ = tag + '.' + ifile.split('/')[-1]
+                lines = open(ifile).readlines()
                 
                 os.system('cp {0} {1}'.format(ifile, os.path.join(odir, ifile_)))
             
