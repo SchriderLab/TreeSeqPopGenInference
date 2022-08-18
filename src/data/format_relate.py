@@ -68,6 +68,8 @@ def main():
         stag = stags[ik]
         
         anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and stag in u)])
+        if len(anc_files) == 0:
+            continue
         
         indices_f = list(range(len(anc_files)))
         random.shuffle(indices_f)
