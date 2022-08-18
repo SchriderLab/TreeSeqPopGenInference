@@ -43,7 +43,7 @@ def main():
         
         cmd_ = cmd.format(idir, odir, log_file)
         print(cmd_)
-        #os.system(cmd_)
+        os.system(cmd_)
         
     # ${code_blocks}
 
