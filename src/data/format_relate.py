@@ -53,7 +53,8 @@ def main():
     ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
-    print(ifiles)
+    N_val = int(N * float(args.val_prop))
+    N = N - N_val
     
     tags = [u.split('/')[-1].split('.')[-3] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
@@ -82,16 +83,12 @@ def main():
             N = len(anc_files)
         else:
             N = int(args.n_samples)
-            
-        N_val = int(N * float(args.val_prop))
-        N = N - N_val
         
         branch_lengths = []
         snp_widths = []
         
         times = []
         
-        logging.info('have {0} training and {1} validation replicates...'.format(N, N_val))
         logging.info('writing...')
         for ix in range(N + N_val):
             #if (ix + 1) % 100 == 0:
@@ -305,7 +302,7 @@ def main():
                 infos.append(info_vec)
                 
             if len(Xs) > 0:
-                if ix < N:
+                if ii < N:
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
@@ -317,7 +314,7 @@ def main():
             Xg = x[0]
             A = np.array(As)
             
-            if ix < N:
+            if ii < N:
                 ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
                 if A.shape[0] > 0:
                     ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
