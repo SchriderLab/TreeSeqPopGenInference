@@ -45,17 +45,17 @@ def main():
         _ = []
         ls = [] 
         for skey in skeys:
-            print(list(ifile[key][skey].keys()))
-            x = np.array(ifile[key][skey]['x'])
-            ls.append(x.shape[0])
-            
-            x = x[:,0]
-            x = x[np.where(x > 0.)]
-            
-            
-            x = np.exp(x)
-            
-            _.extend(x)
+            if 'x' in list(ifile[key][skey].keys()):
+                x = np.array(ifile[key][skey]['x'])
+                ls.append(x.shape[0])
+                
+                x = x[:,0]
+                x = x[np.where(x > 0.)]
+                
+                
+                x = np.exp(x)
+                
+                _.extend(x)
             
         print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls))
 
