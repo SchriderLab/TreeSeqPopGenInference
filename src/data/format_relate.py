@@ -53,6 +53,8 @@ def main():
     ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
+    N = len(ifiles)
+    
     N_val = int(N * float(args.val_prop))
     N = N - N_val
     
