@@ -75,7 +75,7 @@ class TreeSeqGenerator(object):
                     x = X_[ii_]
                     
                     ik = list(np.where(x[:,0] != 0))
-                    x[ik,0] = (np.exp(x[ik,0]) - 1.5989695331044547) / 2.3575154388917863
+                    x[ik,0] = (x[ik,0] - 1.5218211198855984) / 2.138067735871922
                     
                     X.append(x)
                     indices.append(edges[ii_])
