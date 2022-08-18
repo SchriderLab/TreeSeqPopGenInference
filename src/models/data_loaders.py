@@ -11,6 +11,7 @@ class TreeSeqGenerator(object):
     def __init__(self, ifile, models=None, n_samples_per=12, sequence_length = 32, sequential = True):
         if models is None:
             self.models = list(ifile.keys())
+            print(self.models)
         else:
             self.models = models
 
@@ -100,6 +101,7 @@ class TreeSeqGenerator(object):
 
         for key in self.keys.keys():
             random.shuffle(self.keys[key])
+            print(len(self.keys[key]))
             
     def __len__(self):
         return int(np.floor(np.min([len(self.keys[u]) for u in self.keys.keys()]) / self.n_samples_per))
