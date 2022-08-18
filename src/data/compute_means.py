@@ -52,9 +52,6 @@ def main():
                 x = x[:,0]
                 x = x[np.where(x > 0.)]
                 
-                
-                x = np.exp(x)
-                
                 _.extend(x)
             
         print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls))
