@@ -70,7 +70,6 @@ def main():
             
             for ifile in ifiles:
                 ifile_ = tag + '.' + ifile.split('/')[-1]
-                lines = open(ifile).readlines()
                 
                 os.system('cp {0} {1}'.format(ifile, os.path.join(odir, ifile_)))
             
