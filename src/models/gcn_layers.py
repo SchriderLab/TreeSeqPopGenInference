@@ -746,7 +746,7 @@ class MLP(nn.Module):
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 26, n_gcn_layers = 4, 
-                             num_gru_layers = 1, hidden_size = 256, L = 16, n_heads = 1, n_gcn_iter = 8):
+                             num_gru_layers = 1, hidden_size = 256, L = 16, n_heads = 1, n_gcn_iter = 12):
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -762,11 +762,10 @@ class GATSeqClassifier(nn.Module):
         self.dropout = nn.Dropout(0.15)
         
         self.L = L
-        self.gcns = nn.ModuleList()
+        self.gcn = GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads)
         
         for ix in range(n_gcn_iter):    
             self.norms.append(nn.LayerNorm((gcn_dim, )))
-            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads))
         
         """
         for ix in range(1, n_gcn_layers):
@@ -786,7 +785,7 @@ class GATSeqClassifier(nn.Module):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         
         for ix in range(self.n_gcn_iter):
-            x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
+            x = self.norms[ix](self.gcn(x, edge_index) + x)    
             x = self.act(x)
             
         x = torch.cat([x0, x], dim = -1)
