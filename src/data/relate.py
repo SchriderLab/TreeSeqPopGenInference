@@ -64,7 +64,7 @@ def main():
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
-        cmd_ = rcmd.format(ifile, ifile.split('.')[0], int(args.L))
+        cmd_ = rcmd.format(ifile, ifile.split('.')[-2], int(args.L))
         os.system(cmd_)
         
         # read the ms file for the mutation rate and number of sites
