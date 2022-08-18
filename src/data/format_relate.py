@@ -81,11 +81,6 @@ def main():
             logging.info('couldnt read it...moving on...')
             continue
         
-        if args.n_samples == "None":
-            N = len(anc_files)
-        else:
-            N = int(args.n_samples)
-        
         branch_lengths = []
         snp_widths = []
         
