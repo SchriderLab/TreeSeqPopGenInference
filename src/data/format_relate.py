@@ -58,7 +58,7 @@ def main():
     N_val = int(N * float(args.val_prop))
     N = N - N_val
     
-    tags = [u.split('/')[-1].split('.')[-3] for u in ifiles]
+    tags = [u.split('/')[-1].split('.')[-4] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
     for ik in range(len(ifiles)):
