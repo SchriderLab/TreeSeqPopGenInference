@@ -60,16 +60,17 @@ def main():
     for ifile in ifiles:
         ifile = ifile.replace('.gz', '')
         
-        tag = ifile.split('/')[-1].split('_')[0]
+        tag = ifile.split('/')[-1].split('.')[-2]
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, ifile.split('.')[-2], int(args.L))
         os.system(cmd_)
+        os.system('mv {0}* {1}'.format(ifile.split('.')[-2], idir))
         
         # read the ms file for the mutation rate and number of sites
-        msf = open(ifile, 'r')
-        lines = msf.readlines()
+        #msf = open(ifile, 'r')
+        #lines = msf.readlines()
         
         L = float(args.L)  
         r = float(args.r)
