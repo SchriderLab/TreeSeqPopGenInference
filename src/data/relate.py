@@ -75,13 +75,13 @@ def main():
         r = float(args.r)
         mu = float(args.mu)
         
-        ofile = open(ifile.split('.')[0] + '.map', 'w')
+        ofile = open(ifile.split('.')[-2] + '.map', 'w')
         ofile.write('pos COMBINED_rate Genetic_Map\n')
         ofile.write('0 {} 0\n'.format(r * L))
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
-        ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
+        ofile = open(ifile.split('.')[-2] + '.poplabels', 'w')
         ofile.write('sample population group sex\n')
         for k in range(1, 26):
             ofile.write('UNR{} POP POP 1\n'.format(k))
@@ -92,7 +92,7 @@ def main():
         #ofile.write(sum(['0' for k in range(n_sites)]) + '\n')
         #ofile.close()
         
-        map_file = ifile.split('.')[0] + '.map'
+        map_file = ifile.split('.')[-2] + '.map'
         samples = sorted(glob.glob(os.path.join(idir, '*.sample')))
         haps = sorted(glob.glob(os.path.join(idir, '*.haps')))
         
