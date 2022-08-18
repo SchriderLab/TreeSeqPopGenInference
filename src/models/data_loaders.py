@@ -8,7 +8,7 @@ import glob
 import os
 
 class TreeSeqGenerator(object):
-    def __init__(self, ifile, models=None, n_samples_per=12, sequence_length = 32, sequential = True):
+    def __init__(self, ifile, models=None, n_samples_per=24, sequence_length = 16, sequential = True):
         if models is None:
             self.models = list(ifile.keys())
             print(self.models)
