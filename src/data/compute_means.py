@@ -45,7 +45,7 @@ def main():
         _ = []
         ls = [] 
         for skey in skeys:
-            x = np.array(ifile[key][skeys]['x_0'])
+            x = np.array(ifile[key][skey]['x_0'])
             ls.append(x.shape[0])
             
             x = x[:,0]
