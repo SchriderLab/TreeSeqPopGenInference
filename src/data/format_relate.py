@@ -55,7 +55,7 @@ def main():
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
     print(ifiles)
     
-    tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
+    tags = [u.split('/')[-1].split('.')[-3] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
     for ii in range(len(ifiles)):
@@ -259,8 +259,7 @@ def main():
                 X = np.array(X)
                 # topologically order nodes
                 X = X[indices,:]
-                
-                
+
                 Xs.append(X)
                 
                 lengths = np.array(lengths)
