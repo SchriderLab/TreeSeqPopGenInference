@@ -8,7 +8,7 @@ import glob
 import os
 
 class TreeSeqGenerator(object):
-    def __init__(self, ifile, models=None, n_samples_per=12, sequence_length = 24, sequential = True):
+    def __init__(self, ifile, models=None, n_samples_per=12, sequence_length = 32, sequential = True):
         if models is None:
             self.models = list(ifile.keys())
         else:
@@ -57,7 +57,8 @@ class TreeSeqGenerator(object):
                     if not 'x' in skeys:
                         continue
                     
-                    X_ = np.array(self.ifile[model][key]['x'])                   
+                    X_ = np.array(self.ifile[model][key]['x'])   
+                    #print(X_.shape)
                     if len(X_) > self.s_length:
                         ii = np.random.choice(range(len(X_) - self.s_length))
                         ii = range(ii, ii + self.s_length)

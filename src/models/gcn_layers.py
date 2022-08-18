@@ -745,8 +745,8 @@ class MLP(nn.Module):
         return self.model(x.view(x.size(0), -1))
     
 class GATSeqClassifier(nn.Module):
-    def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 58, n_gcn_layers = 4, 
-                             num_gru_layers = 1, hidden_size = 256, L = 24, n_heads = 2, n_gcn_iter = 6):
+    def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 26, n_gcn_layers = 4, 
+                             num_gru_layers = 1, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 8):
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -798,7 +798,7 @@ class GATSeqClassifier(nn.Module):
         n_batch = max(bl) + 1
         
         x = x.view((n_batch, self.L, x.shape[-1]))
-        #print(x.shape)
+        
         _, h = self.gru(x)
         h = torch.flatten(h.transpose(0, 1), 1, 2)
         
