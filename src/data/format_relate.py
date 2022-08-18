@@ -59,13 +59,15 @@ def main():
     N = N - N_val
     
     tags = [u.split('/')[-1].split('.')[-4] for u in ifiles]
+    stags = [u.split('/')[-1].split('.')[-3] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
     for ik in range(len(ifiles)):
         tag = tags[ik]
         ifile = ifiles[ik]
+        stag = stags[ik]
         
-        anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and tag in u)])
+        anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and stag in u)])
         
         indices_f = list(range(len(anc_files)))
         random.shuffle(indices_f)
