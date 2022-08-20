@@ -78,6 +78,9 @@ def main():
                 ofile.flush()
                 ofile_val.flush()
                 
+    for case in sorted(list(counts.keys())):
+        logging.info('have {0}, {1} training / validation replicates for case {2}...'.format(counts[case][0], counts[case][1], case))
+                
     ofile.close()
     ofile_val.close()
         
