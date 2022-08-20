@@ -97,6 +97,9 @@ def main():
         samples = sorted(glob.glob(os.path.join(idir, '*.sample')))
         haps = sorted(glob.glob(os.path.join(idir, '*.haps')))
         
+        if len(samples) != len(haps):
+            continue
+        
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
                                      samples[ix], map_file, 
