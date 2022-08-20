@@ -68,7 +68,8 @@ def main():
         stag = stags[ik]
         
         anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and stag in u)])
-        if len(anc_files) == 0:
+        if len(anc_files) != 1:
+            logging.info('ERROR: have {} as files...'.format(anc_files))
             continue
         
         indices_f = list(range(len(anc_files)))
@@ -82,7 +83,7 @@ def main():
             x, y, p = load_data(ifile, None)
             del y
         except:
-            logging.info('couldnt read it...moving on...')
+            logging.info('ERROR: couldnt read it...moving on...')
             continue
         
         branch_lengths = []
@@ -96,6 +97,7 @@ def main():
         #    print(ix)
         
         if not os.path.exists(anc_files[0].replace('.anc', '.mut')):
+            logging.info('ERROR: no corresponding .mut file.... for {}'.format(anc_files[0]))
             continue
         
         anc_file = open(anc_files[0], 'r')
