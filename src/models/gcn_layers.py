@@ -746,7 +746,7 @@ class MLP(nn.Module):
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, n_classes = 3, in_dim = 6, gcn_dim = 26, n_gcn_layers = 4, 
-                             num_gru_layers = 1, hidden_size = 256, L = 16, n_heads = 1, n_gcn_iter = 12):
+                             num_gru_layers = 1, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 8):
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -779,7 +779,7 @@ class GATSeqClassifier(nn.Module):
         self.gru = nn.GRU(hidden_size * num_gru_layers * 2, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         
-        self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
+        self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 4)
         self.soft = nn.LogSoftmax(dim = -1)
         
     def forward(self, x0, edge_index, batch, bl):
