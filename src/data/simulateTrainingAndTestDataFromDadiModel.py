@@ -51,7 +51,7 @@ def writeTbsFile(params, outFileName):
             outFile.write(" ".join([str(x) for x in paramVec]) + "\n")
             
 if __name__ == '__main__':
-    slurm_cmd = 'sbatch -t 02:00:00 --mem=4G --wrap "{0} | tee {1} && gzip {1}"'
+    slurm_cmd = 'sbatch -t 08:00:00 --mem=8G --wrap "{0} | tee {1} && gzip {1}"'
 
     for simType, sampleNumber, outDir in [("train", trainingSampleNumber, trainingOutDir)]:
         noMigParams, mig12Params, mig21Params = [], [], []
@@ -83,4 +83,4 @@ if __name__ == '__main__':
         mig21TbsFileName = "%s/mig21.tbs" %(outDir)
         mig21SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -T -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 2 1 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig21TbsFileName)
         writeTbsFile(mig21Params, mig21TbsFileName)
-        os.system(slurm_cmd.format(mig12SimCmd, os.path.join(outDir, 'mig21.msOut')))
+        os.system(slurm_cmd.format(mig21SimCmd, os.path.join(outDir, 'mig21.msOut')))
