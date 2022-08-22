@@ -66,7 +66,7 @@ def main():
         if len(anc_files) == 0:
             logging.info('ERROR: have no matching .anc files for {}...'.format(ifile))
         else:
-            logging.info('have {} anc files...')
+            logging.info('have {} anc files...'.format(len(anc_files)))
         indices_f = list(range(len(anc_files)))
         random.shuffle(indices_f)
         
