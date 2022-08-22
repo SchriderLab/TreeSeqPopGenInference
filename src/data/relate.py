@@ -64,7 +64,7 @@ def main():
             
             ifile = ifile.replace('.gz', '')
             
-        tag = ifile.split('/')[-1].split('_')[0]
+        tag = ifile.split('/')[-1].split('.')[0]
         
         s = id_generator()
         
