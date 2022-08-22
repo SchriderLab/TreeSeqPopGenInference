@@ -7,10 +7,15 @@ from collections import OrderedDict
 import glob
 
 from data_functions import load_data
+import random
+import string
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 def parse_args():
     # Argument Parser
@@ -21,6 +26,7 @@ def parse_args():
     parser.add_argument("--L", default = "10000")
     parser.add_argument("--mu", default = "3.5e-9")
     parser.add_argument("--r", default = "1.75e-8")
+    parser.add_argument("--relate_path", default = "/nas/longleaf/home/ddray/SeqOrSwim/relate/bin/Relate")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -50,22 +56,34 @@ def main():
     ### get haplotype and sample files
     logging.info('uncompressing data...')
     ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
-    for ifile in ifiles:
+    for ix in range(len(ifiles)):
+        ifile = ifiles[ix]
+        
         if '.gz' in ifile:
             os.system('gzip -d {}'.format(ifile))
+            
+            ifile = ifile.replace('.gz', '')
+            
+        tag = ifile.split('/')[-1].split('_')[0]
+        
+        s = id_generator()
+        
+        ifile_ = ifile.replace(tag, tag + s)
+        os.system('mv {0} {1}'.format(ifile, ifile_))
+        
+        ifiles[ix] = ifile_
     
     rcmd = 'Rscript src/data/ms2haps.R {0} {1} {2}'
-    relate_cmd = 'relate/bin/Relate --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
+    relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
-        ifile = ifile.replace('.gz', '')
-        
         tag = ifile.split('/')[-1].split('_')[0]
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, ifile.split('.')[0], int(args.L))
-        os.system(cmd_)
+        os.system(cmd_)        
+        os.system('mv {0}* {1}'.format(ifile.split('.')[0]), odir)
         
         # read the ms file for the mutation rate and number of sites
         msf = open(ifile, 'r')
@@ -81,16 +99,13 @@ def main():
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
+        """
         ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
         ofile.write('sample population group sex\n')
         for k in range(1, 26):
             ofile.write('UNR{} POP POP 1\n'.format(k))
         ofile.close()
-        
-        #ofile = open(ifile.split('.')[0] + '.relate.anc', 'w')
-        #ofile.write('>anc\n')
-        #ofile.write(sum(['0' for k in range(n_sites)]) + '\n')
-        #ofile.close()
+        """
         
         map_file = ifile.split('.')[0] + '.map'
         samples = sorted(glob.glob(os.path.join(idir, '*.sample')))
@@ -99,16 +114,11 @@ def main():
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
                                      samples[ix], map_file, 
-                                     haps[ix].split('/')[-1].split('.')[0])
+                                     haps[ix].split('/')[-1].split('.')[0], odir)
             os.system(cmd_)
-        
-            os.system('mv {0}.anc {1}'.format(haps[ix].split('/')[-1].split('.')[0], odir))
-            os.system('mv {0}.mut {1}'.format(haps[ix].split('/')[-1].split('.')[0], odir))
-            os.system('rm -rf {}*'.format(haps[ix].split('/')[-1].split('.')[0]))
         
         os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
-        os.system('rm -rf {}*'.format(tag))
         
     # compress back
     logging.info('compressing back...')
