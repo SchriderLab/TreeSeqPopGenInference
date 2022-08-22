@@ -30,7 +30,7 @@ class TreeSeqGenerator(object):
 
         # shuffle the keys / make sure they are all there (keys are deleted
         # during training or validation so as not to repeat samples)
-        self.o_keys = {model: list(self.ifile[model].keys()) for model in self.models}
+        self.keys = {model: list(self.ifile[model].keys()) for model in self.models}
         self.on_epoch_end()
         
         return
@@ -48,13 +48,13 @@ class TreeSeqGenerator(object):
             # grab n_samples_per for each model
             for ix in range(self.n_samples_per):
                 while True:
-                    if len(self.keys[model]) == 0:
+                    if self.counts[model] == len(self.keys[model]):
                         break
                     
                     model_index = self.models.index(model)
-                    key = self.keys[model][0]
+                    key = self.keys[model][self.counts[model]]
     
-                    del self.keys[model][0]
+                    self.counts[model] += 1
                     skeys = sorted(list(self.ifile[model][key].keys()))
                     
                     if not 'x' in skeys:
@@ -68,7 +68,7 @@ class TreeSeqGenerator(object):
                         
                         break
                     
-                if len(self.keys[model]) == 0:
+                if self.counts[model] == len(self.keys[model]):
                     return None, None, None
                 
                 edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
@@ -99,7 +99,9 @@ class TreeSeqGenerator(object):
         return batch, y, batch_
                 
     def on_epoch_end(self):
-        self.keys = copy.copy(self.o_keys)
+        counts = dict()
+        for model in self.models:
+            counts[model] = 0
 
         for key in self.keys.keys():
             random.shuffle(self.keys[key])
