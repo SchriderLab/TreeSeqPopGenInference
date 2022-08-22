@@ -60,7 +60,7 @@ def main():
     for ifile in ifiles:
         ifile = ifile.replace('.gz', '')
         
-        tag = ifile.split('/')[-1].split('.')[-2]
+        tag = ifile.split('/')[-1].split('.')[0]
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
@@ -98,6 +98,7 @@ def main():
         haps = sorted(glob.glob(os.path.join(idir, '*.haps')))
         
         if len(samples) != len(haps):
+            logging.info('ERROR: have {0} as sample files and {1} as haps files...'.format(samples, haps))
             continue
         
         for ix in range(len(samples)):
