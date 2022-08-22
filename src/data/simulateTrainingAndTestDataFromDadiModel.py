@@ -70,17 +70,17 @@ if __name__ == '__main__':
             mig21Params.append(paramVec)
             
         noMigTbsFileName = "%s/noMig.tbs" %(outDir)
-        noMigSimCmd = "msmove/gccRelease/msmove %d %d -t tbs -T -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, noMigTbsFileName)
+        noMigSimCmd = "msmove/gccRelease/msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, noMigTbsFileName)
         writeTbsFile(noMigParams, noMigTbsFileName)
         os.system(slurm_cmd.format(noMigSimCmd, os.path.join(outDir, 'noMig.msOut')))
         #os.system("echo \"%s > %s/noMig.msOut\" | qsub -q HP8g7,HPblg7,galaxy -w e -N msmove -o /dev/null -e /dev/null" %(noMigSimCmd, outDir))
     
         mig12TbsFileName = "%s/mig12.tbs" %(outDir)
-        mig12SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -T -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig12TbsFileName)
+        mig12SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 1 2 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig12TbsFileName)
         writeTbsFile(mig12Params, mig12TbsFileName)
         os.system(slurm_cmd.format(mig12SimCmd, os.path.join(outDir, 'mig12.msOut')))
     
         mig21TbsFileName = "%s/mig21.tbs" %(outDir)
-        mig21SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -T -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 2 1 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig21TbsFileName)
+        mig21SimCmd = "msmove/gccRelease/msmove %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 6.576808 -eg 0 2 -7.841388 -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -ev tbs 2 1 tbs < %s" %(sampleSize1+sampleSize2, sampleNumber, numSites, sampleSize1, sampleSize2, mig21TbsFileName)
         writeTbsFile(mig21Params, mig21TbsFileName)
         os.system(slurm_cmd.format(mig21SimCmd, os.path.join(outDir, 'mig21.msOut')))
