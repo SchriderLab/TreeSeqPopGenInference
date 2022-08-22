@@ -34,6 +34,8 @@ def parse_args():
     parser.add_argument("--weight_decay", default="None")
     parser.add_argument("--predict_sequences", action="store_true", help="Whether to predict on entire sequences")
     parser.add_argument("--n_early", default = "10")
+    
+    parser.add_argument("--n_steps", default = "4000")
 
     args = parser.parse_args()
 
@@ -92,8 +94,8 @@ def main():
     for epoch in range(int(args.n_epochs)):
         model.train()
         
-        n_steps = len(generator)
-        for j in range(len(generator)):
+        n_steps = int(args.n_steps)
+        for j in range(int(args.n_steps)):
             batch, y, bl = generator[j]
             
             if batch is None:
