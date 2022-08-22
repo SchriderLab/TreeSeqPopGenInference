@@ -60,29 +60,28 @@ def main():
     for ifile in ifiles:
         ifile = ifile.replace('.gz', '')
         
-        tag = ifile.split('/')[-1].split('.')[0]
+        tag = ifile.split('/')[-1].split('_')[0]
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
-        cmd_ = rcmd.format(ifile, ifile.split('.')[-2], int(args.L))
+        cmd_ = rcmd.format(ifile, ifile.split('.')[0], int(args.L))
         os.system(cmd_)
-        os.system('mv {0}* {1}'.format(ifile.split('.')[-2], idir))
         
         # read the ms file for the mutation rate and number of sites
-        #msf = open(ifile, 'r')
-        #lines = msf.readlines()
+        msf = open(ifile, 'r')
+        lines = msf.readlines()
         
         L = float(args.L)  
         r = float(args.r)
         mu = float(args.mu)
         
-        ofile = open(ifile.split('.')[-2] + '.map', 'w')
+        ofile = open(ifile.split('.')[0] + '.map', 'w')
         ofile.write('pos COMBINED_rate Genetic_Map\n')
         ofile.write('0 {} 0\n'.format(r * L))
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
-        ofile = open(ifile.split('.')[-2] + '.poplabels', 'w')
+        ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
         ofile.write('sample population group sex\n')
         for k in range(1, 26):
             ofile.write('UNR{} POP POP 1\n'.format(k))
@@ -93,13 +92,9 @@ def main():
         #ofile.write(sum(['0' for k in range(n_sites)]) + '\n')
         #ofile.close()
         
-        map_file = ifile.split('.')[-2] + '.map'
+        map_file = ifile.split('.')[0] + '.map'
         samples = sorted(glob.glob(os.path.join(idir, '*.sample')))
         haps = sorted(glob.glob(os.path.join(idir, '*.haps')))
-        
-        if len(samples) != len(haps):
-            logging.info('ERROR: have {0} as sample files and {1} as haps files...'.format(samples, haps))
-            continue
         
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
@@ -124,4 +119,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
