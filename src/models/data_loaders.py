@@ -99,9 +99,9 @@ class TreeSeqGenerator(object):
         return batch, y, batch_
                 
     def on_epoch_end(self):
-        counts = dict()
+        self.counts = dict()
         for model in self.models:
-            counts[model] = 0
+            self.counts[model] = 0
 
         for key in self.keys.keys():
             random.shuffle(self.keys[key])
