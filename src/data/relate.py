@@ -66,7 +66,7 @@ def main():
             
         ifiles[ix] = ifile
     
-    rcmd = 'Rscript src/data/ms2haps.R {0} {1} {2}'
+    rcmd = 'cd {3} && Rscript /nas/longleaf/home/ddray/SeqOrSwim/src/data/ms2haps.R {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
@@ -74,9 +74,9 @@ def main():
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
-        cmd_ = rcmd.format(ifile, ifile.split('.')[0], int(args.L))
+        cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
         os.system(cmd_)        
-        os.system('mv {0}* {1}'.format(ifile.split('.')[0]), odir)
+        #os.system('mv {0}* {1}'.format(ifile.split('.')[0]), odir)
         
         # read the ms file for the mutation rate and number of sites
         msf = open(ifile, 'r')
