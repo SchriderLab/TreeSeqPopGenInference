@@ -70,7 +70,7 @@ def main():
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
-        tag = ifile.split('/')[-1].split('_')[0]
+        tag = ifile.split('/')[-1].split('.')[0]
         
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
@@ -92,6 +92,8 @@ def main():
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
+        os.system('mv {0} {1}'.format(ifile.split('.')[0] + '.map', odir))
+        
         """
         ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
         ofile.write('sample population group sex\n')
@@ -101,8 +103,8 @@ def main():
         """
         
         map_file = ifile.split('.')[0] + '.map'
-        samples = sorted(glob.glob(os.path.join(idir, '*.sample')))
-        haps = sorted(glob.glob(os.path.join(idir, '*.haps')))
+        samples = sorted(glob.glob(os.path.join(odir, '*.sample')))
+        haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
         
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
