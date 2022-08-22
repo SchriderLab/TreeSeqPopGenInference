@@ -51,7 +51,7 @@ def writeTbsFile(params, outFileName):
             outFile.write(" ".join([str(x) for x in paramVec]) + "\n")
             
 if __name__ == '__main__':
-    slurm_cmd = 'sbatch -t 08:00:00 --mem=8G --wrap "{0} | tee {1} && gzip {1}"'
+    slurm_cmd = 'sbatch -t 08:00:00 --output=/dev/null --error=/dev/null --mem=8G -o {2} --wrap "{0} | tee {1} && gzip {1}"'
 
     for simType, sampleNumber, outDir in [("train", trainingSampleNumber, trainingOutDir)]:
         noMigParams, mig12Params, mig21Params = [], [], []
