@@ -64,11 +64,11 @@ def main():
                 
                 for skey in skeys:
                     if not val:
-                        ofile.create_dataset('{1}/{0}/{2}'.format(counts[case][0], case, skey), data = np.array(ifile[case][key][skey]), compression = 'lzf')
+                        ofile.create_dataset('{1}/{0}/{2}'.format(counts[case][0], case, skey), data = ifile[case][key][skey], compression = 'lzf')
                         
                     
                     else:
-                        ofile_val.create_dataset('{1}/{0}/{2}'.format(counts[case][1], case, skey), data = np.array(ifile[case][key][skey]), compression = 'lzf')
+                        ofile_val.create_dataset('{1}/{0}/{2}'.format(counts[case][1], case, skey), data = ifile[case][key][skey], compression = 'lzf')
                     
                 if val:
                     counts[case][1] += 1
