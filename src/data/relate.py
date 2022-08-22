@@ -86,13 +86,15 @@ def main():
         r = float(args.r)
         mu = float(args.mu)
         
-        ofile = open(ifile.split('.')[0] + '.map', 'w')
+        map_file = ifile.replace('.msOut', '.map')
+        logging.info('writing map file {}...'.format(map_file))
+        
+        ofile = open(map_file, 'w')
         ofile.write('pos COMBINED_rate Genetic_Map\n')
         ofile.write('0 {} 0\n'.format(r * L))
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
-        os.system('mv {0} {1}'.format(ifile.split('.')[0] + '.map', odir))
         
         """
         ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
@@ -101,8 +103,7 @@ def main():
             ofile.write('UNR{} POP POP 1\n'.format(k))
         ofile.close()
         """
-        
-        map_file = ifile.split('.')[0] + '.map'
+
         samples = sorted(glob.glob(os.path.join(odir, '*.sample')))
         haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
         
