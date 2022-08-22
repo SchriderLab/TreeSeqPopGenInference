@@ -50,7 +50,7 @@ def main():
                 ls.append(x.shape[0])
                 
                 x = x[:,0]
-                x = x[np.where(x > 0.)]
+                x = np.log(x[np.where(x > 0.)])
                 
                 _.extend(x)
             
