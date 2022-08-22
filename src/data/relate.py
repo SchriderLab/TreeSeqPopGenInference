@@ -64,14 +64,7 @@ def main():
             
             ifile = ifile.replace('.gz', '')
             
-        tag = ifile.split('/')[-1].split('.')[0]
-        
-        s = id_generator()
-        
-        ifile_ = ifile.replace(tag, tag + s)
-        os.system('mv {0} {1}'.format(ifile, ifile_))
-        
-        ifiles[ix] = ifile_
+        ifiles[ix] = ifile
     
     rcmd = 'Rscript src/data/ms2haps.R {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
