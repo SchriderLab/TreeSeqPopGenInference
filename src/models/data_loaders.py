@@ -30,8 +30,8 @@ class TreeSeqGenerator(object):
 
         # shuffle the keys / make sure they are all there (keys are deleted
         # during training or validation so as not to repeat samples)
-        self.on_epoch_end()
         self.o_keys = {model: list(self.ifile[model].keys()) for model in self.models}
+        self.on_epoch_end()
         
         return
     
