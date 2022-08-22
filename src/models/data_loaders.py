@@ -6,6 +6,7 @@ import random
 
 import glob
 import os
+import copy
 
 class TreeSeqGenerator(object):
     def __init__(self, ifile, models=None, n_samples_per = 16, sequence_length = 32, sequential = True):
@@ -30,6 +31,7 @@ class TreeSeqGenerator(object):
         # shuffle the keys / make sure they are all there (keys are deleted
         # during training or validation so as not to repeat samples)
         self.on_epoch_end()
+        self.o_keys = {model: list(self.ifile[model].keys()) for model in self.models}
         
         return
     
@@ -97,7 +99,7 @@ class TreeSeqGenerator(object):
         return batch, y, batch_
                 
     def on_epoch_end(self):
-        self.keys = {model: list(self.ifile[model].keys()) for model in self.models}
+        self.keys = copy.copy(self.o_keys)
 
         for key in self.keys.keys():
             random.shuffle(self.keys[key])
