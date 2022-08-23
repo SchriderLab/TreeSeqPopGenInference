@@ -76,6 +76,9 @@ def main():
             # load the genotype matrices that correspond to the trees
             logging.info('reading data, {}...'.format(ifile))
             x, y, p, intros = load_data(ifile, None)
+            
+            if ('mig12' in ifile) or ('mig21' in ifile):
+                filter_zeros = True
             del y
         except:
             logging.info('ERROR: couldnt read {}...moving on...'.format(ifile))
@@ -99,6 +102,10 @@ def main():
             
             if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
                 logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
+                continue
+            
+            if (not intros[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]) and filter_zeros:
+                logging.info('Found zero introgression case, skipping.')
                 continue
             
             anc_file = open(anc_files[ix], 'r')
