@@ -40,7 +40,7 @@ def main():
     
     
     
-    for ix in range(len(idirs)):
+    for ix in range(1):
         ms_dir = os.path.join(args.ms_dir, idirs[ix].split('/')[-1])
         
         if os.path.exists(ms_dir):
