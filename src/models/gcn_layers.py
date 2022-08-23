@@ -779,7 +779,7 @@ class GATSeqClassifier(nn.Module):
         self.gru = nn.GRU(hidden_size * num_gru_layers * 2, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         
-        self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 4)
+        self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
         self.soft = nn.LogSoftmax(dim = -1)
         
     def forward(self, x0, edge_index, batch, bl):
