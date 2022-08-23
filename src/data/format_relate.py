@@ -67,10 +67,6 @@ def main():
             logging.info('ERROR: have no matching .anc files for {}...'.format(ifile))
         else:
             logging.info('have {} anc files...'.format(len(anc_files)))
-        indices_f = list(range(len(anc_files)))
-        random.shuffle(indices_f)
-        
-        anc_files = [anc_files[u] for u in indices_f]
         
         try:
             # load the genotype matrices that correspond to the trees

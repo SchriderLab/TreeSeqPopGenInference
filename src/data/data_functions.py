@@ -45,6 +45,8 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         line = chunk[0]
         if '*' in line:
             intros.append(True)
+        else:
+            intros.append(False)
         
         pos = np.array([u for u in chunk[2].split(' ')[1:-1] if u != ''], dtype = np.float32)
         
