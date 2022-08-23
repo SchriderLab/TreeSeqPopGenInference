@@ -75,7 +75,7 @@ def main():
         try:
             # load the genotype matrices that correspond to the trees
             logging.info('reading data, {}...'.format(ifile))
-            x, y, p = load_data(ifile, None)
+            x, y, p, intros = load_data(ifile, None)
             del y
         except:
             logging.info('ERROR: couldnt read {}...moving on...'.format(ifile))

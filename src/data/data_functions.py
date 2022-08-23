@@ -27,7 +27,13 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         idx_list = [idx for idx, value in enumerate(ms_lines) if '//' in value] + [len(ms_lines)]
     else:
         idx_list = [idx for idx, value in enumerate(ms_lines) if '//' in value] + [len(ms_lines)]
-
+        
+    intros = []    
+    for ii in idx_list[:-1]:
+        line = ms_lines
+        if '*' in line:
+            intros.append(True)
+            
     ms_chunks = [ms_lines[idx_list[k]:idx_list[k+1]] for k in range(len(idx_list) - 1)]
     ms_chunks[-1] += ['\n']
 
@@ -70,4 +76,4 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         Y.append(y)
         P.append(pos)
         
-    return X, Y, P
+    return X, Y, P, intros
