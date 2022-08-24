@@ -8,6 +8,8 @@ import glob
 import os
 import copy
 
+
+
 class TreeSeqGenerator(object):
     def __init__(self, ifile, models=None, n_samples_per = 16, sequence_length = 32, sequential = True):
         if models is None:
@@ -109,6 +111,67 @@ class TreeSeqGenerator(object):
             
     def __len__(self):
         return int(np.floor(np.min([len(self.keys[u]) for u in self.keys.keys()]) / self.n_samples_per))
+    
+def pad_matrix(x, new_size, axis = 0):
+    # expects a genotype matrix (sites, n_individuals) shaped
+    s = x.shape[0]
+    
+    if new_size > s:
+        x_ = np.zeros((new_size - s, x.shape[1]))
+        x = np.concatenate(x_)
+    elif new_size < s:
+        return None
+    
+    return x
+
+class GenotypeMatrixGenerator(TreeSeqGenerator):
+    def __init__(self, ifile, padded_size, **kwargs):
+        super().__init__(ifile, **kwargs)
+        
+        self.padded_size = padded_size
+        
+    def __getitem__(self, index):
+        # features, edge_indices, and label, what sequence the graphs belong to
+        X = []
+        y = []
+        
+        for model in self.models:
+            # grab n_samples_per for each model
+            for ix in range(self.n_samples_per):
+                while True:
+                    if self.counts[model] == len(self.keys[model]):
+                        break
+                    
+                    model_index = self.models.index(model)
+                    key = self.keys[model][self.counts[model]]
+    
+                    self.counts[model] += 1
+                    skeys = sorted(list(self.ifile[model][key].keys()))
+                    
+                    if not 'x' in skeys:
+                        continue
+                    
+                    X_ = np.array(self.ifile[model][key]['x_0'])
+                    
+                    X_ = pad_matrix(X_, self.padded_size)
+                    if X_ is None:
+                        continue
+                    
+                    break
+                    
+                X.append(X_)
+                y.append(self.models.index(model))
+                
+            # guaruntees even class proportion batches
+            if self.counts[model] == len(self.keys[model]):
+                return None, None
+                
+        X = torch.FloatTensor(X)
+        y = torch.LongTensor(y)
+            
+        return X, y
+                
+        
 
 class TreeGenerator(object):
     def __init__(self, ifile, models=None, n_samples_per=5):
