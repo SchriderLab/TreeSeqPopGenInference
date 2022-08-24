@@ -25,17 +25,17 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--verbose", action="store_true", help="display messages")
-    parser.add_argument("--ifile", default="None")
-    parser.add_argument("--ifile_val", default="None")
-    parser.add_argument("--config", default="None")
+    parser.add_argument("--ifile", default="None", help = "training h5 file")
+    parser.add_argument("--ifile_val", default="None", help = "validation h5 file")
     parser.add_argument("--odir", default="None")
+    
     parser.add_argument("--n_epochs", default="100")
-    parser.add_argument("--lr", default="0.00001") # lr is specified in configs file
-    parser.add_argument("--weight_decay", default="None")
-    parser.add_argument("--predict_sequences", action="store_true", help="Whether to predict on entire sequences")
+    parser.add_argument("--lr", default="0.00001")
     parser.add_argument("--n_early", default = "10")
     
-    parser.add_argument("--n_steps", default = "4000")
+    parser.add_argument("--n_per_batch", default = "16")
+    parser.add_argument("--L", default = "32", help = "tree sequence length")
+    parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
 
     args = parser.parse_args()
 
@@ -87,7 +87,7 @@ def main():
     accuracies = deque(maxlen=500)
     criterion = NLLLoss()
     
-    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.99)
+    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.98)
     
     min_val_loss = np.inf
     
@@ -197,7 +197,7 @@ def main():
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
         
-        #lr_scheduler.step()
+        lr_scheduler.step()
         
         
     """
