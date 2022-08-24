@@ -76,6 +76,8 @@ def main():
             print(len(intros), len(x))
             if ('mig12' in ifile) or ('mig21' in ifile):
                 filter_zeros = True
+            else:
+                filter_zeros = False
             del y
         except:
             logging.info('ERROR: couldnt read {}...moving on...'.format(ifile))
