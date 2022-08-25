@@ -103,7 +103,7 @@ class TreeSeqGenerator(object):
                 ij += 1
 
         if len(y) < 2:
-            return None, None, None
+            return None, None, None, None
 
         y = torch.LongTensor(np.hstack(y).astype(np.float32))
         X1 = torch.FloatTensor(np.array(X1))
