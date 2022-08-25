@@ -49,7 +49,7 @@ def main():
                 x = np.array(ifile[key][skey]['x'])
                 ls.append(x.shape[0])
                 
-                x_ = x[:,0]
+                x_ = x[:,:,0]
                 x_ = np.log(x_[np.where(x_ > 0.)])
                 
                 _.extend(x_)
