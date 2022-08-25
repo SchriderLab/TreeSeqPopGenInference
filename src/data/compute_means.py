@@ -54,6 +54,7 @@ def main():
                 
                 _.extend(x)
             
+        print(x.shape)
         print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls), np.max(ls))
 
     # ${code_blocks}
