@@ -735,9 +735,9 @@ class GATv2Conv(MessagePassing):
 class MLP(nn.Module):
     def __init__(self, input_dim, output_dim, dim=256, n_blk=3):
         super(MLP, self).__init__()
-        layers = [nn.Linear(input_dim, dim), nn.BatchNorm1d(dim), nn.Dropout(0.1), nn.ReLU(inplace=True)]
+        layers = [nn.Linear(input_dim, dim), nn.BatchNorm1d(dim), nn.ReLU(inplace=True)]
         for _ in range(n_blk - 2):
-            layers += [nn.Linear(dim, dim), nn.BatchNorm1d(dim), nn.Dropout(0.1), nn.ReLU(inplace=True)]
+            layers += [nn.Linear(dim, dim), nn.BatchNorm1d(dim), nn.ReLU(inplace=True)]
         layers += [nn.Linear(dim, output_dim)]
         self.model = nn.Sequential(*layers)
 
@@ -745,7 +745,7 @@ class MLP(nn.Module):
         return self.model(x.view(x.size(0), -1))
     
 class GATSeqClassifier(nn.Module):
-    def __init__(self, n_classes = 3, in_dim = 6, info_dim = 13, gcn_dim = 26, n_gcn_layers = 4, 
+    def __init__(self, n_classes = 3, in_dim = 6, info_dim = 13, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
                              num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6):
         super(GATSeqClassifier, self).__init__()
 
@@ -766,7 +766,7 @@ class GATSeqClassifier(nn.Module):
         
         for ix in range(n_gcn_iter):    
             self.norms.append(nn.LayerNorm((gcn_dim, )))
-            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads))
+            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout))
         
         """
         for ix in range(1, n_gcn_layers):
