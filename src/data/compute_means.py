@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--ifile", default = "None")
 
-    parser.add_argument("--odir", default = "None")
+    parser.add_argument("--ofile", default = "intro_means.npz")
     args = parser.parse_args()
 
     if args.verbose:
@@ -24,12 +24,6 @@ def parse_args():
         logging.debug("running in verbose mode")
     else:
         logging.basicConfig(level=logging.INFO)
-
-    if args.odir != "None":
-        if not os.path.exists(args.odir):
-            os.system('mkdir -p {}'.format(args.odir))
-            logging.debug('root: made output directory {0}'.format(args.odir))
-    # ${odir_del_block}
 
     return args
 
@@ -39,24 +33,35 @@ def main():
     ifile = h5py.File(args.ifile, 'r')
     keys = list(ifile.keys())
     
+    vs = []
+    _ = []
+    ls = []
     for key in keys:
         print(key)
         skeys = list(ifile[key].keys())
-        _ = []
-        ls = [] 
+        
         for skey in skeys:
             if 'x' in list(ifile[key][skey].keys()):
                 x = np.array(ifile[key][skey]['x'])
+                v = np.array(ifile[key][skey]['info'])
+                
                 ls.append(x.shape[0])
                 
                 x_ = x[:,:,0]
                 x_ = np.log(x_[np.where(x_ > 0.)])
                 
+                vs.append(v)
                 _.extend(x_)
             
-        print(x.shape)
-        print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls), np.max(ls))
-
+    vs = np.array(vs)
+        
+    v_mean = np.mean(vs, axis = 0)
+    v_std = np.std(vs, axis = 0)
+    
+    np.savez(args.ofile, v_mean = v_mean, v_std = v_std, times = np.array([np.mean(_), np.std(_)]))
+    
+    print(v_mean, v_std)
+    print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls), np.max(ls))
     # ${code_blocks}
 
 if __name__ == '__main__':
