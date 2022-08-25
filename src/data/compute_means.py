@@ -53,7 +53,7 @@ def main():
                 vs.append(v)
                 _.extend(x_)
             
-    vs = np.array(vs)
+    vs = np.concatenate(vs)
         
     v_mean = np.mean(vs, axis = 0)
     v_std = np.std(vs, axis = 0)
