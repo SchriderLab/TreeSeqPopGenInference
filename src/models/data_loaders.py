@@ -74,7 +74,7 @@ class TreeSeqGenerator(object):
                         ii = np.random.choice(range(len(X_) - self.s_length))
                         ii = range(ii, ii + self.s_length)
                         
-                        X1_ = np.array(self.ifile[model][key]['info'])
+                        X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
                         
                         break
                     
@@ -87,7 +87,6 @@ class TreeSeqGenerator(object):
                     x = X_[ii_]
                     v = X1_[ii_]
                     
-                    v = (v - self.info_mean) / self.info_std
                     
                     ik = list(np.where(x[:,0] != 0))
                     x[ik,0] = (np.log(x[ik,0]) - 7.022152320411862) / 1.5233794326067114
@@ -99,6 +98,7 @@ class TreeSeqGenerator(object):
     
                     batch_.append(ij)
                     
+                X1.append(X1_)
                 y.append(model_index)
                 ij += 1
 
