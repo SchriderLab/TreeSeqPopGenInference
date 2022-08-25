@@ -106,7 +106,7 @@ class TreeSeqGenerator(object):
             return None, None, None
 
         y = torch.LongTensor(np.hstack(y).astype(np.float32))
-        X1 = torch.FloatTensor(np.hstack(X1).astype(np.float32))
+        X1 = torch.FloatTensor(np.array(X1))
     
         # use PyTorch Geometrics batch object to make one big graph
         batch = Batch.from_data_list(
