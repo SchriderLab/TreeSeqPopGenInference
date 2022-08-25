@@ -79,7 +79,7 @@ class TreeSeqGenerator(object):
                     x = X_[ii_]
                     
                     ik = list(np.where(x[:,0] != 0))
-                    x[ik,0] = (np.log(x[ik,0]) - 0.6568706730096306) / 2.5765864628157367
+                    x[ik,0] = (np.log(x[ik,0]) - 7.022152320411862) / 1.5233794326067114
                     
                     X.append(x)
                     indices.append(edges[ii_])
@@ -131,7 +131,6 @@ class GenotypeMatrixGenerator(TreeSeqGenerator):
         self.padded_size = padded_size
         
     def __getitem__(self, index):
-        # features, edge_indices, and label, what sequence the graphs belong to
         X = []
         y = []
         
@@ -142,7 +141,6 @@ class GenotypeMatrixGenerator(TreeSeqGenerator):
                     if self.counts[model] == len(self.keys[model]):
                         break
                     
-                    model_index = self.models.index(model)
                     key = self.keys[model][self.counts[model]]
     
                     self.counts[model] += 1
