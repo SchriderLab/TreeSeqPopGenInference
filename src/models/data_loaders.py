@@ -98,7 +98,7 @@ class TreeSeqGenerator(object):
                     batch_.append(ij)
                     
                 X1.append(X1_)
-                print(X_.shape)
+                print(X1_.shape)
                 
                 y.append(model_index)
                 ij += 1
