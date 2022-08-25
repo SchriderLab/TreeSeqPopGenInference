@@ -66,7 +66,7 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), sequeunce_length = L)
+    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), sequence_length = L)
     validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), sequence_length = L)
     model = GATSeqClassifier(L = L)
     
