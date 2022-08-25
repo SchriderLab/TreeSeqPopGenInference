@@ -11,7 +11,7 @@ import copy
 
 
 class TreeSeqGenerator(object):
-    def __init__(self, ifile, models=None, n_samples_per = 16, sequence_length = 32, sequential = True):
+    def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, sequence_length = 32, sequential = True):
         if models is None:
             self.models = list(ifile.keys())
             print(self.models)
@@ -20,6 +20,10 @@ class TreeSeqGenerator(object):
 
         # hdf5 file we are reading from
         self.ifile = ifile
+        means = np.load(means)
+        
+        self.info_mean = means['v_mean']
+        self.info_std = means['v_std']
 
         # how many tree sequences from each demographic model are included in a batch?
         self.n_samples_per = n_samples_per
@@ -68,6 +72,8 @@ class TreeSeqGenerator(object):
                         ii = np.random.choice(range(len(X_) - self.s_length))
                         ii = range(ii, ii + self.s_length)
                         
+                        X1_ = np.array(self.ifile[model][key]['info'])
+                        
                         break
                     
                 if self.counts[model] == len(self.keys[model]):
@@ -77,11 +83,16 @@ class TreeSeqGenerator(object):
                 
                 for ii_ in ii:
                     x = X_[ii_]
+                    v = X1_[ii_]
+                    
+                    v = (v - self.info_mean) / self.info_std
                     
                     ik = list(np.where(x[:,0] != 0))
                     x[ik,0] = (np.log(x[ik,0]) - 7.022152320411862) / 1.5233794326067114
                     
                     X.append(x)
+                    X1.append(v)
+                    
                     indices.append(edges[ii_])
     
                     batch_.append(ij)
@@ -93,12 +104,13 @@ class TreeSeqGenerator(object):
             return None, None, None
 
         y = torch.LongTensor(np.hstack(y).astype(np.float32))
+        X1 = torch.FloatTensor(np.array(X1, dtype = np.float32))
     
         # use PyTorch Geometrics batch object to make one big graph
         batch = Batch.from_data_list(
             [Data(x=torch.FloatTensor(X[k]), edge_index=torch.LongTensor(indices[k])) for k in range(len(indices))])
 
-        return batch, y, batch_
+        return batch, y, X1, batch_
                 
     def on_epoch_end(self):
         self.counts = dict()
