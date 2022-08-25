@@ -32,10 +32,12 @@ def parse_args():
     parser.add_argument("--n_epochs", default="100")
     parser.add_argument("--lr", default="0.00001")
     parser.add_argument("--n_early", default = "10")
+    parser.add_argument("--lr_decay", default = "None")
     
     parser.add_argument("--n_per_batch", default = "16")
     parser.add_argument("--L", default = "32", help = "tree sequence length")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
+    parser.add_argument("--n_gcn_iter", default = "None")
 
     args = parser.parse_args()
 
@@ -88,8 +90,11 @@ def main():
     accuracies = deque(maxlen=500)
     criterion = NLLLoss()
     
-    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.98)
-    
+    if args.lr_decay != "None":
+        lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, float(args.lr_decay))
+    else:
+        lr_scheduler = None
+        
     min_val_loss = np.inf
     
     for epoch in range(int(args.n_epochs)):
@@ -198,8 +203,9 @@ def main():
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
         
-        print(lr_scheduler.get_lr())
-        lr_scheduler.step()
+        if lr_scheduler is not None:
+            logging.info('lr for next epoch: {}'.format(lr_scheduler.get_lr()))
+            lr_scheduler.step()
         
         
     """
