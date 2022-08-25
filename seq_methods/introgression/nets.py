@@ -6,13 +6,14 @@ import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import keras
 from sklearn.metrics import confusion_matrix, mean_absolute_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import compute_class_weight
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.layers import Conv1D, Dense, Dropout, Flatten, Input, MaxPooling1D
-from tensorflow.keras.models import Model, save_model
+from tensorflow.keras.layers import Conv1D, Dense, Dropout, Flatten, Input, MaxPooling1D, AveragePooling1D
+from tensorflow.keras.models import Model, save_model, Sequential
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.utils import plot_model
 
@@ -99,33 +100,53 @@ def split_partitions(data, labs, sel_coeffs):
 # fmt: off
 def create_TS_model(datadim, n_class):
     """
-    Creates Time-Distributed SHIC model that uses 3 convlutional blocks with concatenation.
+    Creates Time-Distributed SHIC model that uses 3 convlutional blocks with concatenation. Adapting for sequencing data
 
     Returns:
         Model: Keras compiled model.
     """
-    model_in = Input(datadim)
-    h = Conv1D(64, 3, activation="relu", padding="same")(model_in)
-    h = Conv1D(64, 3, activation="relu", padding="same")(h)
-    h = MaxPooling1D(pool_size=3, padding="same")(h)
-    h = Dropout(0.15)(h)
-    h = Flatten()(h)
 
-    h = Dense(264, activation="relu")(h)
-    h = Dropout(0.2)(h)        
-    h = Dense(264, activation="relu")(h)
-    h = Dropout(0.2)(h)
-    h = Dense(128, activation="relu")(h)
-    h = Dropout(0.1)(h)
-    reg_output = Dense(1, activation="relu", name="reg_output")(h)
-    class_output = Dense(n_class, activation="softmax", name="class_output")(h)
+    model = Sequential()
+    model.add(Conv1D(256, kernel_size=2,
+                 activation='relu',
+                 input_shape=(datadim, datadim)))
+    model.add(Conv1D(128, kernel_size=2, activation='relu'))
+    model.add(AveragePooling1D(pool_size=2))
+    model.add(Dropout(0.25))
+    model.add(Conv1D(128, kernel_size=2, activation='relu'))
+    model.add(AveragePooling1D(pool_size=2))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(n_class, activation='sigmoid'))
+    model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=keras.optimizers.Adam(),
+              metrics=['accuracy'])
+    #model_in = Input(datadim)
+    #h = Conv1D(64, 3, activation="relu", padding="same")(model_in)
+    #h = Conv1D(64, 3, activation="relu", padding="same")(h)
+    #h = MaxPooling1D(pool_size=3, padding="same")(h)
+    #h = Dropout(0.15)(h)
+    #h = Flatten()(h)
 
-    model = Model(inputs=[model_in], outputs=[class_output, reg_output], name="Timesweeper")
-    model.compile(
-        loss={"class_output":"categorical_crossentropy", "reg_output":"mae"},
-        optimizer="adam",
-        metrics={"class_output": "accuracy", "reg_output": "mae"},
-    )
+    #h = Dense(264, activation="relu")(h)
+    #h = Dropout(0.2)(h)        
+    #h = Dense(264, activation="relu")(h)
+    #h = Dropout(0.2)(h)
+    #h = Dense(128, activation="relu")(h)
+    #h = Dropout(0.1)(h)
+    #reg_output = Dense(1, activation="relu", name="reg_output")(h)
+    #class_output = Dense(n_class, activation="softmax", name="class_output")(h)
+
+    #model = Model(inputs=[model_in], outputs=[class_output, reg_output], name="Timesweeper")
+    #model.compile(
+    #    loss={"class_output":"categorical_crossentropy", "reg_output":"mae"},
+    #    optimizer="adam",
+    #    metrics={"class_output": "accuracy", "reg_output": "mae"},
+    #)
 
     return model
 
