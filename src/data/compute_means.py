@@ -49,10 +49,10 @@ def main():
                 x = np.array(ifile[key][skey]['x'])
                 ls.append(x.shape[0])
                 
-                x = x[:,0]
-                x = np.log(x[np.where(x > 0.)])
+                x_ = x[:,0]
+                x_ = np.log(x_[np.where(x_ > 0.)])
                 
-                _.extend(x)
+                _.extend(x_)
             
         print(x.shape)
         print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls), np.max(ls))
