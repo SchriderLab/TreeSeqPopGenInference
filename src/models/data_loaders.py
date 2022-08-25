@@ -24,6 +24,8 @@ class TreeSeqGenerator(object):
         
         self.info_mean = means['v_mean'].reshape(1, -1)
         self.info_std = means['v_std'].reshape(1, -1)
+        
+        self.info_std[np.where(np.isnan(self.info_std))] = 1.
 
         # how many tree sequences from each demographic model are included in a batch?
         self.n_samples_per = n_samples_per

@@ -776,8 +776,8 @@ class GATSeqClassifier(nn.Module):
         self.final_gat = GATv2Conv(gcn_dim, gcn_dim)
         """  
         # we'll give it mean, max, min, std of GCN features per graph
-        self.gru = nn.GRU(hidden_size * num_gru_layers * 2, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
-        self.graph_gru = nn.GRU(gcn_dim + in_dim + info_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         
         self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
         self.soft = nn.LogSoftmax(dim = -1)
