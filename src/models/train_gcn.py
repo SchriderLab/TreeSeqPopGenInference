@@ -62,13 +62,14 @@ def main():
     print("Using " + str(device) + " as device")
     # model = Classifier(config)
 
-    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'))
-    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'))
-    model = GATSeqClassifier()
+    L = int(args.L)
+
+    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), sequeunce_length = L)
+    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), sequence_length = L)
+    model = GATSeqClassifier(L = L)
     
     classes = generator.models
-
-
+    
     model = model.to(device)
     print(model)
     count_parameters(model)
@@ -197,6 +198,7 @@ def main():
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
         
+        print(lr_scheduler.get_lr())
         lr_scheduler.step()
         
         
