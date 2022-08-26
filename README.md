@@ -34,7 +34,12 @@
 - 1DCNN
 
 ### 2. Detect introgression
-
+Leaderboard:
+|Model   |NLLLoss   |Validation accuracy   |   |   |
+|---|---|---|---|---|
+|GCN   |0.327077   |0.327077   |   |   |
+|   |   |   |   |   |
+|   |   |   |   |   |
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
 
