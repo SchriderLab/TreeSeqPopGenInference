@@ -36,7 +36,7 @@
 ### 2. Detect introgression
 Leaderboard:
 |Model   |NLLLoss   |Validation accuracy   |n_gcn_layers   |tree_sequence_length   |n_per_class_batch   |gru_hidden_dim   |n_parameters
-|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|
 |GCN   |0.327077   |0.86688   |12   |54   |16   |128    |1164549
 
 - D. simulans and D. sechelia
