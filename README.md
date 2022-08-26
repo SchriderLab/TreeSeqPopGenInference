@@ -34,6 +34,13 @@
 - 1DCNN
 
 ### 2. Detect introgression
+All training and validation should be done with: 
+```
+/pine/scr/d/d/ddray/intro_trees.hdf5
+/pine/scr/d/d/ddray/intro_trees_val.hdf5
+```
+respectively.
+
 Leaderboard:
 |Model   |NLLLoss   |Validation accuracy   |n_gcn_layers   |tree_sequence_length   |n_per_class_batch   |gru_hidden_dim   |n_parameters   |lr, decay, steps_per_epoch
 |---|---|---|---|---|---|---|---|---|
