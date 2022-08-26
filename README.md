@@ -37,7 +37,7 @@
 Leaderboard:
 |Model   |NLLLoss   |Validation accuracy   |n_gcn_layers   |tree_sequence_length   |n_per_class_batch   |gru_hidden_dim   |n_parameters   |lr, decay, steps_per_epoch
 |---|---|---|---|---|---|---|---|---|
-|GCN   |0.327077   |0.86688   |12   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000
+|GATConvRNN   |0.327077   |0.86688   |12   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000
 
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
