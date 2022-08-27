@@ -22,8 +22,8 @@ def dump_to_ms(X, positions, dir_count, N, odir):
         del X[c][:N]
         del positions[c][:N]
         
-        ofile = os.path.join(os.path.join(odir, c + '.msOut'))
-        ofile = open(ofile, 'w')
+        ofile_ = os.path.join(os.path.join(odir, c + '.msOut'))
+        ofile = open(ofile_, 'w')
         
         for x, p in zip(Xs, pos):
             n_seg = x.shape[0]
@@ -45,7 +45,7 @@ def dump_to_ms(X, positions, dir_count, N, odir):
             ofile.write('\n')
             
         ofile.close()
-        os.system('gzip {}'.format(ofile))
+        os.system('gzip {}'.format(ofile_))
             
         
     dir_count += 1
