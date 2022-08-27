@@ -100,7 +100,9 @@ def main():
     
     dir_count = 0
     
-    for ix in range(1):
+    for ix in range(len(x_keys)):
+        print('working on {}...'.format(x_keys[ix]))
+        
         x = list(ifile[x_keys[ix]])
         pos = list(ifile[pos_keys[ix]])
         
