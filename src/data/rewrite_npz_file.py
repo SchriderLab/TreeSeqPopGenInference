@@ -39,7 +39,7 @@ def dump_to_ms(X, positions, dir_count, N, odir):
             
             x = x.T.astype(np.uint8)
             for x_ in x:
-                line = ''.join([chr(u) for u in x_]) + '\n'
+                line = ''.join([str(u) for u in x_]) + '\n'
                 ofile.write(line)
                 
             ofile.write('\n')
@@ -115,6 +115,7 @@ def main():
             
             if all([len(X[c]) >= N for c in classes]):
                 X, positions, dir_count = dump_to_ms(X, positions, dir_count, N, args.odir)
+                print('dumping files...')
            
 
 if __name__ == '__main__':
