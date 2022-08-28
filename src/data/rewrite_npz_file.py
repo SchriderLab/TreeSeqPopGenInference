@@ -12,7 +12,7 @@ from mpi4py import MPI
 
 def dump_to_ms(X, positions, dir_count, N, odir):
     classes = list(X.keys())
-    odir = os.path.join(odir, '{0:04d}'.format(dir_count))
+    odir = os.path.join(odir, '{0:08d}'.format(dir_count))
     
     os.system('mkdir -p {}'.format(odir))
     
@@ -117,7 +117,7 @@ def main():
             positions[c].append(pos_)
             
         while all([len(X[c]) >= N for c in classes]):
-            print('{1}: dumping files to {0:04d}...'.format(idn, comm.rank))
+            print('{1}: dumping files to {0:08d}...'.format(idn, comm.rank))
             X, positions, idn = dump_to_ms(X, positions, idn, N, args.odir)
            
 
