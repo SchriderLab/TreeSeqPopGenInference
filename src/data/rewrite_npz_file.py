@@ -4,7 +4,6 @@ import argparse
 import logging
 
 import numpy as np
-from mpi4py import MPI
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -17,6 +16,7 @@ def dump_to_ms(X, positions, dir_count, N, odir):
     os.system('mkdir -p {}'.format(odir))
     
     for c in classes:
+        logging.info('on {}...'.format(c))
         Xs = X[c][:N]
         pos = positions[c][:N]
         
@@ -60,6 +60,8 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--n_per_dir", default = "100")
     parser.add_argument("--ifile", default = "/pine/scr/d/d/ddray/seln_data.npz")
+    
+    parser.add_argument("--idn", default = "None")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -81,17 +83,21 @@ def parse_args():
 def main():
     args = parse_args()
     
-    # configure MPI
-    comm = MPI.COMM_WORLD
+
 
     classes = ['neutral', 'hard', 'hard-near', 'soft', 'soft-near']
 
     ifile = np.load(args.ifile, allow_pickle = True, encoding = 'latin1')
     keys = list(ifile.keys())
 
-    x_keys = sorted([u for u in keys if 'xtrain' in u])
-    pos_keys = sorted([u for u in keys if 'postrain' in u])
-    y_keys = sorted([u for u in keys if 'ytrain' in u])
+    if args.idn == "None":
+        x_keys = sorted([u for u in keys if 'xtrain' in u])
+        pos_keys = sorted([u for u in keys if 'postrain' in u])
+        y_keys = sorted([u for u in keys if 'ytrain' in u])
+    else:
+        x_keys = sorted([u for u in keys if ('xtrain' in u) and (args.idn in u)])
+        pos_keys = sorted([u for u in keys if ('postrain' in u) and (args.idn in u)])
+        y_keys = sorted([u for u in keys if ('ytrain' in u) and (args.idn in u)])
     
     N = int(args.n_per_dir)
     
@@ -102,8 +108,8 @@ def main():
         X[c] = []
         positions[c] = []
     
-    for ix in range(comm.rank, len(x_keys), comm.size):
-        print('{}: working on {}...'.format(comm.rank, x_keys[ix]))
+    for ix in range(len(x_keys)):
+        print('working on {}...'.format(x_keys[ix]))
         idn = int(x_keys[ix].split('_')[-1])
         
         x = list(ifile[x_keys[ix]])
@@ -117,7 +123,7 @@ def main():
             positions[c].append(pos_)
             
         while all([len(X[c]) >= N for c in classes]):
-            print('{1}: dumping files to {0:08d}...'.format(idn, comm.rank))
+            print('dumping files to {0:08d}...'.format(idn))
             X, positions, idn = dump_to_ms(X, positions, idn, N, args.odir)
            
 
