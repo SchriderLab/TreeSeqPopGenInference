@@ -45,7 +45,7 @@ def dump_to_ms(X, positions, dir_count, N, odir):
             ofile.write('\n')
             
         ofile.close()
-        os.system('gzip {}'.format(ofile_))
+        #os.system('gzip {}'.format(ofile_))
             
         
     dir_count += 1
@@ -113,9 +113,9 @@ def main():
             X[c].append(x_)
             positions[c].append(pos_)
             
-            if all([len(X[c]) >= N for c in classes]):
-                X, positions, dir_count = dump_to_ms(X, positions, dir_count, N, args.odir)
-                print('dumping files...')
+        while all([len(X[c]) >= N for c in classes]):
+            print('dumping files to {0:04d}...'.format(dir_count))
+            X, positions, dir_count = dump_to_ms(X, positions, dir_count, N, args.odir)
            
 
 if __name__ == '__main__':
