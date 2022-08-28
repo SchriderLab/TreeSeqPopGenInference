@@ -104,7 +104,7 @@ def main():
     
     for ix in range(comm.rank, len(x_keys), comm.size):
         print('{}: working on {}...'.format(comm.rank, x_keys[ix]))
-        idn = x_keys[ix].split('_')[-1]
+        idn = int(x_keys[ix].split('_')[-1])
         
         x = list(ifile[x_keys[ix]])
         pos = list(ifile[pos_keys[ix]])
