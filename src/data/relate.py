@@ -14,6 +14,10 @@ import string
 # where to insert certain parts of the script
 # ${imports}
 
+# L = 110000
+# mu = 1e-8
+# r = 1e-8
+
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
 
@@ -78,11 +82,6 @@ def main():
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
         os.system(cmd_)        
-        #os.system('mv {0}* {1}'.format(ifile.split('.')[0]), odir)
-        
-        # read the ms file for the mutation rate and number of sites
-        msf = open(ifile, 'r')
-        lines = msf.readlines()
         
         L = float(args.L)  
         r = float(args.r)

@@ -13,6 +13,10 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
+    
+    parser.add_argument("--L", default = "1100000")
+    parser.add_argument("--mu", default = "1.2e-8")
+    parser.add_argument("--r", default = "1e-8")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -36,14 +40,14 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=8G -t 04:00:00 -o {2} --wrap "python3 src/data/relate.py --idir {0} --odir {1}"'
+    cmd = 'sbatch --mem=8G -t 04:00:00 -o {2} --wrap "python3 src/data/relate.py --idir {0} --odir {1} --L {3} --mu {4} --r {5}"'
     idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u]
     
     for idir in idirs:
         log_file = os.path.join(args.odir, '{}_slurm.out'.format(idir.split('/')[-1]))
         odir = os.path.join(args.odir, idir.split('/')[-1])
         
-        cmd_ = cmd.format(idir, odir, log_file)
+        cmd_ = cmd.format(idir, odir, log_file, args.L, args.mu, args.r)
         print(cmd_)
         os.system(cmd_)
         
