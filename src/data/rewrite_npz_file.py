@@ -118,7 +118,7 @@ def main():
             
         while all([len(X[c]) >= N for c in classes]):
             print('{1}: dumping files to {0:04d}...'.format(idn, comm.rank))
-            X, positions, _ = dump_to_ms(X, positions, idn, N, args.odir)
+            X, positions, idn = dump_to_ms(X, positions, idn, N, args.odir)
            
 
 if __name__ == '__main__':
