@@ -4,6 +4,7 @@ import argparse
 import logging
 
 import numpy as np
+from mpi4py import MPI
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -79,6 +80,9 @@ def parse_args():
 
 def main():
     args = parse_args()
+    
+    # configure MPI
+    comm = MPI.COMM_WORLD
 
     classes = ['neutral', 'hard', 'hard-near', 'soft', 'soft-near']
 
@@ -98,10 +102,9 @@ def main():
         X[c] = []
         positions[c] = []
     
-    dir_count = 0
-    
-    for ix in range(len(x_keys)):
-        print('working on {}...'.format(x_keys[ix]))
+    for ix in range(comm.rank, len(x_keys), comm.size):
+        print('{}: working on {}...'.format(comm.rank, x_keys[ix]))
+        idn = x_keys.split('_')[-1]
         
         x = list(ifile[x_keys[ix]])
         pos = list(ifile[pos_keys[ix]])
@@ -114,8 +117,8 @@ def main():
             positions[c].append(pos_)
             
         while all([len(X[c]) >= N for c in classes]):
-            print('dumping files to {0:04d}...'.format(dir_count))
-            X, positions, dir_count = dump_to_ms(X, positions, dir_count, N, args.odir)
+            print('{1}: dumping files to {0:04d}...'.format(idn, comm.rank))
+            X, positions, _ = dump_to_ms(X, positions, idn, N, args.odir)
            
 
 if __name__ == '__main__':
