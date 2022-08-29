@@ -68,21 +68,18 @@ def main():
         else:
             logging.info('have {} anc files...'.format(len(anc_files)))
         
-        try:
-            # load the genotype matrices that correspond to the trees
-            logging.info('reading data, {}...'.format(ifile))
-            x, y, p, intros = load_data(ifile, None)
-            
-            print(len(intros), len(x))
-            if ('mig12' in ifile) or ('mig21' in ifile):
-                filter_zeros = True
-            else:
-                filter_zeros = False
-            del y
-        except Exception as e:
-            print(e)
-            logging.info('ERROR: couldnt read {}...moving on...'.format(ifile))
-            continue
+        
+        # load the genotype matrices that correspond to the trees
+        logging.info('reading data, {}...'.format(ifile))
+        x, y, p, intros = load_data(ifile, None)
+        
+        print(len(intros), len(x))
+        if ('mig12' in ifile) or ('mig21' in ifile):
+            filter_zeros = True
+        else:
+            filter_zeros = False
+        del y
+        
         
         if args.n_samples == "None":
             N = len(anc_files)
