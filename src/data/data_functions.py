@@ -68,6 +68,7 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         else:
             y = np.zeros(x.shape, dtype = np.uint8)
             
+        print(pos.shape, x.shape)
         assert len(pos) == x.shape[1]
         
         if n is not None:
