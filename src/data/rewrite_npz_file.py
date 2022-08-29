@@ -4,6 +4,7 @@ import argparse
 import logging
 
 import numpy as np
+import copy
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -17,12 +18,22 @@ def dump_to_ms(X, positions, dir_count, N, odir):
     
     for c in classes:
         logging.info('on {}...'.format(c))
-        Xs = X[c][:N]
-        pos = positions[c][:N]
         
-        del X[c][:N]
-        del positions[c][:N]
-        
+        if len(X[c]) >= N:
+            Xs = copy.copy(X[c][:N])
+            pos = copy.copy(positions[c][:N])
+            
+            del X[c][:N]
+            del positions[c][:N]
+        else:
+            Xs = copy.copy(X[c])
+            pos = copy.copy(positions[c])
+
+            if len(Xs) == 0:
+                continue
+
+            positions[c] = []
+            
         ofile_ = os.path.join(os.path.join(odir, c + '.msOut'))
         ofile = open(ofile_, 'w')
         
@@ -122,7 +133,7 @@ def main():
             X[c].append(x_)
             positions[c].append(pos_)
             
-        while all([len(X[c]) >= N for c in classes]):
+        while any([len(X[c]) >= N for c in classes]):
             print('dumping files to {0:08d}...'.format(idn))
             X, positions, idn = dump_to_ms(X, positions, idn, N, args.odir)
            
