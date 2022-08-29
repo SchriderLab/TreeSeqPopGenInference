@@ -79,7 +79,8 @@ def main():
             else:
                 filter_zeros = False
             del y
-        except:
+        except Exception as e:
+            print(e)
             logging.info('ERROR: couldnt read {}...moving on...'.format(ifile))
             continue
         
