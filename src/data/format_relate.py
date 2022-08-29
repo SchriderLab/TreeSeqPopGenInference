@@ -34,6 +34,8 @@ def parse_args():
     parser.add_argument("--n_samples", default = "None")
     parser.add_argument("--val_prop", default = "0.1")
     parser.add_argument("--pop_sizes", default = "20,14")
+    
+    parser.add_argument("--topological_order", action = "store_true")
 
     parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
@@ -226,13 +228,16 @@ def main():
                 As.append(A)
                                                 
                 data = dict()
-                for node in current_day_nodes[:s0]:
-                    data[node] = np.array([0., 1., 0., 0., 0., 0.])
                 
-                for node in current_day_nodes[s0:s0 + s1]:
-                    data[node] = np.array([0., 0., 1., 0., 0., 0.])
+                if s1 > 0:
+                    for node in current_day_nodes[:s0]:
+                        data[node] = np.array([0., 1., 0., 0., 0., 0.])
                     
-                t = 0.
+                    for node in current_day_nodes[s0:s0 + s1]:
+                        data[node] = np.array([0., 0., 1., 0., 0., 0.])
+                else:
+                    for node in current_day_nodes[:s0]:
+                        data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
                 while len(data.keys()) < len(G.nodes()):
@@ -243,15 +248,21 @@ def main():
                                 p = edges[j][0]
                                 break
                     
+                    
                         if p in data.keys():
-                            lv = (data[node][1:3].astype(np.uint8).astype(bool) | data[p][-2:].astype(bool)).astype(np.uint8)
-                            data[p][-2:] = lv.astype(np.float32)
-                        else:
-                            lv = data[node][1:3]
+                            if s1 > 0:
+                                lv = (data[node][1:3].astype(np.uint8).astype(bool) | data[p][-2:].astype(bool)).astype(np.uint8)
+                                data[p][-2:] = lv.astype(np.float32)
                         
-                            # cumulatively add branch lengths for a time parameter
-                            # note that current day nodes have t = 0.
-                            data[p] = np.array([lengths[j] + data[node][0], 0., 0., 1.] + list(lv))
+                        else:
+                            if s1 > 0:
+                                lv = data[node][1:3]
+                            
+                                # cumulatively add branch lengths for a time parameter
+                                # note that current day nodes have t = 0.
+                                data[p] = np.array([lengths[j] + data[node][0], 0., 0., 1.] + list(lv))
+                            else:
+                                data[p] = np.array([lengths[j] + data[node][0], 0., 1.])
                         
                         _.append(p)
                         
@@ -262,15 +273,18 @@ def main():
                     X.append(data[node])
                     
                 X = np.array(X)
-                # topologically order nodes
-                X = X[indices,:]
+                if args.topological_order:
+                    # topologically order nodes
+                    X = X[indices,:]
+                    # change the edge indexes to topologically (levelorder) ordered
+                    # as we ordered the node features
+                    edges = [(indices_[u], indices_[v]) for u,v in edges]
                 
         
                 Xs.append(X)
                 
                 ii = list(np.where(X[:,0] > 0)[0])
                 times.extend(X[ii,0])
-                
                 
                 
                 t_coal = np.max(X[:,0])
@@ -289,10 +303,6 @@ def main():
                 
                 info_vec = np.array([t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length, min_branch_length,
                                      position, w, l])
-                
-                # change the edge indexes to topologically (levelorder) ordered
-                # as we ordered the node features
-                edges = [(indices_[u], indices_[v]) for u,v in edges]
                 
                 # make edges bi-directional
                 edges = edges + [(v,u) for u,v in edges]
