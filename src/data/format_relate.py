@@ -212,20 +212,23 @@ def main():
                 # slim adjacency representation we have for TreeGANs
                 # for a potential RNN or CNN route
                 G_ = G.to_undirected()
-                A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
                 
-                i, j = np.tril_indices(A.shape[0])
-                A[i, j] = 0.
-
-                A = A[:,len(current_day_nodes):]
-                indices = [nodes.index(u) for u in ii]
-                indices_ = dict(zip(nodes, [ii.index(u) for u in nodes]))
-                
-                lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
-                
-                A = np.concatenate([A.astype(np.float32), lengths_], 1)
-                
-                As.append(A)
+                # let's do this to save time in the cases we don't want this anyway
+                if args.topological_order:
+                    A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
+                    
+                    i, j = np.tril_indices(A.shape[0])
+                    A[i, j] = 0.
+    
+                    A = A[:,len(current_day_nodes):]
+                    indices = [nodes.index(u) for u in ii]
+                    indices_ = dict(zip(nodes, [ii.index(u) for u in nodes]))
+                    
+                    lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
+                    
+                    A = np.concatenate([A.astype(np.float32), lengths_], 1)
+                    
+                    As.append(A)
                                                 
                 data = dict()
                 
