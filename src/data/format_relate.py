@@ -96,8 +96,8 @@ def main():
         logging.info('have {0} training and {1} validation replicates...'.format(N, N_val))
         logging.info('writing...')
         for ix in range(N + N_val):
-            #if (ix + 1) % 100 == 0:
-            #    print(ix)
+            if (ix + 1) % 10 == 0:
+                logging.info('on replicate {}...'.format(ix))
             
             if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
                 logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
