@@ -30,7 +30,7 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         
             
     ms_chunks = [ms_lines[idx_list[k]:idx_list[k+1]] for k in range(len(idx_list) - 1)]
-    ms_chunks[-1] += ['\n']
+    #ms_chunks[-1] += ['\n']
 
     if ancFile is not None:
         anc_lines = [u.decode('utf-8') for u in ancFile.readlines()]
