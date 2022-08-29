@@ -41,7 +41,7 @@ def main():
     cmd = 'sbatch --mem=8G -t 04:00:00 -o {2} --wrap "python3 src/data/rewrite_npz_file.py --ifile {0} --odir {1} --idn {3}"'
     ifile = np.load(args.ifile)
     keys = list(ifile.keys())
-    idns = list(set([u.split('_')[-1] for u in keys]))
+    idns = list(set([u.split('_')[-1] for u in keys if '_' in u]))
 
     for idn in idns:
         log_file = os.path.join(args.odir, '{}_slurm.out'.format(idn))

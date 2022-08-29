@@ -94,21 +94,19 @@ def parse_args():
 def main():
     args = parse_args()
     
-
-
     classes = ['neutral', 'hard', 'hard-near', 'soft', 'soft-near']
 
     ifile = np.load(args.ifile, allow_pickle = True, encoding = 'latin1')
     keys = list(ifile.keys())
 
     if args.idn == "None":
-        x_keys = sorted([u for u in keys if 'xtrain' in u])
-        pos_keys = sorted([u for u in keys if 'postrain' in u])
-        y_keys = sorted([u for u in keys if 'ytrain' in u])
+        x_keys = sorted([u for u in keys if 'xtrain' in u and '_' in u], key = lambda x: int(x.split('_')[-1]))
+        pos_keys = sorted([u for u in keys if 'postrain' in u and '_' in u], key = lambda x: int(x.split('_')[-1]))
+        y_keys = sorted([u for u in keys if 'ytrain' in u and '_' in u], key = lambda x: int(x.split('_')[-1]))
     else:
-        x_keys = sorted([u for u in keys if ('xtrain' in u) and (args.idn in u)])
-        pos_keys = sorted([u for u in keys if ('postrain' in u) and (args.idn in u)])
-        y_keys = sorted([u for u in keys if ('ytrain' in u) and (args.idn in u)])
+        x_keys = sorted([u for u in keys if 'xtrain' in u and '_' in u and args.idn == u.split('_')[-1]], key = lambda x: int(x.split('_')[-1]))
+        pos_keys = sorted([u for u in keys if 'postrain' in u and '_' in u and args.idn == u.split('_')[-1]], key = lambda x: int(x.split('_')[-1]))
+        y_keys = sorted([u for u in keys if 'ytrain' in u and '_' in u and args.idn == u.split('_')[-1]], key = lambda x: int(x.split('_')[-1]))
     
     N = int(args.n_per_dir)
     
