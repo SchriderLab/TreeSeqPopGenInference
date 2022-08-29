@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
     parser.add_argument("--n_gcn_iter", default = "6")
     parser.add_argument("--in_dim", default = "6")
+    parser.add_arugment("--n_classes", default = "3")
 
     args = parser.parse_args()
 
@@ -69,7 +70,7 @@ def main():
 
     generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), sequence_length = L)
     validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), sequence_length = L)
-    model = GATSeqClassifier(L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
+    model = GATSeqClassifier(n_classes = int(args.n_classes), L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
     
     classes = generator.models
     
