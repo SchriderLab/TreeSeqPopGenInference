@@ -67,6 +67,7 @@ def main():
         anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and tag in u)])
         if len(anc_files) == 0:
             logging.info('ERROR: have no matching .anc files for {}...'.format(ifile))
+            continue
         else:
             logging.info('have {} anc files...'.format(len(anc_files)))
         
@@ -82,6 +83,9 @@ def main():
             filter_zeros = False
         del y
         
+        if len(x) == 0:
+            logging.info('ERROR: have no genotype matrices! for {}...'.format(ifile))
+            continue
         
         if args.n_samples == "None":
             N = len(anc_files)
@@ -101,10 +105,6 @@ def main():
             
             if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
                 logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
-                continue
-            
-            if (not intros[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]) and filter_zeros:
-                logging.info('Found zero introgression case, skipping.')
                 continue
             
             anc_file = open(anc_files[ix], 'r')
