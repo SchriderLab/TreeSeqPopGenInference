@@ -76,7 +76,7 @@ def main():
         logging.info('reading data, {}...'.format(ifile))
         x, y, p, intros = load_data(ifile, None)
         
-        print(len(intros), len(x))
+        print(len(intros), len(x), len(anc_files))
         if ('mig12' in ifile) or ('mig21' in ifile):
             filter_zeros = True
         else:
