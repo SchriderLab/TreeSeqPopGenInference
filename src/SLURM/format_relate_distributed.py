@@ -15,6 +15,8 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--ms_dir", default = "None")
     parser.add_argument("--pop_sizes", default = "208,0")
+    
+    parser.add_argument("--only_print", action = "store_true")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -47,7 +49,8 @@ def main():
         if os.path.exists(ms_dir):
             cmd_ = cmd.format(idirs[ix], ms_dir, os.path.join(args.odir, '{0:04d}.hdf5'.format(ix)), os.path.join(args.odir, '{0:04d}_slurm.out'.format(ix)), args.pop_sizes)
             print(cmd_)
-            os.system(cmd_)
+            if not args.only_print:
+                os.system(cmd_)
         
     # ${code_blocks}
 
