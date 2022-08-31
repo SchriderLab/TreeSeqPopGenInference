@@ -11,7 +11,8 @@ import copy
 
 
 class TreeSeqGenerator(object):
-    def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, sequence_length = 32, sequential = True):
+    def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, 
+                         sequence_length = 32, sequential = True, pad = False):
         if models is None:
             self.models = list(ifile.keys())
             print(self.models)
@@ -21,6 +22,8 @@ class TreeSeqGenerator(object):
         # hdf5 file we are reading from
         self.ifile = ifile
         means = np.load(means)
+        
+        self.pad = pad
         
         self.info_mean = means['v_mean'].reshape(1, -1)
         self.info_std = means['v_std'].reshape(1, -1)
@@ -69,7 +72,9 @@ class TreeSeqGenerator(object):
                         continue
                     
                     X_ = np.array(self.ifile[model][key]['x'])   
-                    #print(X_.shape)
+                    if X_.shape[0] == 0:
+                        continue
+                    
                     if len(X_) > self.s_length:
                         ii = np.random.choice(range(len(X_) - self.s_length))
                         ii = range(ii, ii + self.s_length)
@@ -77,24 +82,34 @@ class TreeSeqGenerator(object):
                         X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
                         
                         break
-                    
+                    elif self.pad:
+                        # pad out to this size
+                        ii = list(range(self.s_length))
+                
+                # this guaruntees batches are always balanced
                 if self.counts[model] == len(self.keys[model]):
                     return None, None, None, None
                 
                 edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
+                # n_nodes, n_features
+                s = (X_.shape[1], X_.shape[2])
                 
                 for ii_ in ii:
-                    x = X_[ii_]
-                    v = X1_[ii_]
+                    if ii_ < X_.shape[0]:
+                        x = X_[ii_]
+                        
+                        ik = list(np.where(x[:,0] != 0))
+                        x[ik,0] = (np.log(x[ik,0]) - 7.022152320411862) / 1.5233794326067114
+                        
+                        X.append(x)
+                        
+                        indices.append(edges[ii_])
+                    else:
+                        x = np.zeros(s)
+                        
+                        X.append(x)
+                        indices.append(None)
                     
-                    
-                    ik = list(np.where(x[:,0] != 0))
-                    x[ik,0] = (np.log(x[ik,0]) - 7.022152320411862) / 1.5233794326067114
-                    
-                    X.append(x)
-                    
-                    indices.append(edges[ii_])
-    
                     batch_.append(ij)
                     
                 X1.append(X1_[ii])

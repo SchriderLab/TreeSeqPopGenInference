@@ -41,6 +41,8 @@ def parse_args():
     parser.add_argument("--in_dim", default = "6")
     parser.add_argument("--n_classes", default = "3")
     
+    parser.add_argument("--pad_l", action = "store_true")
+    
     parser.add_argument("--weights", default = "None")
 
     args = parser.parse_args()
@@ -70,8 +72,8 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), sequence_length = L)
-    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), sequence_length = L)
+    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), sequence_length = L, pad = args.pad_l)
+    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), sequence_length = L, pad = args.pad_l)
     model = GATSeqClassifier(n_classes = int(args.n_classes), L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
     
     if args.weights != "None":
