@@ -72,8 +72,8 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), n_per_batch = int(args.n_per_batch), sequence_length = L, pad = args.pad_l)
-    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), n_per_batch = int(args.n_per_batch), sequence_length = L, pad = args.pad_l)
+    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), n_samples_per = int(args.n_per_batch), sequence_length = L, pad = args.pad_l)
+    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch), sequence_length = L, pad = args.pad_l)
     model = GATSeqClassifier(n_classes = int(args.n_classes), L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
     
     if args.weights != "None":
