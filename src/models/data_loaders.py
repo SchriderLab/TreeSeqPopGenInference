@@ -103,7 +103,7 @@ class TreeSeqGenerator(object):
                         
                         X.append(x)
                         
-                        indices.append(edges[ii_])
+                        indices.append(edges[ii_] + 1)
                     else:
                         x = np.zeros(s)
                         
