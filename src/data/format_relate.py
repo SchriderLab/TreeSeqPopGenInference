@@ -198,6 +198,8 @@ def main():
                 nodes.append(-1)
                 lengths.append(0.)
                 
+                print(edges)
+                
                 root = None
                 for node in sk_nodes.keys():
                     node = sk_nodes[node]
