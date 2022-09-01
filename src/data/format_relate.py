@@ -273,6 +273,7 @@ def main():
                     As.append(A)
                                                 
                 data = dict()
+                data_prune = dict()
                 
                 if s1 > 0:
                     for node in current_day_nodes[:s0]:
@@ -287,27 +288,47 @@ def main():
                 nodes = copy.copy(current_day_nodes)
                 T = T.get_common_ancestor([u for u in T.get_descendants() if u.name in nodes])
                 
-                print(T)
+                
+                T_nodes = list(T.iter_descendants())
+                T_names = [u.name for u in T_nodes]
+                
                 leaf_names = [u.name for u in T.get_leaves()]
+                print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
+                
+                to_prune = list(set(leaf_names).difference(current_day_nodes))
+                
+                to_prune = [u for u in T_nodes if u.name in to_prune]
+                T.prune(to_prune, True)
+                
+                print(T)
                 print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
                 
                 sys.exit()
                 
-                while len(data.keys()) < len(current_day_nodes) * 2 - 1:
+                
+                while len(data.keys()) < len(G.nodes()):
                     _ = []
                     for node in nodes:
+                        
+                    
+            
                         for j in range(len(edges)):
                             if edges[j][-1] == node:
                                 p = edges[j][0]
                                 break
                     
-                    
+                            
+                            
                         if p in data.keys():
+                            
+                            
                             if s1 > 0:
                                 lv = (data[node][1:3].astype(np.uint8).astype(bool) | data[p][-2:].astype(bool)).astype(np.uint8)
                                 data[p][-2:] = lv.astype(np.float32)
                         
                         else:
+         
+                            
                             if s1 > 0:
                                 lv = data[node][1:3]
                             
