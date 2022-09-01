@@ -330,7 +330,14 @@ def main():
                     
                     T_nodes = list(T.iter_descendants())
                     T_names = [u.name for u in T_nodes]
-
+                        
+                    print(len(T_nodes))
+                    
+                print(T)
+                leaf_names = [u.name for u in T.get_leaves()]
+                print(set(current_day_nodes).difference(leaf_names))
+                
+                sys.exit()
                 
                 to_prune = []
                 for node in sorted(data.keys()):
