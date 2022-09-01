@@ -326,7 +326,7 @@ def main():
                 T_names = [u.name for u in T_nodes]
                 
                 print(to_prune)
-                to_prune = to_prune + [u for u in T_names if u not in list(data.keys())]
+                to_prune = to_prune + [u for u in nodes if u not in list(data.keys())]
                                 
                 print(to_prune)
                 to_prune = [u for u in T_nodes if u.name in to_prune]
