@@ -249,7 +249,7 @@ def main():
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
-            
+                print(len(nodes))
                 
                 while len(data.keys()) < len(current_day_nodes) * 2:
                     _ = []
