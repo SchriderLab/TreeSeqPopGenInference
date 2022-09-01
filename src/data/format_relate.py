@@ -138,13 +138,6 @@ def main():
             for ij in range(len(lines)):
                 line = lines[ij]
                 
-                print(line)
-                
-                T = Tree(line.replace('\n', ''), format = 1)
-                print(T)
-                T.delete("1")
-                
-                sys.exit()
                 
                 nodes = []
                 parents = []
@@ -212,7 +205,35 @@ def main():
                         root = node
                         break
                     
+                root_ete = Tree(name = -1)
                 
+                cs = []
+                for c in root.children:
+                    cs.append(root_ete.add_child(Tree(), name = c.name, dist = c.length))
+                
+                while len(cs) > 0:
+                    _ = []
+                    
+                    for ix in range(len(cs)):
+                        root_ete = cs[ix]
+                        
+                        # find the edges
+                        n = root_ete.name
+                        ii = [u for u in range(len(edges)) if edges[u][0] == n]
+                        e = [edges[u] for u in ii]
+                        l = [lengths[u] for u in ii]
+                        
+                        for e_, l_ in zip(e, l):
+                            _.append(root_ete.add_child(Tree(), name = e_[1], dist = l_))
+                            
+                    cs = copy.copy(_)
+                                                
+                T = root_ete.get_tree_root()
+                
+                print(T)
+                sys.exit()
+                    
+                        
                     
                 level_order = [u.name for u in list(root.levelorder())]
                 #sys.exit()
