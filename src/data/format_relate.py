@@ -19,6 +19,8 @@ from skbio.tree import TreeNode
 import matplotlib.pyplot as plt
 import random
 
+from ete3 import Tree
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -136,6 +138,13 @@ def main():
             for ij in range(len(lines)):
                 line = lines[ij]
                 
+                T = Tree(line.replace('\n', ''))
+                print(T)
+                
+                T.delete("1")
+                
+                sys.exit()
+                
                 nodes = []
                 parents = []
                 lengths = []
@@ -201,6 +210,8 @@ def main():
                     if node.is_root():
                         root = node
                         break
+                    
+                
                     
                 level_order = [u.name for u in list(root.levelorder())]
                 #sys.exit()
@@ -279,6 +290,8 @@ def main():
                         
                     nodes = copy.copy(_)
                     
+                
+                
                     
                 X = []
                 for node in sorted(data.keys()):
