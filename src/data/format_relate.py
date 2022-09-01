@@ -329,7 +329,7 @@ def main():
                     T_nodes = list(T.iter_descendants())
                     T_names = [u.name for u in T_nodes]
 
-
+                
                 to_prune = []
                 for node in sorted(data.keys()):
                     if Gs.in_degree(node) == Gs.out_degree(node) == 1:
@@ -338,8 +338,7 @@ def main():
                 to_prune = to_prune + [u for u in master_nodes if (u not in sorted(data.keys())) and (u in T_names)]
                         
                 print(to_prune)
-                to_prune = [u for u in T_nodes if u.name in to_prune] + [u for u in master_nodes if (u not in sorted(data.keys())) and (u in T_names)]
-                
+                to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
                 
                 print(T)
