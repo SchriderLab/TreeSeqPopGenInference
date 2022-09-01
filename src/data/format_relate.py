@@ -316,6 +316,8 @@ def main():
                     if G.in_degree(node) == G.out_degree(node) == 1:
                         to_prune.append(node)
                         
+                print(to_prune)
+                        
                 to_prune = to_prune + [u for u in G.nodes() if u not in sorted(data.keys())]
                 T_nodes = list(T.iter_ancestors())
                 
