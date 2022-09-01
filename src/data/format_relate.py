@@ -35,6 +35,8 @@ def parse_args():
     parser.add_argument("--val_prop", default = "0.1")
     parser.add_argument("--pop_sizes", default = "20,14")
     
+    parser.add_argument("--n_sample", default = "104")
+    
     parser.add_argument("--topological_order", action = "store_true")
 
     parser.add_argument("--ofile", default = "None")
@@ -59,6 +61,8 @@ def main():
     
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
+    
+    
     
     for ii in range(len(ifiles)):
         tag = tags[ii]
@@ -108,6 +112,15 @@ def main():
                 continue
             
             anc_file = open(anc_files[ix], 'r')
+            
+            if args.n_sample != "None":
+                n_sample = int(args.n_sample)
+                
+                current_day_nodes = list(np.random.choice(range(1, sum(pop_sizes) + 1), n_sample, replace = False))
+            else:
+                current_day_nodes = list(range(1, sum(pop_sizes) + 1))
+                
+                                        
             
             lines = anc_file.readlines()[2:]
             
@@ -194,27 +207,19 @@ def main():
                 G = nx.DiGraph()
                 G.add_edges_from(edges)
                 
-                current_day_nodes = []
-                # find the nodes which have no out degree
-                for node in G.nodes():
-                    d = G.out_degree(node)
-                    
-                    if d == 0:
-                        current_day_nodes.append(node)
-                        
-                s0, s1 = pop_sizes        
-                        
-                i0 = current_day_nodes[:s0]
-                i1 = current_day_nodes[s0:s0 + s1]
-                
-                ii = [u for u in level_order if u in i0] + [u for u in level_order if u in i1] + [u for u in level_order if not ((u in i0) or (u in i1))]
-                
                 # slim adjacency representation we have for TreeGANs
                 # for a potential RNN or CNN route
                 G_ = G.to_undirected()
                 
                 # let's do this to save time in the cases we don't want this anyway
                 if args.topological_order:
+                    s0, s1 = pop_sizes        
+                            
+                    i0 = current_day_nodes[:s0]
+                    i1 = current_day_nodes[s0:s0 + s1]
+                    
+                    ii = [u for u in level_order if u in i0] + [u for u in level_order if u in i1] + [u for u in level_order if not ((u in i0) or (u in i1))]
+                    
                     A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
                     
                     i, j = np.tril_indices(A.shape[0])
@@ -243,6 +248,8 @@ def main():
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
+            
+                
                 while len(data.keys()) < len(G.nodes()):
                     _ = []
                     for node in nodes:
@@ -289,7 +296,6 @@ def main():
                 ii = list(np.where(X[:,0] > 0)[0])
                 times.extend(X[ii,0])
                 
-                
                 t_coal = np.max(X[:,0])
                 mean_time = np.mean(X[ii,0])
                 std_time = np.std(X[ii,0])
@@ -306,6 +312,8 @@ def main():
                 
                 info_vec = np.array([t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length, min_branch_length,
                                      position, w, l])
+                
+                edges = [(v,u) for u,v in edges]
                 
                 # make edges bi-directional
                 if args.bidirectional:
