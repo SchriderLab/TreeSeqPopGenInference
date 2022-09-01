@@ -317,6 +317,11 @@ def main():
                     
                 Gs = G.subgraph(list(sorted(data.keys())))
                 
+                T_nodes = list(T.iter_ancestors())
+                T_names = [u.name for u in T_nodes]
+                
+                print(T_names)
+                
                 print(list(sorted(data.keys())))
                 
                 if not (-1 in list(sorted(data.keys()))):
@@ -324,9 +329,6 @@ def main():
                     print(root_name)
                     T = [u for u in list(T.iter_ancestors()) if u.name == root_name][0]
 
-                
-                T_nodes = list(T.iter_ancestors())
-                T_names = [u.name for u in T_nodes]
 
                 to_prune = []
                 for node in sorted(data.keys()):
