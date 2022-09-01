@@ -285,7 +285,13 @@ def main():
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
+                T = T.get_common_ancestor([u for u in T.get_descendants() if u.name in nodes])
                 
+                print(T)
+                leaf_names = [u.name for u in T.get_leaves()]
+                print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
+                
+                sys.exit()
                 
                 while len(data.keys()) < len(current_day_nodes) * 2 - 1:
                     _ = []
@@ -335,7 +341,7 @@ def main():
                     
                 print(T)
                 leaf_names = [u.name for u in T.get_leaves()]
-                print(set(current_day_nodes).difference(leaf_names), len(data.keys()))
+                print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
                 
                 sys.exit()
                 
