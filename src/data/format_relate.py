@@ -318,14 +318,16 @@ def main():
                     if Gs.in_degree(node) == Gs.out_degree(node) == 1:
                         to_prune.append(node)
                         
-                        
-                to_prune = to_prune + [u for u in range(sum(pop_sizes)) if u not in current_day_nodes]
                 T_nodes = list(T.iter_ancestors())
+                T_names = [u.name for u in T_nodes]
                 
+                print(to_prune)
+                to_prune = to_prune + [u for u in T_names if u not in list(data.keys())]
+                                
                 print(to_prune)
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 
-                T.prune(to_prune)
+                T.prune(to_prune, True)
                 
                 print(T)
                 sys.exit()
