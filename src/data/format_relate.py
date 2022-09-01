@@ -324,7 +324,7 @@ def main():
                 
                 if not (-1 in list(sorted(data.keys()))):
                     root_name = max(list(sorted(data.keys())))
-                    T = [u for u in T_names if u.name == root_name][0]
+                    T = [u for u in T_nodes if u.name == root_name][0]
                     
                     T_nodes = list(T.iter_descendants())
                     T_names = [u.name for u in T_nodes]
