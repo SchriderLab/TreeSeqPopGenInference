@@ -308,7 +308,8 @@ def main():
                                      position, w, l])
                 
                 # make edges bi-directional
-                edges = edges + [(v,u) for u,v in edges]
+                if args.bidirectional:
+                    edges = edges + [(v,u) for u,v in edges]
                 edges = np.array(edges).T
                 
                 Edges.append(edges)
