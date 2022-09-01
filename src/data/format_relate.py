@@ -319,17 +319,19 @@ def main():
                 
                 print(list(sorted(data.keys())))
                 
+                if not (-1 in list(sorted(data.keys()))):
+                    root_name = max(list(sorted(data.keys())))
+                else:
+                    root_name = -1
+                
+                T_nodes = list(T.iter_ancestors())
+                T = [u for u in list(T.iter_ancestors()) if u.name == root_name][0]
+                
                 to_prune = []
                 for node in sorted(data.keys()):
                     if Gs.in_degree(node) == Gs.out_degree(node) == 1:
                         to_prune.append(node)
                         
-                T_nodes = list(T.iter_ancestors())
-                T_names = [u.name for u in T_nodes]
-                
-                print(to_prune)
-                to_prune = to_prune + [u for u in master_nodes if u not in list(data.keys())]
-                                
                 print(to_prune)
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 
