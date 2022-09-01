@@ -62,7 +62,7 @@ def main():
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
-    
+    s0, s1 = pop_sizes
     
     for ii in range(len(ifiles)):
         tag = tags[ii]
