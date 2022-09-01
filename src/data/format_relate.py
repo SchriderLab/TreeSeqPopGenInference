@@ -311,9 +311,11 @@ def main():
                         
                     nodes = copy.copy(_)
                     
+                Gs = G.subgraph(list(sorted(data.keys())))
+                    
                 to_prune = []
                 for node in sorted(data.keys()):
-                    if G.in_degree(node) == G.out_degree(node) == 1:
+                    if Gs.in_degree(node) == Gs.out_degree(node) == 1:
                         to_prune.append(node)
                         
                 print(to_prune)
