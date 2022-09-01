@@ -250,7 +250,7 @@ def main():
                 nodes = copy.copy(current_day_nodes)
             
                 
-                while len(data.keys()) < len(G.nodes()):
+                while len(data.keys()) < len(current_day_nodes) * 2:
                     _ = []
                     for node in nodes:
                         for j in range(len(edges)):
