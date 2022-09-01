@@ -38,6 +38,7 @@ def parse_args():
     parser.add_argument("--n_sample", default = "104")
     
     parser.add_argument("--topological_order", action = "store_true")
+    parser.add_argument("--bidirectional", action = "store_true")
 
     parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
@@ -116,9 +117,9 @@ def main():
             if args.n_sample != "None":
                 n_sample = int(args.n_sample)
                 
-                current_day_nodes = list(np.random.choice(range(1, sum(pop_sizes) + 1), n_sample, replace = False))
+                current_day_nodes = list(np.random.choice(range(sum(pop_sizes)), n_sample, replace = False))
             else:
-                current_day_nodes = list(range(1, sum(pop_sizes) + 1))
+                current_day_nodes = list(range(sum(pop_sizes)))
                 
                                         
             
