@@ -339,6 +339,9 @@ def main():
                         
                 print(to_prune)
                 to_prune = [u for u in T_nodes if u.name in to_prune]
+                print(T)
+                print(len(T.get_leaves()))
+                
                 T.prune(to_prune, True)
                 
                 print(T)
