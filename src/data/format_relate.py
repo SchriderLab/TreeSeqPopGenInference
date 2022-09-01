@@ -321,6 +321,7 @@ def main():
                 
                 if not (-1 in list(sorted(data.keys()))):
                     root_name = max(list(sorted(data.keys())))
+                    print(root_name)
                     T = [u for u in list(T.iter_ancestors()) if u.name == root_name][0]
 
                 
