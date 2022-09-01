@@ -138,9 +138,10 @@ def main():
             for ij in range(len(lines)):
                 line = lines[ij]
                 
+                print(line)
+                
                 T = Tree(line.replace('\n', ''))
                 print(T)
-                
                 T.delete("1")
                 
                 sys.exit()
