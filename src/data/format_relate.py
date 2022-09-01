@@ -317,6 +317,10 @@ def main():
                         to_prune.append(node)
                         
                 to_prune = to_prune + [u for u in G.nodes() if u not in sorted(data.keys())]
+                T_nodes = list(T.iter_ancestors())
+                
+                to_prune = [u for u in T_nodes if u.name in to_prune]
+                
                 T.prune(to_prune)
                 
                 print(T)
