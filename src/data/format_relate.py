@@ -346,7 +346,7 @@ def main():
                 
                 T.prune(to_prune, True)
                 
-                print(T)
+                print(T, len(T.get_leaves()))
                 sys.exit()
                 
                     
