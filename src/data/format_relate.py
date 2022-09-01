@@ -335,7 +335,7 @@ def main():
                     
                 print(T)
                 leaf_names = [u.name for u in T.get_leaves()]
-                print(set(current_day_nodes).difference(leaf_names))
+                print(set(current_day_nodes).difference(leaf_names), len(data.keys()))
                 
                 sys.exit()
                 
