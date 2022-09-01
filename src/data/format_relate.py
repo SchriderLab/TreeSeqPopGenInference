@@ -279,11 +279,14 @@ def main():
                         
                     nodes = copy.copy(_)
                     
+                    
                 X = []
                 for node in sorted(data.keys()):
                     X.append(data[node])
                     
                 X = np.array(X)
+                print(X.shape)
+                
                 if args.topological_order:
                     # topologically order nodes
                     X = X[indices,:]
