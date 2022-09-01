@@ -277,7 +277,7 @@ def main():
                     for node in current_day_nodes[s0:s0 + s1]:
                         data[node] = np.array([0., 0., 1., 0., 0., 0.])
                 else:
-                    for node in current_day_nodes[:s0]:
+                    for node in current_day_nodes:
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
@@ -312,7 +312,9 @@ def main():
                     nodes = copy.copy(_)
                     
                 Gs = G.subgraph(list(sorted(data.keys())))
-                    
+                
+                print(list(sorted(data.keys())))
+                
                 to_prune = []
                 for node in sorted(data.keys()):
                     if Gs.in_degree(node) == Gs.out_degree(node) == 1:
