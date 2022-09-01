@@ -140,7 +140,7 @@ def main():
                 
                 print(line)
                 
-                T = Tree(line.replace('\n', ''))
+                T = Tree(line.replace('\n', ''), format = 1)
                 print(T)
                 T.delete("1")
                 
