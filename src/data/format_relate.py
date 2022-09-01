@@ -229,17 +229,16 @@ def main():
                     cs = copy.copy(_)
                                                 
                 T = root_ete.get_tree_root()
-                
-                print(T)
-                sys.exit()
-                    
-                        
+                            
                     
                 level_order = [u.name for u in list(root.levelorder())]
                 #sys.exit()
                 
                 G = nx.DiGraph()
                 G.add_edges_from(edges)
+                
+                
+                    
                 
                 # slim adjacency representation we have for TreeGANs
                 # for a potential RNN or CNN route
@@ -282,7 +281,7 @@ def main():
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
-                print(len(nodes))
+                
                 
                 while len(data.keys()) < len(current_day_nodes) * 2:
                     _ = []
@@ -312,7 +311,16 @@ def main():
                         
                     nodes = copy.copy(_)
                     
+                to_prune = []
+                for node in sorted(data.keys()):
+                    if G.in_degree(node) == G.out_degree(node) == 1:
+                        to_prune.append(node)
+                        
+                to_prune = to_prune + [u for u in G.nodes() if u not in sorted(data.keys())]
+                T.prune(to_prune)
                 
+                print(T)
+                sys.exit()
                 
                     
                 X = []
