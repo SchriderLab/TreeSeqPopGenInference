@@ -323,7 +323,9 @@ def main():
                 print(list(sorted(data.keys())))
                 
                 if not (-1 in list(sorted(data.keys()))):
-                    root_name = max(list(sorted(data.keys())))
+                    root_name = sorted(data.keys(), key = lambda x: data[x][0])[-1]
+                    print(root_name)
+                    
                     T = [u for u in T_nodes if u.name == root_name][0]
                     
                     T_nodes = list(T.iter_descendants())
