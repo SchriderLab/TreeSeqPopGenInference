@@ -230,7 +230,7 @@ def main():
                     cs = copy.copy(_)
                                                 
                 Tr = root_ete.get_tree_root()
-                master_nodes = list(Tr.get_descendants) + [Tr]
+                master_nodes = list(Tr.iter_descendants()) + [Tr]
                 _ = [u.name for u in master_nodes]
                 
                 master_node_dict = dict(zip(_, master_nodes))
