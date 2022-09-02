@@ -335,7 +335,7 @@ def main():
                 
                     
                 X = []
-                for node in T_names:
+                for node in T_names[:-1]:
                     X.append(data[node])
                     
                 X = np.array(X)
