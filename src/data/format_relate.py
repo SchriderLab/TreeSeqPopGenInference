@@ -223,9 +223,9 @@ def main():
                         n = root_ete.name
                         ii = [u for u in range(len(edges)) if edges[u][0] == n]
                         e = [edges[u] for u in ii]
-                        l = [lengths[u] for u in ii]
+                        ls = [lengths[u] for u in ii]
                         
-                        for e_, l_ in zip(e, l):
+                        for e_, l_ in zip(e, ls):
                             _.append(root_ete.add_child(Tree(), name = e_[1], dist = l_))
                             
                     cs = copy.copy(_)
@@ -268,7 +268,6 @@ def main():
                     As.append(A)
                                                 
                 data = dict()
-                data_prune = dict()
                 
                 if s1 > 0:
                     for node in current_day_nodes[:s0]:
@@ -285,7 +284,6 @@ def main():
                 
                 T_nodes = list(T.iter_descendants())
                 T_names = [u.name for u in T_nodes]
-                leaf_names = [u.name for u in T.get_leaves()]
                 
                 to_prune = copy.copy(current_day_nodes)
                 
@@ -334,7 +332,6 @@ def main():
                     
                 X = np.array(X)
                 print(X.shape)
-                
                 
                 if args.topological_order:
                     # topologically order nodes
