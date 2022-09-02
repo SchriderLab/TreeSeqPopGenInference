@@ -306,6 +306,8 @@ def main():
                 edges = list(map(list, T.get_edges()))
                 
                 for ix in range(len(edges)):
+                    print(edges[0])
+                    
                     edges[ix] = [u.name for u in edges[ix]]
                 print(edges[:4])
                 
