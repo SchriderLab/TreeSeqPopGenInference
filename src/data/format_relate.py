@@ -303,8 +303,11 @@ def main():
                 print(T)
                 print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
                 
-                edges = T.get_edges()
-                print(edges)
+                edges = list(map(list, T.get_edges()))
+                
+                for ix in range(len(edges)):
+                    edges[ix] = [u.name for u in edges[ix]]
+                print(edges[:4])
                 
                 sys.exit()
                 
