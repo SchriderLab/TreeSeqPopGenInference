@@ -288,45 +288,31 @@ def main():
                 nodes = copy.copy(current_day_nodes)
                 T = T.get_common_ancestor([u for u in T.get_descendants() if u.name in nodes])
                 
-                
                 T_nodes = list(T.iter_descendants())
                 T_names = [u.name for u in T_nodes]
-                
                 leaf_names = [u.name for u in T.get_leaves()]
-                print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
                 
                 to_prune = list(set(leaf_names).difference(current_day_nodes))
                 
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
                 
-                print(T)
-                print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
+                T_nodes = list(T.iter_descendants())
+                T_names = [u.name for u in T_nodes]
                 
-                edges = list(map(list, T.get_edges()))
-                
-                for ix in range(len(edges)):
-                    print(edges[0])
-                    
-                    edges[ix] = [u.name for u in edges[ix]]
-                print(edges[:4])
-                
-                sys.exit()
+                node_dict = dict(zip(T_names, T_nodes))
                 
                 
-                while len(data.keys()) < len(G.nodes()):
+                
+                edges = []
+                while len(data.keys()) < T_nodes:
                     _ = []
                     for node in nodes:
-                        
+                        T_ = node_dict[node]
+                        p = T_.up.name
                     
-            
-                        for j in range(len(edges)):
-                            if edges[j][-1] == node:
-                                p = edges[j][0]
-                                break
+                        edges.append((T_names.index(node), T_names.index(p)))
                     
-                            
-                            
                         if p in data.keys():
                             
                             
@@ -350,53 +336,17 @@ def main():
                         
                     nodes = copy.copy(_)
                     
-                Gs = G.subgraph(list(sorted(data.keys())))
                 
-                T_nodes = list(T.iter_descendants())
-                T_names = [u.name for u in T_nodes]
-                
-                print(list(sorted(data.keys())))
-                
-                if not (-1 in list(sorted(data.keys()))):
-                    root_name = sorted(data.keys(), key = lambda x: data[x][0])[-1]
-                    print(root_name)
-                    
-                    T = [u for u in T_nodes if u.name == root_name][0]
-                    
-                    T_nodes = list(T.iter_descendants())
-                    T_names = [u.name for u in T_nodes]
-                        
-                    print(len(T_nodes))
-                    
-                print(T)
-                leaf_names = [u.name for u in T.get_leaves()]
-                print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
-                
-                sys.exit()
-                
-                to_prune = []
-                for node in sorted(data.keys()):
-                    if Gs.in_degree(node) == Gs.out_degree(node) == 1:
-                        to_prune.append(node)
-
-                        
-                print(to_prune)
-                to_prune = [u for u in T_nodes if u.name in to_prune]
-                print(T)
-                print(len(T.get_leaves()))
-                
-                T.prune(to_prune, True)
-                
-                print(T, len(T.get_leaves()))
-                sys.exit()
                 
                     
                 X = []
-                for node in sorted(data.keys()):
+                for node in T_names:
                     X.append(data[node])
                     
                 X = np.array(X)
                 print(X.shape)
+                
+                sys.exit()
                 
                 if args.topological_order:
                     # topologically order nodes
