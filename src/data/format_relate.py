@@ -309,10 +309,15 @@ def main():
 
                         p = T_.up
                         
+                        
+                        
                         if (p is None):
                             done = True
-                        elif p.name == root_name:
+                        elif (p.name == root_name):
                             done = True
+                        elif p.name == -1:
+                            done = True
+                            break
                         
                         if p.name not in T_names:
                             continue
