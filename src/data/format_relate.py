@@ -351,7 +351,7 @@ def main():
                 edges = list(set(edges))
                     
                 X = []
-                for node in T_names[:-1]:
+                for node in T_names:
                     X.append(data[node])
                     
                 X = np.array(X)
