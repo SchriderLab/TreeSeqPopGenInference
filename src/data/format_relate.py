@@ -312,10 +312,9 @@ def main():
          
                         p = T_.up
                         
-                        if p is None:
-                            done = True
-                            break
-                        elif p.name == -1:
+                        
+                        
+                        if p.name not in T_names:
                             done = True
                             break
                         
@@ -348,7 +347,7 @@ def main():
                 edges = list(set(edges))
                     
                 X = []
-                for node in T_names:
+                for node in T_names[:-1]:
                     X.append(data[node])
                     
                 X = np.array(X)
