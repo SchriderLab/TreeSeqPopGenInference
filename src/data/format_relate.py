@@ -311,6 +311,7 @@ def main():
                         
                         
                         
+                        
                         if (p is None):
                             done = True
                         elif (p.name == root_name):
@@ -349,6 +350,7 @@ def main():
                     nodes = copy.copy(_)
                 
                 edges = list(set(edges))
+                
                 
                 print(root_name, T_names)
                     
