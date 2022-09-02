@@ -106,7 +106,7 @@ def main():
         
         logging.info('have {0} training and {1} validation replicates...'.format(N, N_val))
         logging.info('writing...')
-        for ix in range(N + N_val):
+        for ix in range(5):
             if (ix + 1) % 10 == 0:
                 logging.info('on replicate {}...'.format(ix))
             
@@ -309,6 +309,7 @@ def main():
                         p = p.name
                         
                         if p not in T_names:
+                            print(p)
                             continue
                 
                         edges.append((T_names.index(node), T_names.index(p)))
@@ -379,6 +380,8 @@ def main():
                 Edges.append(edges)
                 infos.append(info_vec)
                 
+            sys.exit()
+            
             if len(Xs) > 0:
                 if ix < N:
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
