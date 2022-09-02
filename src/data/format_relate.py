@@ -291,6 +291,7 @@ def main():
                 T.prune(to_prune, True)
                 
                 print(T.name)
+                print(T_names)
                 
                 T_nodes = list(T.iter_descendants()) + [T] + [Tr]
                 T_names = [u.name for u in T_nodes]
