@@ -200,8 +200,6 @@ def main():
                 
                 lengths.append(0.)
                 
-                print(edges)
-                
                 root = None
                 for node in sk_nodes.keys():
                     node = sk_nodes[node]
@@ -240,9 +238,6 @@ def main():
                 
                 G = nx.DiGraph()
                 G.add_edges_from(edges)
-                
-                
-                    
                 
                 # slim adjacency representation we have for TreeGANs
                 # for a potential RNN or CNN route
@@ -301,8 +296,6 @@ def main():
                 T_names = [u.name for u in T_nodes]
                 
                 node_dict = dict(zip(T_names, T_nodes))
-                
-                
                 
                 edges = []
                 while len(data.keys()) < len(T_nodes):
