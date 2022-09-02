@@ -287,12 +287,10 @@ def main():
                 T_names = [u.name for u in T_nodes]
                 leaf_names = [u.name for u in T.get_leaves()]
                 
-                to_prune = list(set(leaf_names).difference(current_day_nodes))
+                to_prune = copy.copy(current_day_nodes)
                 
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
-                
-                print(T)
                 
                 T_nodes = list(T.iter_descendants())
                 T_names = [u.name for u in T_nodes]
