@@ -321,9 +321,9 @@ def main():
                             
                                 # cumulatively add branch lengths for a time parameter
                                 # note that current day nodes have t = 0.
-                                data[p] = np.array([lengths[j] + data[node][0], 0., 0., 1.] + list(lv))
+                                data[p] = np.array([T_.dist + data[node][0], 0., 0., 1.] + list(lv))
                             else:
-                                data[p] = np.array([lengths[j] + data[node][0], 0., 1.])
+                                data[p] = np.array([T_.dist + data[node][0], 0., 1.])
                         
                         _.append(p)
                         
