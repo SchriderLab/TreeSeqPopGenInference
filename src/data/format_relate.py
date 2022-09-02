@@ -138,7 +138,6 @@ def main():
             for ij in range(len(lines)):
                 line = lines[ij]
                 
-                
                 nodes = []
                 parents = []
                 lengths = []
@@ -295,7 +294,6 @@ def main():
                 T_names = [u.name for u in T_nodes]
                 
                 node_dict = dict(zip(T_names, T_nodes))
-                print(len(node_dict.keys()))
                 
                 edges = []
                 while len(data.keys()) < len(T_nodes):
@@ -335,15 +333,13 @@ def main():
                         
                     nodes = copy.copy(_)
                 
-                print(edges)
-                edges = np.array(edges)
+                
                     
                 X = []
                 for node in T_names:
                     X.append(data[node])
                     
                 X = np.array(X)
-                print(X.shape)
                 
                 if args.topological_order:
                     # topologically order nodes
@@ -352,7 +348,6 @@ def main():
                     # as we ordered the node features
                     edges = [(indices_[u], indices_[v]) for u,v in edges]
                 
-        
                 Xs.append(X)
                 
                 ii = list(np.where(X[:,0] > 0)[0])
@@ -375,8 +370,6 @@ def main():
                 info_vec = np.array([t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length, min_branch_length,
                                      position, w, l])
                 
-                edges = [(v,u) for u,v in edges]
-                
                 # make edges bi-directional
                 if args.bidirectional:
                     edges = edges + [(v,u) for u,v in edges]
@@ -384,8 +377,6 @@ def main():
                 
                 Edges.append(edges)
                 infos.append(info_vec)
-                
-            sys.exit()
                 
             if len(Xs) > 0:
                 if ix < N:
