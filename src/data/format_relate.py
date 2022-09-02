@@ -306,6 +306,9 @@ def main():
                             break
                         
                         p = p.name
+                        
+                        if p not in T_names:
+                            continue
                 
                         edges.append((T_names.index(node), T_names.index(p)))
                     
