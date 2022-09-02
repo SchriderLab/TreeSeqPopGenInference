@@ -300,8 +300,13 @@ def main():
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
-                        p = T_.up.name
-                    
+                        p = T_.up
+                        
+                        if p is None:
+                            break
+                        
+                        p = p.name
+                
                         edges.append((T_names.index(node), T_names.index(p)))
                     
                         if p in data.keys():
