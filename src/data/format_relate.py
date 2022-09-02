@@ -333,7 +333,7 @@ def main():
                         
                     nodes = copy.copy(_)
                 
-                
+                print(len(edges))
                     
                 X = []
                 for node in T_names:
