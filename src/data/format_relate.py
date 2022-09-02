@@ -295,8 +295,6 @@ def main():
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
                 
-                print(len(T_names), len(T.get_leaves()))
-                
                 node_dict = dict(zip(T_names, T_nodes))
                 
                 edges = []
@@ -312,7 +310,7 @@ def main():
                         p = p.name
                         
                         if p not in T_names:
-                            print(p, master_node_dict[p].up, master_node_dict[p].up in T_names)
+                            #print(p, master_node_dict[p].up, master_node_dict[p].up in T_names)
                             continue
                 
                         edges.append((T_names.index(node), T_names.index(p)))
