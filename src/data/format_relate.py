@@ -349,6 +349,8 @@ def main():
                     nodes = copy.copy(_)
                 
                 edges = list(set(edges))
+                
+                print(root_name, T_names)
                     
                 X = []
                 for node in T_names:
