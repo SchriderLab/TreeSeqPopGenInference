@@ -292,6 +292,8 @@ def main():
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
                 
+                print(T)
+                
                 T_nodes = list(T.iter_descendants())
                 T_names = [u.name for u in T_nodes]
                 
