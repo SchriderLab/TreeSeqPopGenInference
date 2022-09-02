@@ -306,17 +306,16 @@ def main():
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
-                        if T_.name == -1:
-                            done = True
-                            break
-         
+
                         p = T_.up
                         
-                        
+                        if (p is None):
+                            done = True
+                        elif p.name == root_name:
+                            done = True
                         
                         if p.name not in T_names:
-                            done = True
-                            break
+                            continue
                         
                         p = p.name
                         
