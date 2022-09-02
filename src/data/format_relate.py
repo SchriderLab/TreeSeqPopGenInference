@@ -303,6 +303,9 @@ def main():
                 print(T)
                 print(set(current_day_nodes).difference(leaf_names), len(data.keys()), len(T.get_leaves()), len(current_day_nodes))
                 
+                edges = T.get_edges()
+                print(edges)
+                
                 sys.exit()
                 
                 
