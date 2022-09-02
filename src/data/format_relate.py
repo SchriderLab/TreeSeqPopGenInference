@@ -230,7 +230,7 @@ def main():
                             
                     cs = copy.copy(_)
                                                 
-                T = root_ete.get_tree_root()
+                Tr = root_ete.get_tree_root()
                             
                     
                 level_order = [u.name for u in list(root.levelorder())]
@@ -280,7 +280,7 @@ def main():
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
-                T = T.get_common_ancestor([u for u in T.get_descendants() if u.name in nodes])
+                T = Tr.get_common_ancestor([u for u in Tr.get_descendants() if u.name in nodes])
                 
                 T_nodes = list(T.iter_descendants())
                 T_names = [u.name for u in T_nodes]
@@ -290,7 +290,7 @@ def main():
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
                 
-                T_nodes = list(T.iter_descendants()) + [T]
+                T_nodes = list(T.iter_descendants()) + [T] + [Tr]
                 T_names = [u.name for u in T_nodes]
                 
                 node_dict = dict(zip(T_names, T_nodes))
