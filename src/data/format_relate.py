@@ -305,7 +305,7 @@ def main():
                 
                 
                 edges = []
-                while len(data.keys()) < T_nodes:
+                while len(data.keys()) < len(T_nodes):
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
@@ -335,8 +335,6 @@ def main():
                         _.append(p)
                         
                     nodes = copy.copy(_)
-                    
-                
                 
                     
                 X = []
