@@ -296,7 +296,7 @@ def main():
                 node_dict = dict(zip(T_names, T_nodes))
                 
                 edges = []
-                while len(data.keys()) < len(T_nodes):
+                while len(data.keys()) < len(T_nodes) - 1:
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
