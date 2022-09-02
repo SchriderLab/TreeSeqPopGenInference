@@ -292,7 +292,7 @@ def main():
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
                 
-                T_nodes = list(T.iter_descendants())
+                T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
                 
                 node_dict = dict(zip(T_names, T_nodes))
@@ -314,8 +314,6 @@ def main():
                                 data[p][-2:] = lv.astype(np.float32)
                         
                         else:
-         
-                            
                             if s1 > 0:
                                 lv = data[node][1:3]
                             
@@ -337,7 +335,6 @@ def main():
                 X = np.array(X)
                 print(X.shape)
                 
-                sys.exit()
                 
                 if args.topological_order:
                     # topologically order nodes
@@ -378,6 +375,8 @@ def main():
                 
                 Edges.append(edges)
                 infos.append(info_vec)
+                
+            sys.exit()
                 
             if len(Xs) > 0:
                 if ix < N:
