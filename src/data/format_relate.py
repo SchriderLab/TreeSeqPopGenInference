@@ -306,7 +306,7 @@ def main():
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
-                        if (T_.name == root_name) or T_.name == -1:
+                        if T_.name == -1:
                             done = True
                             break
          
@@ -328,6 +328,7 @@ def main():
                                 data[p][-2:] = lv.astype(np.float32)
                         
                         else:
+                            
                             if s1 > 0:
                                 lv = data[node][1:3]
                             
@@ -341,6 +342,7 @@ def main():
                         
                     nodes = copy.copy(_)
                 
+                edges = list(set(edges))
                     
                 X = []
                 for node in T_names:
