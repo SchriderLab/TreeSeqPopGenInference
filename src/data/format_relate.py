@@ -230,8 +230,11 @@ def main():
                     cs = copy.copy(_)
                                                 
                 Tr = root_ete.get_tree_root()
-                            
-                    
+                master_nodes = list(Tr.get_descendants) + [Tr]
+                _ = [u.name for u in master_nodes]
+                
+                master_node_dict = dict(zip(_, master_nodes))
+                
                 level_order = [u.name for u in list(root.levelorder())]
                 #sys.exit()
                 
@@ -309,7 +312,7 @@ def main():
                         p = p.name
                         
                         if p not in T_names:
-                            print(p)
+                            print(p, master_node_dict[p].up, master_node_dict[p].up in T_names)
                             continue
                 
                         edges.append((T_names.index(node), T_names.index(p)))
