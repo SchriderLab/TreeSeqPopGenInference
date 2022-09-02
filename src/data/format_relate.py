@@ -292,27 +292,32 @@ def main():
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
                 
+                root_name = T.name
+                
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
                 
                 node_dict = dict(zip(T_names, T_nodes))
                 
                 edges = []
-                while len(data.keys()) < len(T_nodes):
+                
+                done = False
+                while not done:
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
+                        if (T_.name == root_name) or T_.name == -1:
+                            done = True
+                            break
+         
                         p = T_.up
                         
                         if p is None:
+                            done = True
                             break
                         
                         p = p.name
                         
-                        if p not in T_names:
-                            #print(p, master_node_dict[p].up, master_node_dict[p].up in T_names)
-                            continue
-                
                         edges.append((T_names.index(node), T_names.index(p)))
                     
                         if p in data.keys():
