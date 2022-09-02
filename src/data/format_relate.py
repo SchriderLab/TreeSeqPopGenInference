@@ -315,6 +315,9 @@ def main():
                         if p is None:
                             done = True
                             break
+                        elif p.name == -1:
+                            done = True
+                            break
                         
                         p = p.name
                         
