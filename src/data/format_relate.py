@@ -306,22 +306,19 @@ def main():
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
-
+                        if T_.name == -1:
+                            done = True
+                            break
+         
                         p = T_.up
                         
-                        
-                        
-                        
-                        if (p is None):
-                            done = True
-                        elif (p.name == root_name):
-                            done = True
-                        elif p.name == -1:
+                        if p is None:
                             done = True
                             break
                         
                         if p.name not in T_names:
-                            continue
+                            done = True
+                            break
                         
                         p = p.name
                         
@@ -350,9 +347,6 @@ def main():
                     nodes = copy.copy(_)
                 
                 edges = list(set(edges))
-                
-                
-                print(root_name, T_names)
                     
                 X = []
                 for node in T_names:
