@@ -291,13 +291,14 @@ def main():
                 T.prune(to_prune, True)
                 T.standardize()
                 
-                T_nodes = list(T.iter_descendants()) + [T] + [Tr]
+                T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
                 
                 node_dict = dict(zip(T_names, T_nodes))
+                print(len(node_dict.keys()))
                 
                 edges = []
-                while len(data.keys()) < len(T_nodes) - 1:
+                while len(data.keys()) < len(T_nodes):
                     _ = []
                     for node in nodes:
                         T_ = node_dict[node]
@@ -334,9 +335,11 @@ def main():
                         
                     nodes = copy.copy(_)
                 
+                print(edges)
+                edges = np.array(edges)
                     
                 X = []
-                for node in T_names[:-1]:
+                for node in T_names:
                     X.append(data[node])
                     
                 X = np.array(X)
