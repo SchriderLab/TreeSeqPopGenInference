@@ -317,7 +317,7 @@ def main():
                             
                                 _.append(c.up)
                             
-                            edges.append((c_, p))
+                            edges.append((T_names.index(c_), T_names.index(p)))
                         
                         
                     T_present = copy.copy(_)
