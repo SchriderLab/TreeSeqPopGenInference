@@ -323,10 +323,7 @@ def main():
                                 _.append(c.up)
                             
                             edges.append((c_, p))
-                        else:
-                            print('stopping...')
-                            print(c_)
-                            break
+                        
                         
                     T_present = copy.copy(_)
 
