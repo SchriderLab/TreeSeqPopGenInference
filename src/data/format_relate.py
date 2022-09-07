@@ -215,8 +215,8 @@ def main():
                 while len(cs) > 0:
                     _ = []
                     
-                    for ix in range(len(cs)):
-                        root_ete = cs[ix]
+                    for j in range(len(cs)):
+                        root_ete = cs[j]
                         
                         # find the edges
                         n = root_ete.name
@@ -370,7 +370,6 @@ def main():
                 infos.append(info_vec)
             
             if len(Xs) > 0:
-                print(ix, tag, len(Xs))
                 if ix < N:
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
