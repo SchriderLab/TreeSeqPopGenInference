@@ -321,13 +321,14 @@ def main():
                         
                         
                     T_present = copy.copy(_)
-
                     
                 X = []
                 for node in T_names:
                     X.append(data[node])
                     
                 X = np.array(X)
+                
+                print(len(edges), X.shape)
                 
                 if args.topological_order:
                     # topologically order nodes
