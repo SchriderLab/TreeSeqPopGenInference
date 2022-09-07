@@ -316,7 +316,7 @@ def main():
                             p = c.up.name
                             
                             if p not in data.keys():
-                                data[p] = np.array([data[c_] + branch_l, 0., 1.])
+                                data[p] = np.array([data[c_][0] + branch_l, 0., 1.])
                             
                                 _.append(c.up)
                             
@@ -346,7 +346,7 @@ def main():
                 Xs.append(X)
                 print(X.shape)
                 
-                ii = list(np.where(X[:,0] != 0)[0])
+                ii = list(np.where(X[:,0] > 0)[0])
                 times.extend(X[ii,0])
                 
                 t_coal = np.max(X[:,0])
