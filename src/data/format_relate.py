@@ -296,7 +296,7 @@ def main():
                 T.prune(to_prune, True)
 
                 T_nodes = list(T.iter_descendants()) + [T]
-                T_names = [u.name for u in T_nodes]
+                T_names = [u.name for u in T_nodes] + [-1]
 
                 
                 edges = []
@@ -327,6 +327,8 @@ def main():
                     X.append(data[node])
                     
                 X = np.array(X)
+                
+                print(X.shape, len(T_names))
                 
                 #print(len(edges), X.shape)
                 edges = edges[:X.shape[0]]
