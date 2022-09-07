@@ -328,7 +328,8 @@ def main():
                     
                 X = np.array(X)
                 
-                print(len(edges), X.shape)
+                #print(len(edges), X.shape)
+                edges = edges[:X.shape[0]]
                 
                 if args.topological_order:
                     # topologically order nodes
