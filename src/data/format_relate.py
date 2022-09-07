@@ -282,11 +282,14 @@ def main():
                         data[node] = np.array([0., 1., 0.])
                 
                 nodes = copy.copy(current_day_nodes)
+                
                 T = Tr.get_common_ancestor([u for u in Tr.get_descendants() if u.name in nodes])
                 
                 T_nodes = list(T.iter_descendants())
                 T_names = [u.name for u in T_nodes]
                 
+                T_present = [u for u in T_nodes if u.name in nodes]
+            
                 to_prune = copy.copy(current_day_nodes)
                 
                 to_prune = [u for u in T_nodes if u.name in to_prune]
@@ -300,53 +303,29 @@ def main():
                 node_dict = dict(zip(T_names, T_nodes))
                 
                 edges = []
-                
-                done = False
-                while not done:
+                while len(T_present) > 0:
                     _ = []
-                    for node in nodes:
-                        T_ = node_dict[node]
-                        if T_.name == -1:
-                            done = True
-                            break
-         
-                        p = T_.up
-                        
-                        if p is None:
-                            done = True
-                            break
-                        
-                        if p.name not in T_names:
-                            done = True
-                            break
-                        
-                        p = p.name
-                        
-                        edges.append((T_names.index(node), T_names.index(p)))
                     
-                        if p in data.keys():
-                            
-                            
-                            if s1 > 0:
-                                lv = (data[node][1:3].astype(np.uint8).astype(bool) | data[p][-2:].astype(bool)).astype(np.uint8)
-                                data[p][-2:] = lv.astype(np.float32)
+                    for c in T_present:
+                        c_ = c.name
+                        branch_l = c.dist
                         
+                        p = c.up
+                        if p is not None:
+                        
+                            p = c.up.name
+                            
+                            if p not in data.keys():
+                                data[p] = np.array([data[c_] + branch_l, 0., 1.])
+                            
+                                _.append(c.up)
+                            
+                            edges.append((c_, p))
                         else:
-                            
-                            if s1 > 0:
-                                lv = data[node][1:3]
-                            
-                                # cumulatively add branch lengths for a time parameter
-                                # note that current day nodes have t = 0.
-                                data[p] = np.array([T_.dist + data[node][0], 0., 0., 1.] + list(lv))
-                            else:
-                                data[p] = np.array([T_.dist + data[node][0], 0., 1.])
+                            break
                         
-                        _.append(p)
-                        
-                    nodes = copy.copy(_)
-                
-                edges = list(set(edges))
+                    T_present = copy.copy(_)
+
                     
                 X = []
                 for node in T_names:
