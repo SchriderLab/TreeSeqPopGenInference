@@ -370,6 +370,7 @@ def main():
                 infos.append(info_vec)
             
             if len(Xs) > 0:
+                print(ix, tag, len(Xs))
                 if ix < N:
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
