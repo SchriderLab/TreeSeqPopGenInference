@@ -300,7 +300,7 @@ def main():
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
                 
-                print(sorted(T_names))
+                print(sorted(T_names), len(T_names))
                 
                 node_dict = dict(zip(T_names, T_nodes))
                 
@@ -324,6 +324,8 @@ def main():
                             
                             edges.append((c_, p))
                         else:
+                            print('stopping...')
+                            print(c_)
                             break
                         
                     T_present = copy.copy(_)
