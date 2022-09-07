@@ -300,6 +300,8 @@ def main():
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
                 
+                print(sorted(T_names))
+                
                 node_dict = dict(zip(T_names, T_nodes))
                 
                 edges = []
