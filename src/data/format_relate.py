@@ -342,9 +342,11 @@ def main():
                     # as we ordered the node features
                     edges = [(indices_[u], indices_[v]) for u,v in edges]
                 
-                Xs.append(X)
                 
-                ii = list(np.where(X[:,0] > 0)[0])
+                Xs.append(X)
+                print(X.shape)
+                
+                ii = list(np.where(X[:,0] != 0)[0])
                 times.extend(X[ii,0])
                 
                 t_coal = np.max(X[:,0])
