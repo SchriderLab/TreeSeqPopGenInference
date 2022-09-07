@@ -106,7 +106,7 @@ def main():
         
         logging.info('have {0} training and {1} validation replicates...'.format(N, N_val))
         logging.info('writing...')
-        for ix in range(5):
+        for ix in range(N + N_val):
             if (ix + 1) % 5 == 0:
                 logging.info('on replicate {}...'.format(ix))
             
