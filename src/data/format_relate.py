@@ -107,7 +107,7 @@ def main():
         logging.info('have {0} training and {1} validation replicates...'.format(N, N_val))
         logging.info('writing...')
         for ix in range(5):
-            if (ix + 1) % 10 == 0:
+            if (ix + 1) % 5 == 0:
                 logging.info('on replicate {}...'.format(ix))
             
             if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
@@ -294,15 +294,10 @@ def main():
                 
                 to_prune = [u for u in T_nodes if u.name in to_prune]
                 T.prune(to_prune, True)
-                
-                root_name = T.name
-                
+
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
-                
-                print(sorted(T_names), len(T_names))
-                
-                node_dict = dict(zip(T_names, T_nodes))
+
                 
                 edges = []
                 while len(T_present) > 0:
@@ -334,8 +329,6 @@ def main():
                     
                 X = np.array(X)
                 
-                print(len(edges), X.shape)
-                
                 if args.topological_order:
                     # topologically order nodes
                     X = X[indices,:]
@@ -345,7 +338,6 @@ def main():
                 
                 
                 Xs.append(X)
-                print(X.shape)
                 
                 ii = list(np.where(X[:,0] > 0)[0])
                 times.extend(X[ii,0])
@@ -374,8 +366,6 @@ def main():
                 
                 Edges.append(edges)
                 infos.append(info_vec)
-                
-            sys.exit()
             
             if len(Xs) > 0:
                 if ix < N:
