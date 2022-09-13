@@ -21,6 +21,15 @@ import random
 
 from ete3 import Tree
 
+"""
+notes:
+training_results/seln_rnn_i2/ --n_steps 1000 --lr 0.00001 --L 128 --n_gcn_iter 16 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4
+training_results/seln_rnn_i3/ --n_steps 1000 --lr 0.00001 --L 92 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4
+training_results/seln_rnn_i4/ --n_steps 1000 --lr 0.00001 --L 128 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4"
+training_results/seln_rnn_i5/ --n_steps 1000 --lr 0.0001 --L 128 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4"
+
+"""
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -166,7 +175,7 @@ def main():
                 l_ = end_snp - start_snp
                 
                 sk_nodes = dict()
-                
+                mut_dict = dict()
                 try:
                     for j in range(2, len(line), 5):
                         nodes.append((j - 1) // 5)
@@ -188,6 +197,8 @@ def main():
                         parents.append(p)
                         lengths.append(float(line[j + 1]))
                         n_mutations.append(float(line[j + 2]))
+                        
+                        mut_dict[nodes[-1]] = n_mutations[-1]
                         regions.append((int(line[j + 3]), int(line[j + 4])))
                         
                         edges.append((parents[-1], nodes[-1]))
@@ -279,7 +290,7 @@ def main():
                         data[node] = np.array([0., 0., 1., 0., 0., 0.])
                 else:
                     for node in current_day_nodes:
-                        data[node] = np.array([0., 1., 0.])
+                        data[node] = np.array([0., 1., 0., mut_dict[node]])
                 
                 nodes = copy.copy(current_day_nodes)
                 
@@ -298,7 +309,6 @@ def main():
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
 
-                
                 edges = []
                 while len(T_present) > 0:
                     _ = []
@@ -313,7 +323,10 @@ def main():
                             p = c.up.name
                             
                             if p not in data.keys():
-                                data[p] = np.array([data[c_][0] + branch_l, 0., 1.])
+                                if p in mut_dict.keys():
+                                    data[p] = np.array([data[c_][0] + branch_l, 0., 1., mut_dict[p]])
+                                else:
+                                    data[p] = np.array([data[c_][0] + branch_l, 0., 1., 0.])
                             
                                 _.append(c.up)
                             
