@@ -129,26 +129,13 @@ def main():
         val = '_val' in ifile        
         
         for j in range(len(generator)):
-            batch, y, x1, bl = generator.get_batch()
-            bl = torch.LongTensor(bl)
-            
-            if batch is None:
+            x, x1, edge_index, y = generator.get_batch()
+            if x is None:
                 break
             
-            x1 = x1.detach().cpu().numpy()
-            x = batch.x
-            edge_index = batch.edge_index
-            y = list(y.detach().cpu().numpy().flatten())
+            print([u.shape for u in x])
+            print([u.shape for u in x1])
             
-            classes_ = [classes[u] for u in y]
-            
-            print(x.shape)
-            
-            x = to_dense_batch(x, bl)[0]
-            edge_index = unbatch_edge_index(edge_index, bl)
-            
-            print(x.shape)
-            print(edge_index.shape)
             sys.exit()
             
             

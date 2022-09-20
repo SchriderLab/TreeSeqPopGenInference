@@ -44,56 +44,90 @@ class TreeSeqGenerator(object):
         self.keys = {model: list(self.ifile[model].keys()) for model in self.models}
         self.on_epoch_end()
         
+        # internal list for original sequence lengths observed
+        self.lengths = []
+        
         return
     
-    def get_batch(self):
-        # features, edge_indices, and label, what sequence the graphs belong to
-        X = []
+    # for internal use
+    def get_single_model_batch(self):
+        Xs = []
         X1 = [] # tree-level features (same size as batch_)
-        indices = []
+        edge_index = []
         y = []
-        batch_ = []
-
-        ij = 0
+        
         for model in self.models:
-            # grab n_samples_per for each model
-            for ix in range(self.n_samples_per):
-                while True:
-                    if self.counts[model] == len(self.keys[model]):
-                        break
-                    
-                    model_index = self.models.index(model)
-                    key = self.keys[model][self.counts[model]]
-    
-                    self.counts[model] += 1
-                    skeys = sorted(list(self.ifile[model][key].keys()))
-                    
-                    if not 'x' in skeys:
-                        continue
-                    
-                    X_ = np.array(self.ifile[model][key]['x'])   
-                    if X_.shape[0] == 0:
-                        continue
-                    
-                    if len(X_) > self.s_length:
-                        ii = np.random.choice(range(len(X_) - self.s_length))
-                        ii = range(ii, ii + self.s_length)
-                        
-                        X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
-                        
-                        break
-                    elif self.pad:
-                        # pad out to this size
-                        ii = list(range(self.s_length))
-                
-                # this guaruntees batches are always balanced
+            # features, edge_indices, and label, what sequence the graphs belong to
+            
+            while True:
                 if self.counts[model] == len(self.keys[model]):
-                    return None, None, None, None
+                    break
                 
-                edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
-                print(X_.shape, edges.shape)
+                model_index = self.models.index(model)
+                key = self.keys[model][self.counts[model]]
+
+                self.counts[model] += 1
+                skeys = sorted(list(self.ifile[model][key].keys()))
                 
-                sys.exit()
+                if not 'x' in skeys:
+                    continue
+                
+                X_ = np.array(self.ifile[model][key]['x'])   
+                if X_.shape[0] == 0:
+                    continue
+                
+                if len(X_) > self.s_length:
+                    ii = np.random.choice(range(len(X_) - self.s_length))
+                    ii = range(ii, ii + self.s_length)
+                    
+                    X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
+                    
+                    break
+                elif self.pad:
+                    # pad out to this size
+                    ii = list(range(self.s_length))
+            
+            # this guaruntees batches are always balanced
+            if self.counts[model] == len(self.keys[model]):
+                return None, None, None, None
+            
+            edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
+            # n_nodes, n_features
+            s = (X_.shape[1], X_.shape[2])
+            
+            # record sequence length
+            self.lengths.append(X_.shape[0])
+            
+            indices = []
+            X = []
+            
+            for ii_ in ii:
+                if ii_ < X_.shape[0]:
+                    x = X_[ii_]
+                    
+                    ik = list(np.where(x[:,0] != 0))
+                    x[ik,0] = np.log(x[ik,0])
+                    
+                    X.append(x)
+                    
+                    indices.append(edges[ii_])
+                else:
+                    x = np.zeros(s)
+                    
+                    X.append(x)
+                    indices.append(None)
+                
+            X1.append(X1_[ii])
+            X = np.array(X)
+            Xs.append(X)
+            
+            y.append(model)
+            edge_index.append(np.array(indices))
+            
+        return Xs, X1, edge_index, y
+
+            
+            
     
     def __getitem__(self, index):
         # features, edge_indices, and label, what sequence the graphs belong to
