@@ -6,6 +6,11 @@ import logging
 import h5py
 import numpy as np
 
+import sys
+sys.path.insert(0, './src/models')
+
+from data_loaders import TreeSeqGenerator
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -18,6 +23,11 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--classes", default = "mig12,mig21,noMig")
+    
+    parser.add_argument("--L", default = "128")
+    parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
+    
+    parser.add_argument("--n_train", default = "100000")
 
     args = parser.parse_args()
 
@@ -77,6 +87,9 @@ def main():
 
                 ofile.flush()
                 ofile_val.flush()
+        
+        if all([counts[case][0] >= int(args.n_train) for case in counts.keys()]):
+            break
                 
     for case in sorted(list(counts.keys())):
         logging.info('have {0}, {1} training / validation replicates for case {2}...'.format(counts[case][0], counts[case][1], case))

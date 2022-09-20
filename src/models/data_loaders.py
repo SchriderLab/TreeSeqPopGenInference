@@ -110,7 +110,7 @@ class TreeSeqGenerator(object):
                         X.append(x)
                         indices.append(None)
                     
-                    batch_.append(ij)
+                    batch_.extend(list(np.repeat(ij, x.shape[0])))
                     
                 X1.append(X1_[ii])
                 
