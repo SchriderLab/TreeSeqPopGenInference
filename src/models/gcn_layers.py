@@ -968,17 +968,17 @@ class Res1dBlock(nn.Module):
     def __init__(self, in_shape, out_channels, n_layers, 
                              k = 5, pooling = None):
         super(Res1dBlock, self).__init__()
-        
-        in_shape = list(in_shape)
+  
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
         
         for ix in range(n_layers):
+            
             self.convs.append(nn.Conv1d(in_shape, out_channels, k, 
                                         stride = 1, padding = (k - 1) // 2))
             self.norms.append(nn.Sequential(nn.InstanceNorm1d(out_channels), nn.Dropout1d(0.1)))
             
-            in_shape[0] = out_channels
+            in_shape = out_channels
         
         if pooling == 'max':
             self.pool = nn.MaxPool2d((1, 2), stride = (1, 2))
