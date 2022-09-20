@@ -976,7 +976,7 @@ class Res1dBlock(nn.Module):
             
             self.convs.append(nn.Conv1d(in_shape, out_channels, k, 
                                         stride = 1, padding = (k - 1) // 2))
-            self.norms.append(nn.Sequential(nn.InstanceNorm1d(out_channels), nn.Dropout1d(0.1)))
+            self.norms.append(nn.Sequential(nn.InstanceNorm1d(out_channels)))
             
             in_shape = out_channels
         
