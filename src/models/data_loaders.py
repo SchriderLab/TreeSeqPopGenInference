@@ -46,9 +46,9 @@ class TreeSeqGeneratorV2(object):
             edge_index = np.array(self.ifile[key]['edge_index'])
             
             y.extend(y_)
-            X.extend(list(x))
-            X1.extend(list(x1))
-            indices.extend(list(edge_index))
+            X.extend(list(x.reshape(x.shape[0] * x.shape[1], -1)))
+            X1.extend(list(x1.reshape(x.shape[0] * x.shape[1], -1)))
+            indices.extend(list(edge_index.reshape(x.shape[0] * x.shape[1], -1)))
 
         y = torch.LongTensor(np.array(y).astype(np.float32))
         X1 = torch.FloatTensor(np.array(X1))
