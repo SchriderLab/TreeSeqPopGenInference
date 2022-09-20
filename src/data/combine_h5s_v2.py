@@ -130,6 +130,7 @@ def main():
         
         for j in range(len(generator)):
             batch, y, x1, bl = generator[j]
+            bl = torch.LongTensor(bl)
             
             if batch is None:
                 break
