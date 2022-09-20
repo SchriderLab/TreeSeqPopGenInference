@@ -144,7 +144,7 @@ def main():
             
             print(x.shape)
             
-            x = to_dense_batch(x, bl)
+            x = to_dense_batch(x, bl)[0]
             edge_index = unbatch_edge_index(edge_index, bl)
             
             print(x.shape)
