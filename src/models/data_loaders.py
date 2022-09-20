@@ -59,6 +59,8 @@ class TreeSeqGeneratorV2(object):
         batch = Batch.from_data_list(
             [Data(x=torch.FloatTensor(X[k]), edge_index=torch.LongTensor(indices[k])) for k in range(len(indices))])
 
+        print(back.x.shape, batch.edge_index.shape)
+
         return batch, X1, y
 
 class TreeSeqGenerator(object):
