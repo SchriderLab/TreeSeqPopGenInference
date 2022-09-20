@@ -802,6 +802,8 @@ class GATSeqClassifier(nn.Module):
         n_batch = self.batch_size
         
         x = x.view((n_batch, self.L, x.shape[-1]))
+        print(x.shape, x1.shape)
+        
         x = torch.cat([x, x1], dim = -1)
         
         _, h = self.gru(x)
