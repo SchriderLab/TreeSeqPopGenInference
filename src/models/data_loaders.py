@@ -45,12 +45,10 @@ class TreeSeqGeneratorV2(object):
             x1 = np.array(self.ifile[key]['x1'])
             edge_index = np.array(self.ifile[key]['edge_index'])
             
-            print(x.shape, edge_index.shape)
-            
             y.extend(y_)
-            X.extend(list(x.reshape(x.shape[0] * x.shape[1], -1)))
-            X1.extend(list(x1.reshape(x.shape[0] * x.shape[1], -1)))
-            indices.extend(list(edge_index.reshape(x.shape[0] * x.shape[1], -1)))
+            X.extend(list(x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
+            X1.extend(list(x1.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
+            indices.extend(list(edge_index.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
 
         y = torch.LongTensor(np.array(y).astype(np.float32))
         X1 = torch.FloatTensor(np.array(X1))
@@ -58,8 +56,6 @@ class TreeSeqGeneratorV2(object):
         # use PyTorch Geometrics batch object to make one big graph
         batch = Batch.from_data_list(
             [Data(x=torch.FloatTensor(X[k]), edge_index=torch.LongTensor(indices[k])) for k in range(len(indices))])
-
-        print(back.x.shape, batch.edge_index.shape)
 
         return batch, X1, y
 
