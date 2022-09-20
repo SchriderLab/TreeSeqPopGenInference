@@ -125,7 +125,7 @@ def main():
     counter = 0
 
     for ifile in ifiles:
-        generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = args.pad_l)
+        generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
         val = '_val' in ifile        
         
         for j in range(len(generator)):
