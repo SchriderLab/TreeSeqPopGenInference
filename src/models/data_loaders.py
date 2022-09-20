@@ -42,6 +42,9 @@ class TreeSeqGeneratorV2(object):
             self.ix += 1
             
             x = np.array(self.ifile[key]['x'])
+            ii = np.where(x[:,:,0] > 0) 
+            x[ii[0],ii[1],0] = np.log(x[ii[0],ii[1],0])
+            
             y_ = np.array(self.ifile[key]['y'])
             x1 = np.array(self.ifile[key]['x1'])
             edge_index = np.array(self.ifile[key]['edge_index'])

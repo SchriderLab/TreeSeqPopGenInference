@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument("--hidden_dim", default = "128")
     parser.add_argument("--n_gru_layers", default = "1")
     parser.add_argument("--n_gcn_iter", default = "6")
+    parser.add_argument("--gcn_dim", default = "26")
     
     parser.add_argument("--pad_l", action = "store_true")
     
@@ -231,7 +232,7 @@ def main():
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
         
         if lr_scheduler is not None:
-            logging.info('lr for next epoch: {}'.format(lr_scheduler.get_lr()))
+            logging.info('lr for next epoch: {}'.format(lr_scheduler.get_last_lr()))
             lr_scheduler.step()
         
         
