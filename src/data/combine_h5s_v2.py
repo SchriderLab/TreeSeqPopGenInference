@@ -129,7 +129,7 @@ def main():
         val = '_val' in ifile        
         
         for j in range(len(generator)):
-            batch, y, x1, bl = generator[j]
+            batch, y, x1, bl = generator.get_batch()
             bl = torch.LongTensor(bl)
             
             if batch is None:

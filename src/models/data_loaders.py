@@ -46,6 +46,55 @@ class TreeSeqGenerator(object):
         
         return
     
+    def get_batch(self):
+        # features, edge_indices, and label, what sequence the graphs belong to
+        X = []
+        X1 = [] # tree-level features (same size as batch_)
+        indices = []
+        y = []
+        batch_ = []
+
+        ij = 0
+        for model in self.models:
+            # grab n_samples_per for each model
+            for ix in range(self.n_samples_per):
+                while True:
+                    if self.counts[model] == len(self.keys[model]):
+                        break
+                    
+                    model_index = self.models.index(model)
+                    key = self.keys[model][self.counts[model]]
+    
+                    self.counts[model] += 1
+                    skeys = sorted(list(self.ifile[model][key].keys()))
+                    
+                    if not 'x' in skeys:
+                        continue
+                    
+                    X_ = np.array(self.ifile[model][key]['x'])   
+                    if X_.shape[0] == 0:
+                        continue
+                    
+                    if len(X_) > self.s_length:
+                        ii = np.random.choice(range(len(X_) - self.s_length))
+                        ii = range(ii, ii + self.s_length)
+                        
+                        X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
+                        
+                        break
+                    elif self.pad:
+                        # pad out to this size
+                        ii = list(range(self.s_length))
+                
+                # this guaruntees batches are always balanced
+                if self.counts[model] == len(self.keys[model]):
+                    return None, None, None, None
+                
+                edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
+                print(X_.shape, edges.shape)
+                
+                sys.exit()
+    
     def __getitem__(self, index):
         # features, edge_indices, and label, what sequence the graphs belong to
         X = []
