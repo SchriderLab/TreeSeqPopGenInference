@@ -784,7 +784,7 @@ class GATSeqClassifier(nn.Module):
         self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
         self.soft = nn.LogSoftmax(dim = -1)
         
-    def forward(self, x0, edge_index, batch, x1, bl):
+    def forward(self, x0, edge_index, batch, x1):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         
         for ix in range(self.n_gcn_iter):

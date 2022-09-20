@@ -21,6 +21,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+"""
+example command:
+"python3 src/models/train_gcn.py --ifile /pine/scr/d/d/ddray/seln_trees_i2_l128_scattered.hdf5 --ifile_val /pine/scr/d/d/ddray/seln_trees_i2_l128_scattered.hdf5 
+    --odir training_results/seln_rnn_i6/ --n_steps 1000 --lr 0.0001 --L 128 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4"
+"""
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -115,7 +121,7 @@ def main():
         
         n_steps = int(args.n_steps)
         for j in range(int(args.n_steps)):
-            batch, y, x1, bl = generator[j]
+            batch, y, x1 = generator[j]
             
             if batch is None:
                 break
@@ -127,7 +133,7 @@ def main():
 
             optimizer.zero_grad()
 
-            y_pred = model(batch.x, batch.edge_index, batch.batch, x1, bl)
+            y_pred = model(batch.x, batch.edge_index, batch.batch, x1)
 
             loss = criterion(y_pred, y)
 
@@ -163,7 +169,7 @@ def main():
         Y_pred = []
         with torch.no_grad():
             for j in range(len(validation_generator)):
-                batch, y, x1, bl = validation_generator[j]
+                batch, y, x1 = validation_generator[j]
                 
                 if batch is None:
                     break
@@ -172,7 +178,7 @@ def main():
                 y = y.to(device)
                 x1 = x1.to(device)
 
-                y_pred = model(batch.x, batch.edge_index, batch.batch, x1, bl)
+                y_pred = model(batch.x, batch.edge_index, batch.batch, x1)
 
                 loss = criterion(y_pred, y)
 
