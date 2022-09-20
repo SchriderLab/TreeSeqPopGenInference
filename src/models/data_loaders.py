@@ -52,8 +52,6 @@ class TreeSeqGeneratorV2(object):
 
         y = torch.LongTensor(np.array(y).astype(np.float32))
         X1 = torch.FloatTensor(np.array(X1))
-        
-        print(X1.shape, x.shape)
     
         # use PyTorch Geometrics batch object to make one big graph
         batch = Batch.from_data_list(
