@@ -8,7 +8,9 @@ import glob
 import os
 import copy
 
-
+class TreeSeqGeneratorV2(object):
+    def __init__(self):
+        return
 
 class TreeSeqGenerator(object):
     def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, 
@@ -50,7 +52,7 @@ class TreeSeqGenerator(object):
         return
     
     # for internal use
-    def get_single_model_batch(self):
+    def get_single_model_batch(self, scattered_sample = False):
         Xs = []
         X1 = [] # tree-level features (same size as batch_)
         edge_index = []
@@ -63,7 +65,6 @@ class TreeSeqGenerator(object):
                 if self.counts[model] == len(self.keys[model]):
                     break
                 
-                model_index = self.models.index(model)
                 key = self.keys[model][self.counts[model]]
 
                 self.counts[model] += 1
@@ -77,8 +78,11 @@ class TreeSeqGenerator(object):
                     continue
                 
                 if len(X_) > self.s_length:
-                    ii = np.random.choice(range(len(X_) - self.s_length))
-                    ii = range(ii, ii + self.s_length)
+                    if not scattered_sample:
+                        ii = np.random.choice(range(len(X_) - self.s_length))
+                        ii = range(ii, ii + self.s_length)
+                    else:
+                        ii = sorted(list(np.random.choice(range(len(X_)), self.s_length, replace = False)))
                     
                     X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
                     

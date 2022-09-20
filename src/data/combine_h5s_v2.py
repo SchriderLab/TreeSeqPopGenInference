@@ -92,8 +92,7 @@ def parse_args():
     parser.add_argument("--L", default = "128")
     parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
     parser.add_argument("--chunk_size", default = "5")
-    
-    parser.add_argument("--n_train", default = "100000")
+    parser.add_argument("--scattered", action = "store_true")
 
     args = parser.parse_args()
 
@@ -139,7 +138,7 @@ def main():
         val = '_val' in ifile
         
         for j in range(len(generator)):
-            x, x1, edge_index, y = generator.get_single_model_batch()
+            x, x1, edge_index, y = generator.get_single_model_batch(scattered_sample = args.scattered)
             if x is None:
                 break
                     
