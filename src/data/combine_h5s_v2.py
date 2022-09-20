@@ -17,6 +17,10 @@ import torch
 from torch import Tensor
 
 from torch_geometric.utils import degree
+import matplotlib
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
 
 def unbatch(src: Tensor, batch: Tensor, dim: int = 0) -> List[Tensor]:
     r"""Splits :obj:`src` according to a :obj:`batch` vector along dimension
@@ -122,29 +126,81 @@ def main():
     
     L = int(args.L)
     
+    # counters for dataset labels
     counter = 0
-
+    val_counter = 0
+    
+    lengths = []
+    
     for ifile in ifiles:
+        logging.info('working on {}...'.format(ifile))
+        
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
-        val = '_val' in ifile        
+        val = '_val' in ifile
         
         for j in range(len(generator)):
             x, x1, edge_index, y = generator.get_single_model_batch()
             if x is None:
                 break
+                    
+            for k in range(len(x)):
+                c = y[k]
+                
+                data[c]['x'].append(x[k])
+                data[c]['x1'].append(x1[k])
+                data[c]['edge_index'].append(edge_index[k])
+                
+        # append sequence lengths for histogram
+        lengths.extend(generator.lengths)
+        
+        while all([len(data[u]['x']) > 0 for u in classes]):
+            X = []
+            edge_index = []
+            X1 = []
+            y = []
             
-            print([u.shape for u in x])
-            print([u.shape for u in x1])
+            for c in classes:
+                X.append(data[c]['x'][-1])
+                edge_index.append(data[c]['edge_index'][-1])
+                X1.append(data[c]['x1'][-1])
+                y.append(classes.index(c))
+                
+                del data[c]['x'][-1]
+                del data[c]['edge_index'][-1]
+                del data[c]['x1'][-1]
+
+            X = np.array(X, dtype = np.float32)
+            edge_index = np.array(edge_index, dtype = np.int32)
+            X1 = np.array(X1)
+            y = np.array(y, dtype = np.uint8)
             
-            sys.exit()
+            if not val:
+                ofile.create_dataset('{0:06d}/x'.format(counter), data = X, compression = 'lzf')
+                ofile.create_dataset('{0:06d}/x1'.format(counter), data = X1, compression = 'lzf')
+                ofile.create_dataset('{0:06d}/edge_index'.format(counter), data = edge_index, compression = 'lzf')
+                ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
+                ofile.flush()
+            
+                counter += 1
+            else:
+                ofile_val.create_dataset('{0:06d}/x'.format(val_counter), data = X, compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/x1'.format(val_counter), data = X1, compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/edge_index'.format(val_counter), data = edge_index, compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
+                ofile_val.flush()
+            
+                val_counter += 1
+        
+        logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
             
             
-            
-            
-            
+    logging.info('closing files and plotting hist...')
     ofile.close()
     ofile_val.close()
         
+    plt.hist(lengths, bins = 35)
+    plt.savefig('seql_hist.png', dpi = 100)
+    plt.close()
         
         
         
