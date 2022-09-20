@@ -9,8 +9,10 @@ import os
 import copy
 
 class TreeSeqGeneratorV2(object):
-    def __init__(self, ifile, n_samples_per = 4, chunk_size = 5):
+    def __init__(self, ifile, n_samples_per = 4, chunk_size = 5, models = "hard,hard-near,neutral,soft,soft-near"): # must be in order, see combine_h5s_v2
         self.ifile = ifile
+        
+        self.models = models.split(',')
         
         self.n_per = n_samples_per
         self.batch_size = chunk_size * self.n_per
