@@ -121,7 +121,7 @@ def main():
         
         n_steps = int(args.n_steps)
         for j in range(int(args.n_steps)):
-            batch, y, x1 = generator[j]
+            batch, x1, y = generator[j]
             
             if batch is None:
                 break
@@ -169,7 +169,7 @@ def main():
         Y_pred = []
         with torch.no_grad():
             for j in range(len(validation_generator)):
-                batch, y, x1 = validation_generator[j]
+                batch, x1, y = validation_generator[j]
                 
                 if batch is None:
                     break
