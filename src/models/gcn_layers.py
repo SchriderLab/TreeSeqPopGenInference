@@ -733,20 +733,23 @@ class GATv2Conv(MessagePassing):
     
 # a basic MLP module
 class MLP(nn.Module):
-    def __init__(self, input_dim, output_dim, dim=256, n_blk=3):
+    def __init__(self, input_dim, output_dim, dim = 256, n_blk = 3, norm = nn.BatchNorm1d,
+                 activation = nn.ReLU):
         super(MLP, self).__init__()
-        layers = [nn.Linear(input_dim, dim), nn.BatchNorm1d(dim), nn.ReLU(inplace=True)]
+        layers = [nn.Linear(input_dim, dim), norm(dim), activation(inplace=True)]
         for _ in range(n_blk - 2):
-            layers += [nn.Linear(dim, dim), nn.BatchNorm1d(dim), nn.ReLU(inplace=True)]
+            layers += [nn.Linear(dim, dim), norm(dim), activation(inplace=True)]
         layers += [nn.Linear(dim, output_dim)]
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.model(x.view(x.size(0), -1))
     
+    
 class GATSeqClassifier(nn.Module):
     def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 13, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
-                             num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6):
+                             num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6,
+                             use_conv = False, conv_k = 5, conv_dim = 4): 
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -770,6 +773,12 @@ class GATSeqClassifier(nn.Module):
             self.norms.append(nn.LayerNorm((gcn_dim, )))
             self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout))
         
+        self.use_conv = use_conv
+        if self.use_conv:
+            # 1d convolution over graph features to cat to MLP layer
+            self.conv = Res1dBlock(hidden_size * num_gru_layers * 2 + info_dim, conv_dim, conv_k)
+            
+            
         """
         for ix in range(1, n_gcn_layers):
             self.gcns.extend([GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads)])
@@ -781,7 +790,11 @@ class GATSeqClassifier(nn.Module):
         self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         
-        self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
+        if not self.use_conv:
+            self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
+        else:
+            self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim, n_classes, dim = hidden_size * num_gru_layers * 3)
+            
         self.soft = nn.LogSoftmax(dim = -1)
         
     def forward(self, x0, edge_index, batch, x1):
@@ -800,11 +813,14 @@ class GATSeqClassifier(nn.Module):
         n_batch = self.batch_size
         
         x = x.view((n_batch, self.L, x.shape[-1]))
-        
         x = torch.cat([x, x1], dim = -1)
         
         _, h = self.gru(x)
         h = torch.flatten(h.transpose(0, 1), 1, 2)
+        
+        if self.use_conv:
+            xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
+            h = torch.cat([h, xc], dim = 1)
         
         return self.soft(self.out(h))
         
@@ -950,7 +966,7 @@ class VanillaConv(MessagePassing):
     
 class Res1dBlock(nn.Module):
     def __init__(self, in_shape, out_channels, n_layers, 
-                             k = 3, pooling = 'max'):
+                             k = 5, pooling = None):
         super(Res1dBlock, self).__init__()
         
         in_shape = list(in_shape)
@@ -958,9 +974,9 @@ class Res1dBlock(nn.Module):
         self.norms = nn.ModuleList()
         
         for ix in range(n_layers):
-            self.convs.append(nn.Conv2d(in_shape[0], out_channels, (1, 3), 
-                                        stride = (1, 1), padding = (0, (k + 1) // 2 - 1)))
-            self.norms.append(nn.Sequential(nn.InstanceNorm2d(out_channels), nn.Dropout2d(0.1)))
+            self.convs.append(nn.Conv1d(in_shape, out_channels, k, 
+                                        stride = 1, padding = (k - 1) // 2))
+            self.norms.append(nn.Sequential(nn.InstanceNorm1d(out_channels), nn.Dropout1d(0.1)))
             
             in_shape[0] = out_channels
         
@@ -969,15 +985,15 @@ class Res1dBlock(nn.Module):
         else:
             self.pool = None
             
-        self.activation = nn.ELU()
+        self.activation = nn.ReLU()
         
     def forward(self, x, return_unpooled = False):
-        xs = [self.norms[0](self.convs[0](x))]
+        x = self.norms[0](self.convs[0](x))
         
         for ix in range(1, len(self.norms)):
-            xs.append(self.norms[ix](self.convs[ix](xs[-1])) + xs[-1])
+            x = self.norms[ix](self.convs[ix](x)) + x
             
-        x = self.activation(torch.cat(xs, dim = 1))
+        x = self.activation(x)
         
         if self.pool is not None:
             xp = self.pool(x)

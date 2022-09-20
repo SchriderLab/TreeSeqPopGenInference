@@ -43,12 +43,16 @@ def parse_args():
     parser.add_argument("--n_per_batch", default = "16")
     parser.add_argument("--L", default = "32", help = "tree sequence length")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
-    parser.add_argument("--n_gcn_iter", default = "6")
+    
+    # data parameter
     parser.add_argument("--in_dim", default = "6")
     parser.add_argument("--n_classes", default = "3")
     
     # hyper-parameters
+    parser.add_argument("--use_conv", action = "store_true")
     parser.add_argument("--hidden_dim", default = "128")
+    parser.add_argument("--n_gru_layers", default = "1")
+    parser.add_argument("--n_gcn_iter", default = "6")
     
     parser.add_argument("--pad_l", action = "store_true")
     
@@ -83,7 +87,9 @@ def main():
 
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), n_samples_per = int(args.n_per_batch))
     validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch))
-    model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
+    model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+                             n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_dim = int(args.hidden_dim),
+                             use_conv = args.use_conv, n_gru_layers = int(args.n_gru_layers))
     
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
