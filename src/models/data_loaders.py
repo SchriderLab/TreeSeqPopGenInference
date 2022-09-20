@@ -39,6 +39,7 @@ class TreeSeqGeneratorV2(object):
         
         for ix in range(self.n_per):
             key = self.keys[self.ix]
+            self.ix += 1
             
             x = np.array(self.ifile[key]['x'])
             y_ = np.array(self.ifile[key]['y'])
