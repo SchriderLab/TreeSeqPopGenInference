@@ -9,8 +9,53 @@ import os
 import copy
 
 class TreeSeqGeneratorV2(object):
-    def __init__(self):
-        return
+    def __init__(self, ifile, n_samples_per = 4, chunk_size = 5):
+        self.ifile = ifile
+        
+        self.n_per = n_samples_per
+        self.batch_size = chunk_size * self.n_per
+        
+        self.on_epoch_end()
+        
+    def on_epoch_end(self, shuffle = True):
+        self.keys = sorted(list(self.ifile.keys()))
+        if shuffle:
+            random.shuffle(self.keys)
+        
+        self.ix = 0
+
+    def __len__(self):
+        return len(self.keys) // self.n_per
+    
+    def __getitem__(self, index):
+        # features, edge_indices, and label, what sequence the graphs belong to
+        X = []
+        X1 = [] # tree-level features (same size as batch_)
+        indices = []
+        y = []
+        batch_ = []
+        
+        for ix in range(self.n_per):
+            key = self.keys[self.ix]
+            
+            x = np.array(self.ifile[key]['x'])
+            y_ = np.array(self.ifile[key]['y'])
+            x1 = np.array(self.ifile[key]['x1'])
+            edge_index = np.array(self.ifile[key]['edge_index'])
+            
+            y.extend(y_)
+            X.extend(list(x))
+            X1.extend(list(x1))
+            indices.extend(list(edge_index))
+
+        y = torch.LongTensor(np.array(y).astype(np.float32))
+        X1 = torch.FloatTensor(np.array(X1))
+    
+        # use PyTorch Geometrics batch object to make one big graph
+        batch = Batch.from_data_list(
+            [Data(x=torch.FloatTensor(X[k]), edge_index=torch.LongTensor(indices[k])) for k in range(len(indices))])
+
+        return batch, X1, y
 
 class TreeSeqGenerator(object):
     def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, 

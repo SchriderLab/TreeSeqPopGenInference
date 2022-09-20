@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import h5py
 import configparser
-from data_loaders import TreeSeqGenerator
+from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
 from gcn_layers import GATSeqClassifier
@@ -41,6 +41,9 @@ def parse_args():
     parser.add_argument("--in_dim", default = "6")
     parser.add_argument("--n_classes", default = "3")
     
+    # hyper-parameters
+    parser.add_argument("--hidden_dim", default = "128")
+    
     parser.add_argument("--pad_l", action = "store_true")
     
     parser.add_argument("--weights", default = "None")
@@ -72,9 +75,9 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGenerator(h5py.File(args.ifile, 'r'), n_samples_per = int(args.n_per_batch), sequence_length = L, pad = args.pad_l)
-    validation_generator = TreeSeqGenerator(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch), sequence_length = L, pad = args.pad_l)
-    model = GATSeqClassifier(n_classes = int(args.n_classes), L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
+    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), n_samples_per = int(args.n_per_batch))
+    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch))
+    model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim))
     
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
