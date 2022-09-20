@@ -141,6 +141,9 @@ def main():
             
             classes_ = [classes[u] for u in y]
             
+            x = to_dense_batch(x, bl)
+            edge_index = unbatch_edge_index(edge_index, bl)
+            
             print(x.shape)
             print(edge_index.shape)
             sys.exit()
