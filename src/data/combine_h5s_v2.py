@@ -142,6 +142,8 @@ def main():
             
             classes_ = [classes[u] for u in y]
             
+            print(x.shape)
+            
             x = to_dense_batch(x, bl)
             edge_index = unbatch_edge_index(edge_index, bl)
             
