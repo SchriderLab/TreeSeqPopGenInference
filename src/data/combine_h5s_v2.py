@@ -129,7 +129,7 @@ def main():
         val = '_val' in ifile        
         
         for j in range(len(generator)):
-            x, x1, edge_index, y = generator.get_batch()
+            x, x1, edge_index, y = generator.get_single_model_batch()
             if x is None:
                 break
             
