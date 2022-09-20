@@ -45,6 +45,8 @@ class TreeSeqGeneratorV2(object):
             x1 = np.array(self.ifile[key]['x1'])
             edge_index = np.array(self.ifile[key]['edge_index'])
             
+            print(x.shape, edge_index.shape)
+            
             y.extend(y_)
             X.extend(list(x.reshape(x.shape[0] * x.shape[1], -1)))
             X1.extend(list(x1.reshape(x.shape[0] * x.shape[1], -1)))
