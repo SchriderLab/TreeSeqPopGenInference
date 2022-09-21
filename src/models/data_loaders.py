@@ -124,7 +124,8 @@ class TreeSeqGenerator(object):
                         self.counts[model] += 1
                         continue
                     
-                    X_ = np.array(self.ifile[model][key]['x'])   
+                    X_ = np.array(self.ifile[model][key]['x']) 
+                    X1_ = np.array(self.ifile[model][key]['info'])
                     if X_.shape[0] == 0:
                         self.counts[model] += 1
                         continue
@@ -136,7 +137,7 @@ class TreeSeqGenerator(object):
                         else:
                             ii = sorted(list(np.random.choice(range(len(X_)), self.s_length, replace = False)))
                         
-                        X1_ = np.array(self.ifile[model][key]['info'])
+                        
                         padding = False
                         pad_size = (0, 0)
                         
