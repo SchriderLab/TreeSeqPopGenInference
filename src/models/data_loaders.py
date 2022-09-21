@@ -57,7 +57,7 @@ class TreeSeqGeneratorV2(object):
                 e = edge_index[k]
                 for j in range(e.shape[0]):
                     if mask[k][j] == 1:
-                        _.append(e[j])
+                        _.append(torch.LongTensor(e[j]))
                     else:
                         _.append(None)
                         
@@ -75,7 +75,7 @@ class TreeSeqGeneratorV2(object):
     
         # use PyTorch Geometrics batch object to make one big graph
         batch = Batch.from_data_list(
-            [Data(x=torch.FloatTensor(X[k]), edge_index=torch.LongTensor(indices[k])) for k in range(len(indices))])
+            [Data(x=torch.FloatTensor(X[k]), edge_index=indices[k]) for k in range(len(indices))])
 
         return batch, X1, y
 
