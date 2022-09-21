@@ -173,6 +173,7 @@ class TreeSeqGenerator(object):
                     x = np.zeros(s)
                     
                     X.append(x)
+                    X1.append(np.zeros(X1_[-1].shape))
                     indices.append(None)
                 
                 for ii_ in ii:
@@ -185,13 +186,15 @@ class TreeSeqGenerator(object):
                     
                     indices.append(edges[ii_])
                     
+                X1.append(X1_[ii])
+                    
                 for j in range(pad_size[1]):
                     x = np.zeros(s)
                     
                     X.append(x)
+                    X1.append(np.zeros(X1_[-1].shape))
                     indices.append(None)
                     
-                X1.append(X1_[ii])
                 X = np.array(X)
                 Xs.append(X)
                 
