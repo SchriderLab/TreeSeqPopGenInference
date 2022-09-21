@@ -136,7 +136,8 @@ def main():
     x1_stds = []
     bls = []
     n_muts = []
-    val_every = 10
+    
+    val_prop = 0.1
     
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
@@ -196,7 +197,7 @@ def main():
             y = np.array(y, dtype = np.uint8)
             masks = np.array(masks, dtype = np.uint8)
             
-            val = counter - val_counter > val_every
+            val = np.random.uniform() < val_prop
             
             if not val:
                 ofile.create_dataset('{0:06d}/x'.format(counter), data = X, compression = 'lzf')
