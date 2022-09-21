@@ -41,7 +41,7 @@ def main():
        
         if 'x' in list(ifile[key].keys()):
             x = np.array(ifile[key]['x'])
-            v = np.array(ifile[key]['info'])
+            v = np.array(ifile[key]['x1'])
             
             ls.append(x.shape[0])
             
