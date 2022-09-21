@@ -144,8 +144,8 @@ def main():
         
         for j in range(len(generator)):
             x, x1, edge_index, y = generator.get_single_model_batch(scattered_sample = args.scattered)
-            x1_means.append(np.mean(axis = 0))
-            x1_stds.append(np.std(axis = 0))
+            x1_means.append(np.mean(x1, axis = 0))
+            x1_stds.append(np.std(x1, axis = 0))
             
             # sequence, node, feature
             ii = np.where(x[:,:,0] > 0)
