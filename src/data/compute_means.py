@@ -52,6 +52,7 @@ def main():
             for k in range(len(v)):
                 m = mask[k]
                 v_ = v[k,np.where(m == 1)]
+                print(v_.shape)
                 
                 vs.append(v_)
             _.extend(x_)
