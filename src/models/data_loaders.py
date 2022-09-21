@@ -145,7 +145,13 @@ class TreeSeqGenerator(object):
                         
                         # pad out to this size
                         ii = list(range(self.s_length))
-                        pad_size = (self.s_length - len(X_)) // 2
+                        
+                        if (self.s_length - len(X_)) % 2 == 0:
+                            pad_size = ((self.s_length - len(X_)) // 2, 
+                                        (self.s_length - len(X_)) // 2)
+                        else:
+                            pad_size = ((self.s_length - len(X_)) // 2 + 1, 
+                                        (self.s_length - len(X_)) // 2)
                         
                         break
                 
@@ -164,7 +170,7 @@ class TreeSeqGenerator(object):
                 X = []
                 
                 for ii_ in ii:
-                    if ii_ < X_.shape[0]:
+                    if (ii_ > pad_size[0]) and (ii_ < max(ii) - pad_size[1]):
                         x = X_[ii_]
                         
                         ik = list(np.where(x[:,0] != 0))
