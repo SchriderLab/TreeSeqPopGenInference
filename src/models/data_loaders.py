@@ -138,13 +138,13 @@ class TreeSeqGenerator(object):
                         
                         X1_ = np.array(self.ifile[model][key]['info'])
                         padding = False
+                        pad_size = (0, 0)
                         
                         break
                     elif self.pad:
                         padding = True
                         
-                        # pad out to this size
-                        ii = list(range(self.s_length))
+                        ii = list(range(len(X_)))
                         
                         if (self.s_length - len(X_)) % 2 == 0:
                             pad_size = ((self.s_length - len(X_)) // 2, 
@@ -169,21 +169,27 @@ class TreeSeqGenerator(object):
                 indices = []
                 X = []
                 
+                for j in range(pad_size[0]):
+                    x = np.zeros(s)
+                    
+                    X.append(x)
+                    indices.append(None)
+                
                 for ii_ in ii:
-                    if (ii_ > pad_size[0]) and (ii_ < max(ii) - pad_size[1]):
-                        x = X_[ii_ - pad_size[0]]
-                        
-                        ik = list(np.where(x[:,0] != 0))
-                        x[ik,0] = np.log(x[ik,0])
-                        
-                        X.append(x)
-                        
-                        indices.append(edges[ii_])
-                    else:
-                        x = np.zeros(s)
-                        
-                        X.append(x)
-                        indices.append(None)
+                    x = X_[ii_]
+                    
+                    ik = list(np.where(x[:,0] != 0))
+                    x[ik,0] = np.log(x[ik,0])
+                    
+                    X.append(x)
+                    
+                    indices.append(edges[ii_])
+                    
+                for j in range(pad_size[1]):
+                    x = np.zeros(s)
+                    
+                    X.append(x)
+                    indices.append(None)
                     
                 X1.append(X1_[ii])
                 X = np.array(X)
