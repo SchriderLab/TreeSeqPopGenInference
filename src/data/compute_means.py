@@ -42,13 +42,16 @@ def main():
         if 'x' in list(ifile[key].keys()):
             x = np.array(ifile[key]['x'])
             v = np.array(ifile[key]['x1'])
+            mask = np.array(ifile[key]['mask'])
+            ii = np.where(mask == 1.)
+            
             
             ls.append(x.shape[0])
             
             x_ = x[:,:,:,0]
             x_ = np.log(x_[np.where(x_ > 0.)])
             
-            vs.append(v)
+            vs.extend(v[ii[0],ii[1],:])
             _.extend(x_)
             
     vs = np.concatenate(vs)
