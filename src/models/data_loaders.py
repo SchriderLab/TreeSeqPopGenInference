@@ -146,6 +146,8 @@ class TreeSeqGenerator(object):
                         # pad out to this size
                         ii = list(range(self.s_length))
                         pad_size = (self.s_length - len(X_)) // 2
+                        
+                        break
                 
                 # this guaruntees batches are always balanced
                 if self.counts[model] == len(self.keys[model]):
