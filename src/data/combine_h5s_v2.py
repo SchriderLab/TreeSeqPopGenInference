@@ -153,14 +153,16 @@ def main():
                 break
                     
             for k in range(len(x)):
-                x1_means.append(np.mean(x1[k], axis = 0))
-                x1_stds.append(np.std(x1[k], axis = 0))
                 
-                # sequence, node, feature
-                ii = np.where(x[k][:,:,0] > 0)
-                bls.extend(np.random.choice(np.log(x[k][ii[0], ii[1],0]), 10, replace = False))
-         
-                n_muts.extend(np.random.choice(x[k][:,:,-1].flatten(), 10, replace = False))
+                if np.random.uniform() < 0.02:
+                    x1_means.append(np.mean(x1[k], axis = 0))
+                    x1_stds.append(np.std(x1[k], axis = 0))
+                    
+                    # sequence, node, feature
+                    ii = np.where(x[k][:,:,0] > 0)
+                    bls.extend(np.random.choice(np.log(x[k][ii[0], ii[1],0]), 10, replace = False))
+             
+                    n_muts.extend(np.random.choice(x[k][:,:,-1].flatten(), 10, replace = False))
                 
                 c = y[k]
                 
