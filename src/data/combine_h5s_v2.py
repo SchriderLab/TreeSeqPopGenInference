@@ -118,6 +118,7 @@ def main():
         data[c]['x'] = []
         data[c]['x1'] = []
         data[c]['edge_index'] = []
+        data[c]['mask'] = []
         
     
     ofile = h5py.File(args.ofile, 'w')
@@ -143,7 +144,7 @@ def main():
         val = '_val' in ifile
         
         for j in range(len(generator)):
-            x, x1, edge_index, y = generator.get_single_model_batch(scattered_sample = args.scattered)
+            x, x1, edge_index, masks, y = generator.get_single_model_batch(scattered_sample = args.scattered)
             
             
             
@@ -165,6 +166,7 @@ def main():
                 data[c]['x'].append(x[k])
                 data[c]['x1'].append(x1[k])
                 data[c]['edge_index'].append(edge_index[k])
+                data[c]['mask'].append(masks[k])
                 
         # append sequence lengths for histogram
         lengths.extend(generator.lengths)
@@ -172,6 +174,7 @@ def main():
         while all([len(data[u]['x']) > 0 for u in classes]):
             X = []
             edge_index = []
+            masks = []
             X1 = []
             y = []
             
@@ -180,20 +183,24 @@ def main():
                 edge_index.append(data[c]['edge_index'][-1])
                 X1.append(data[c]['x1'][-1])
                 y.append(classes.index(c))
+                masks.append(data[c]['mask'][-1])
                 
                 del data[c]['x'][-1]
                 del data[c]['edge_index'][-1]
                 del data[c]['x1'][-1]
+                del data[c]['mask'][-1]
 
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
             X1 = np.array(X1)
             y = np.array(y, dtype = np.uint8)
+            masks = np.array(masks, dtype = np.uint8)
             
             if not val:
                 ofile.create_dataset('{0:06d}/x'.format(counter), data = X, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/x1'.format(counter), data = X1, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/edge_index'.format(counter), data = edge_index, compression = 'lzf')
+                ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
                 ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
                 ofile.flush()
             
@@ -202,6 +209,7 @@ def main():
                 ofile_val.create_dataset('{0:06d}/x'.format(val_counter), data = X, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/x1'.format(val_counter), data = X1, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/edge_index'.format(val_counter), data = edge_index, compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
                 ofile_val.flush()
             
