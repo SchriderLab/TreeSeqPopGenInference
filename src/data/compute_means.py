@@ -54,7 +54,7 @@ def main():
                 v_ = v[k,np.where(m == 1)]
                 print(v_.shape)
                 
-                vs.append(v_)
+                vs.append(v_[0])
             _.extend(x_)
             
     vs = np.concatenate(vs)
