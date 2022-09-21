@@ -9,10 +9,18 @@ import os
 import copy
 
 class TreeSeqGeneratorV2(object):
-    def __init__(self, ifile, n_samples_per = 4, chunk_size = 5, models = "hard,hard-near,neutral,soft,soft-near"): # must be in order, see combine_h5s_v2
+    def __init__(self, ifile, means = 'seln_means.npz', n_samples_per = 4, chunk_size = 5, models = "hard,hard-near,neutral,soft,soft-near"): # must be in order, see combine_h5s_v2
         self.ifile = ifile
         
         self.models = models.split(',')
+        
+        means = np.load(means)
+        
+        self.info_mean = means['v_mean'].reshape(1, 1, -1)
+        self.info_std = means['v_std'].reshape(1, 1, -1)
+        
+        self.info_std[np.where(self.info_std == 0.)] = 1.
+        self.t_mean, self.t_std = tuple(means['times'])
         
         self.n_per = n_samples_per
         self.batch_size = chunk_size * self.n_per
@@ -43,10 +51,10 @@ class TreeSeqGeneratorV2(object):
             
             x = np.array(self.ifile[key]['x'])
             ii = np.where(x[:,:,:,0] > 0) 
-            x[ii[0],ii[1],ii[2],0] = np.log(x[ii[0],ii[1],ii[2],0])
+            x[ii[0],ii[1],ii[2],0] = (np.log(x[ii[0],ii[1],ii[2],0]) - self.t_mean) / self.t_std
             
             y_ = np.array(self.ifile[key]['y'])
-            x1 = np.array(self.ifile[key]['x1'])
+            x1 = (np.array(self.ifile[key]['x1']) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]['edge_index'])
             mask = np.array(self.ifile[key]['mask'])
             
