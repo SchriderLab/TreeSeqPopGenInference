@@ -189,7 +189,7 @@ class TreeSeqGenerator(object):
                     x[ik,0] = np.log(x[ik,0])
                     
                     X.append(x)
-                    mask.apend(1.)
+                    mask.append(1.)
                     indices.append(edges[ii_])
                     
                 X1.append(X1_[ii])
@@ -200,7 +200,7 @@ class TreeSeqGenerator(object):
                     X.append(x)
                     X1.append(np.zeros(X1_[-1].shape))
                     indices.append(None)
-                    mask.apend(0.)
+                    mask.append(0.)
                     
                 X = np.array(X)
                 Xs.append(X)
