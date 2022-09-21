@@ -107,6 +107,7 @@ class TreeSeqGenerator(object):
         Xs = []
         X1 = [] # tree-level features (same size as batch_)
         edge_index = []
+        masks = []
         y = []
         
         for model in self.models:
@@ -168,6 +169,8 @@ class TreeSeqGenerator(object):
                 self.lengths.append(X_.shape[0])
                 
                 indices = []
+                mask = []
+                
                 X = []
                 
                 for j in range(pad_size[0]):
@@ -176,6 +179,8 @@ class TreeSeqGenerator(object):
                     X.append(x)
                     X1.append(np.zeros(X1_[-1].shape))
                     indices.append(None)
+                    mask.append(0.)
+    
                 
                 for ii_ in ii:
                     x = X_[ii_]
@@ -184,7 +189,7 @@ class TreeSeqGenerator(object):
                     x[ik,0] = np.log(x[ik,0])
                     
                     X.append(x)
-                    
+                    mask.apend(1.)
                     indices.append(edges[ii_])
                     
                 X1.append(X1_[ii])
@@ -195,20 +200,30 @@ class TreeSeqGenerator(object):
                     X.append(x)
                     X1.append(np.zeros(X1_[-1].shape))
                     indices.append(None)
+                    mask.apend(0.)
                     
                 X = np.array(X)
                 Xs.append(X)
                 
                 y.append(model)
+                s = [u for u in indices if u is not None][-1].shape
+                
+                for j in range(len(indices)):
+                    if indices[j] is None:
+                        indices[j] = np.zeros(s, dtype = np.int32)
+                
+                
+                mask = np.array(mask, dtype = np.uint8)
                 edge_index.append(np.array(indices))
-            
-                if j != n_samples - 1 and padding:
+                masks.append(mask)
+                
+                if padding:
                     break
             
             self.counts[model] += 1
             
             
-        return Xs, X1, edge_index, y
+        return Xs, X1, edge_index, masks, y
 
             
             
