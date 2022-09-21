@@ -155,15 +155,16 @@ def main():
             for k in range(len(x)):
                 
                 if np.random.uniform() < 0.02:
-                    x1_means.append(np.mean(x1[k], axis = 0))
-                    x1_stds.append(np.std(x1[k], axis = 0))
+                    x1_means.append(np.mean(x1[k][np.where(masks[k] != 0.)[0],:], axis = 0))
+                    x1_stds.append(np.std(x1[k][np.where(masks[k] != 0.)[0],:], axis = 0))
                     
                     # sequence, node, feature
                     ii = np.where(x[k][:,:,0] > 0)
-                    bls.extend(np.random.choice(np.log(x[k][ii[0], ii[1],0]), 10, replace = False))
+                    bls.extend(np.random.choice(np.log(x[k][ii[0],ii[1],0]), 10, replace = False))
              
-                    n_muts.extend(np.random.choice(x[k][:,:,-1].flatten(), 10, replace = False))
+                    n_muts.extend(np.random.choice(x[k][np.where(masks[k] != 0.)[0],:,-1].flatten(), 10, replace = False))
                 
+                    logging.info('have {} samples...'.format(len(x1_means)))
                 c = y[k]
                 
                 data[c]['x'].append(x[k])
