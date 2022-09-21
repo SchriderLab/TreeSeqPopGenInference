@@ -59,7 +59,7 @@ class TreeSeqGeneratorV2(object):
                     if mask[k][j] == 1:
                         _.append(torch.LongTensor(e[j]))
                     else:
-                        _.append(None)
+                        _.append(torch.LongTensor([]))
                         
                 edge_index_.extend(_)
                 
