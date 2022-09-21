@@ -171,7 +171,7 @@ class TreeSeqGenerator(object):
                 
                 for ii_ in ii:
                     if (ii_ > pad_size[0]) and (ii_ < max(ii) - pad_size[1]):
-                        x = X_[ii_]
+                        x = X_[ii_ - pad_size[0]]
                         
                         ik = list(np.where(x[:,0] != 0))
                         x[ik,0] = np.log(x[ik,0])
