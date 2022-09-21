@@ -136,12 +136,12 @@ def main():
     x1_stds = []
     bls = []
     n_muts = []
+    val_every = 10
     
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
-        val = '_val' in ifile
         
         for j in range(len(generator)):
             x, x1, edge_index, masks, y = generator.get_single_model_batch(scattered_sample = args.scattered)
@@ -196,6 +196,8 @@ def main():
             y = np.array(y, dtype = np.uint8)
             masks = np.array(masks, dtype = np.uint8)
             
+            val = counter - val_counter > val_every
+            
             if not val:
                 ofile.create_dataset('{0:06d}/x'.format(counter), data = X, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/x1'.format(counter), data = X1, compression = 'lzf')
@@ -209,7 +211,7 @@ def main():
                 ofile_val.create_dataset('{0:06d}/x'.format(val_counter), data = X, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/x1'.format(val_counter), data = X1, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/edge_index'.format(val_counter), data = edge_index, compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
                 ofile_val.flush()
             
