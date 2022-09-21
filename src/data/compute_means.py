@@ -38,20 +38,18 @@ def main():
     ls = []
     for key in keys:
         print(key)
-        skeys = list(ifile[key].keys())
-        
-        for skey in skeys:
-            if 'x' in list(ifile[key][skey].keys()):
-                x = np.array(ifile[key][skey]['x'])
-                v = np.array(ifile[key][skey]['info'])
-                
-                ls.append(x.shape[0])
-                
-                x_ = x[:,:,0]
-                x_ = np.log(x_[np.where(x_ > 0.)])
-                
-                vs.append(v)
-                _.extend(x_)
+       
+        if 'x' in list(ifile[key].keys()):
+            x = np.array(ifile[key]['x'])
+            v = np.array(ifile[key]['info'])
+            
+            ls.append(x.shape[0])
+            
+            x_ = x[:,:,:,0]
+            x_ = np.log(x_[np.where(x_ > 0.)])
+            
+            vs.append(v)
+            _.extend(x_)
             
     vs = np.concatenate(vs)
         
