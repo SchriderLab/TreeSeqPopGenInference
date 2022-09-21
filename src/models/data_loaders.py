@@ -48,11 +48,27 @@ class TreeSeqGeneratorV2(object):
             y_ = np.array(self.ifile[key]['y'])
             x1 = np.array(self.ifile[key]['x1'])
             edge_index = np.array(self.ifile[key]['edge_index'])
+            mask = np.array(self.ifile[key]['mask'])
+            
+            edge_index_ = []
+            for k in range(x.shape[0]):
+                _ = []
+                
+                e = edge_index[k]
+                for j in range(e.shape[0]):
+                    if mask[k][j] == 1:
+                        _.append(e[j])
+                    else:
+                        _.append(None)
+                        
+                edge_index_.extend(_)
+                
+                
             
             y.extend(y_)
             X.extend(list(x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
             X1.extend(list(x1))
-            indices.extend(list(edge_index.reshape(x.shape[0] * x.shape[1], 2, edge_index.shape[3])))
+            indices.extend(edge_index_)
 
         y = torch.LongTensor(np.array(y).astype(np.float32))
         X1 = torch.FloatTensor(np.array(X1))
@@ -103,7 +119,7 @@ class TreeSeqGenerator(object):
         return
     
     # for internal use
-    def get_single_model_batch(self, n_samples = 3, scattered_sample = False):
+    def get_single_model_batch(self, n_samples = 3, sample_mode = 'scattered'):
         Xs = []
         X1 = [] # tree-level features (same size as batch_)
         edge_index = []
@@ -132,10 +148,10 @@ class TreeSeqGenerator(object):
                         continue
                     
                     if len(X_) > self.s_length:
-                        if not scattered_sample:
+                        if sample_mode not in ['scattered', 'app_equi']:
                             ii = np.random.choice(range(len(X_) - self.s_length))
                             ii = range(ii, ii + self.s_length)
-                        else:
+                        elif sample_mode == 'scattered':
                             ii = sorted(list(np.random.choice(range(len(X_)), self.s_length, replace = False)))
                         
                         
