@@ -43,15 +43,17 @@ def main():
             x = np.array(ifile[key]['x'])
             v = np.array(ifile[key]['x1'])
             mask = np.array(ifile[key]['mask'])
-            ii = np.where(mask == 1.)
             
             
             ls.append(x.shape[0])
             
             x_ = x[:,:,:,0]
             x_ = np.log(x_[np.where(x_ > 0.)])
-            
-            vs.extend(v[ii[0],ii[1],:])
+            for k in range(len(v)):
+                m = mask[k]
+                v_ = v[k,np.where(m == 1)]
+                
+                vs.append(v_)
             _.extend(x_)
             
     vs = np.concatenate(vs)
