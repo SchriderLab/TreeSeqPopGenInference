@@ -191,7 +191,7 @@ class TreeSeqGenerator(object):
                     mask.append(1.)
                     indices.append(edges[ii_])
                     
-                X1.append(np.pad(X1_[ii], ((pad_size[0], pad_size[1]), (0, 0))))
+                X1.append(np.pad(X1_[ii], ((pad_size[0], pad_size[1]), (0, 0)), constant_values = 0.))
                     
                 for j in range(pad_size[1]):
                     x = np.zeros(s)
