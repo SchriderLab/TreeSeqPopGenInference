@@ -86,7 +86,7 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
-    parser.add_argument("--ofile", default = "None")
+    parser.add_argument("--ofile", default = "seln_means.npz")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--L", default = "128")
@@ -131,6 +131,11 @@ def main():
     
     lengths = []
     
+    x1_means = []
+    x1_stds = []
+    bls = []
+    n_muts = []
+    
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         
@@ -139,6 +144,14 @@ def main():
         
         for j in range(len(generator)):
             x, x1, edge_index, y = generator.get_single_model_batch(scattered_sample = args.scattered)
+            x1_means.append(np.mean(axis = 0))
+            x1_stds.append(np.std(axis = 0))
+            
+            # sequence, node, feature
+            ii = np.where(x[:,:,0] > 0)
+            bls.extend(np.random.choice(np.log(x[ii[0], ii[1],0]), 10, replace = False))
+     
+            n_muts.extend(np.random.choice(x[:,:,-1], 10, replace = False))
             if x is None:
                 break
                     
@@ -192,7 +205,14 @@ def main():
         
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
             
-            
+        
+    mean_bl = np.mean(bls)
+    std_bl = np.std(bls)
+    m_x1 = np.mean(np.array(x1_means), axis = 0)
+    s_x1 = np.std(np.array(x1_means), axis = 0)
+    
+    np.savez(args.ofile, bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1)
+    
     logging.info('closing files and plotting hist...')
     ofile.close()
     ofile_val.close()
@@ -201,6 +221,11 @@ def main():
     plt.savefig('seql_hist.png', dpi = 100)
     plt.close()
         
+    plt.hist(n_muts, bins = 35)
+    plt.savefig('nmut_hist.png', dpi = 100)
+    plt.close()
+    
+    
         
         
     # ${code_blocks}

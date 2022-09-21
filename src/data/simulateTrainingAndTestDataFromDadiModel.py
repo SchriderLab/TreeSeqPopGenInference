@@ -16,8 +16,8 @@ T : 86404.6219829
 2Nref_m21 : 0.0861669095413
 """
 
-sampleSize1=20
-sampleSize2=14
+sampleSize1 = int(sys.argv[3])
+sampleSize2 = int(sys.argv[4])
 numSites=10000
 thetaMean, thetaOverRhoMean, nu1Mean, nu2Mean, m12Times2Mean, m21Times2Mean, TMean = 68.29691232, 0.2, 19.022761, 0.054715, 0.025751, 0.172334, 0.664194
 

@@ -103,7 +103,7 @@ class TreeSeqGenerator(object):
         return
     
     # for internal use
-    def get_single_model_batch(self, scattered_sample = False):
+    def get_single_model_batch(self, n_samples = 3, scattered_sample = False):
         Xs = []
         X1 = [] # tree-level features (same size as batch_)
         edge_index = []
@@ -112,72 +112,83 @@ class TreeSeqGenerator(object):
         for model in self.models:
             # features, edge_indices, and label, what sequence the graphs belong to
             
-            while True:
+            for j in range(n_samples):
+                while True:
+                    if self.counts[model] == len(self.keys[model]):
+                        break
+                    
+                    key = self.keys[model][self.counts[model]]
+                    skeys = sorted(list(self.ifile[model][key].keys()))
+                    
+                    if not 'x' in skeys:
+                        self.counts[model] += 1
+                        continue
+                    
+                    X_ = np.array(self.ifile[model][key]['x'])   
+                    if X_.shape[0] == 0:
+                        self.counts[model] += 1
+                        continue
+                    
+                    if len(X_) > self.s_length:
+                        if not scattered_sample:
+                            ii = np.random.choice(range(len(X_) - self.s_length))
+                            ii = range(ii, ii + self.s_length)
+                        else:
+                            ii = sorted(list(np.random.choice(range(len(X_)), self.s_length, replace = False)))
+                        
+                        X1_ = np.array(self.ifile[model][key]['info'])
+                        padding = False
+                        
+                        break
+                    elif self.pad:
+                        padding = True
+                        
+                        # pad out to this size
+                        ii = list(range(self.s_length))
+                        pad_size = (self.s_length - len(X_)) // 2
+                
+                # this guaruntees batches are always balanced
                 if self.counts[model] == len(self.keys[model]):
-                    break
+                    return None, None, None, None
                 
-                key = self.keys[model][self.counts[model]]
-
-                self.counts[model] += 1
-                skeys = sorted(list(self.ifile[model][key].keys()))
+                edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
+                # n_nodes, n_features
+                s = (X_.shape[1], X_.shape[2])
                 
-                if not 'x' in skeys:
-                    continue
+                # record sequence length
+                self.lengths.append(X_.shape[0])
                 
-                X_ = np.array(self.ifile[model][key]['x'])   
-                if X_.shape[0] == 0:
-                    continue
+                indices = []
+                X = []
                 
-                if len(X_) > self.s_length:
-                    if not scattered_sample:
-                        ii = np.random.choice(range(len(X_) - self.s_length))
-                        ii = range(ii, ii + self.s_length)
+                for ii_ in ii:
+                    if ii_ < X_.shape[0]:
+                        x = X_[ii_]
+                        
+                        ik = list(np.where(x[:,0] != 0))
+                        x[ik,0] = np.log(x[ik,0])
+                        
+                        X.append(x)
+                        
+                        indices.append(edges[ii_])
                     else:
-                        ii = sorted(list(np.random.choice(range(len(X_)), self.s_length, replace = False)))
+                        x = np.zeros(s)
+                        
+                        X.append(x)
+                        indices.append(None)
                     
-                    X1_ = (np.array(self.ifile[model][key]['info']) - self.info_mean) / self.info_std
-                    
-                    break
-                elif self.pad:
-                    # pad out to this size
-                    ii = list(range(self.s_length))
-            
-            # this guaruntees batches are always balanced
-            if self.counts[model] == len(self.keys[model]):
-                return None, None, None, None
-            
-            edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
-            # n_nodes, n_features
-            s = (X_.shape[1], X_.shape[2])
-            
-            # record sequence length
-            self.lengths.append(X_.shape[0])
-            
-            indices = []
-            X = []
-            
-            for ii_ in ii:
-                if ii_ < X_.shape[0]:
-                    x = X_[ii_]
-                    
-                    ik = list(np.where(x[:,0] != 0))
-                    x[ik,0] = np.log(x[ik,0])
-                    
-                    X.append(x)
-                    
-                    indices.append(edges[ii_])
-                else:
-                    x = np.zeros(s)
-                    
-                    X.append(x)
-                    indices.append(None)
+                X1.append(X1_[ii])
+                X = np.array(X)
+                Xs.append(X)
                 
-            X1.append(X1_[ii])
-            X = np.array(X)
-            Xs.append(X)
+                y.append(model)
+                edge_index.append(np.array(indices))
             
-            y.append(model)
-            edge_index.append(np.array(indices))
+                if j != n_samples - 1 and padding:
+                    break
+            
+            self.counts[model] += 1
+            
             
         return Xs, X1, edge_index, y
 
