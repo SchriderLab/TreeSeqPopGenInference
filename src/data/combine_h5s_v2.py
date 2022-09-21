@@ -158,7 +158,7 @@ def main():
                 ii = np.where(x[k][:,:,0] > 0)
                 bls.extend(np.random.choice(np.log(x[k][ii[0], ii[1],0]), 10, replace = False))
          
-                n_muts.extend(np.random.choice(x[k][:,:,-1], 10, replace = False))
+                n_muts.extend(np.random.choice(x[k][:,:,-1].flatten(), 10, replace = False))
                 
                 c = y[k]
                 
