@@ -49,9 +49,14 @@ class TreeSeqGeneratorV2(object):
             key = self.keys[self.ix]
             self.ix += 1
             
+            # log and normalize times
             x = np.array(self.ifile[key]['x'])
             ii = np.where(x[:,:,:,0] > 0) 
             x[ii[0],ii[1],ii[2],0] = (np.log(x[ii[0],ii[1],ii[2],0]) - self.t_mean) / self.t_std
+            
+            # log n_mutations
+            ii = np.where(x[:,:,:,-1] > 0) 
+            x[ii[0],ii[1],ii[2],-1] = np.log(x[ii[0],ii[1],ii[2],-1])
             
             y_ = np.array(self.ifile[key]['y'])
             x1 = (np.array(self.ifile[key]['x1']) - self.info_mean) / self.info_std

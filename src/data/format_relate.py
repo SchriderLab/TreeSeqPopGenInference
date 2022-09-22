@@ -368,11 +368,10 @@ def main():
                 std_branch_length = np.std(lengths)
                 skew_branch_length = skew(lengths)
                 max_branch_length = np.max(lengths)
-                min_branch_length = np.min(lengths)
                 position = ((start_snp + end_snp) / 2.) / l
                 w = l_ / l
                 
-                info_vec = np.array([t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length, min_branch_length,
+                info_vec = np.array([t_coal, mean_time, std_time, median_time, mean_branch_length, median_branch_length, std_branch_length, skew_branch_length, max_branch_length,
                                      position, w, l])
                 
                 # make edges bi-directional
@@ -383,12 +382,17 @@ def main():
                 Edges.append(edges)
                 infos.append(info_vec)
             
+            infos = np.array(infos)
+            global_vec = np.array(list(np.mean(infos, axis = 0)) + list(np.std(infos, axis = 0)) + list(np.median(infos, axis = 0)) + [infos.shape[0]], dtype = np.float32)
+            
             if len(Xs) > 0:
                 if ix < N:
+                    ofile.create_dataset('{1}/{0}/global_vec'.format(ix, tag), data = global_vec, compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
                 else:
+                    ofile_val.create_dataset('{1}/{0}/global_vec'.format(ix - N, tag), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/edge_index'.format(ix - N, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/info'.format(ix - N, tag), data = np.array(infos), compression = 'lzf')
