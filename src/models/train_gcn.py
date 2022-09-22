@@ -21,6 +21,25 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+class LabelSmoothing(nn.Module):
+    """NLL loss with label smoothing.
+    """
+    def __init__(self, smoothing=0.0):
+        """Constructor for the LabelSmoothing module.
+        :param smoothing: label smoothing factor
+        """
+        super(LabelSmoothing, self).__init__()
+        self.confidence = 1.0 - smoothing
+        self.smoothing = smoothing
+
+    def forward(self, x, target):
+        logprobs = torch.nn.functional.log_softmax(x, dim=-1)
+        nll_loss = -logprobs.gather(dim=-1, index=target.unsqueeze(1))
+        nll_loss = nll_loss.squeeze(1)
+        smooth_loss = -logprobs.mean(dim=-1)
+        loss = self.confidence * nll_loss + self.smoothing * smooth_loss
+        return loss.mean()
+
 """
 example command:
 "python3 src/models/train_gcn.py --ifile /pine/scr/d/d/ddray/seln_trees_i2_l128_scattered.hdf5 --ifile_val /pine/scr/d/d/ddray/seln_trees_i2_l128_scattered.hdf5 
@@ -61,6 +80,7 @@ def parse_args():
     parser.add_argument("--weight_decay", default = "0.0")
     parser.add_argument("--momenta_dir", default = "/pine/scr/d/d/ddray/seln_momenta_i1")
     parser.add_argument("--save_momenta_every", default = "250")
+    parser.add_argument("--label_smoothing", default = "0.0")
 
     args = parser.parse_args()
 
@@ -128,7 +148,7 @@ def main():
 
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
-    criterion = NLLLoss()
+    criterion = LabelSmoothing(float(args.label_smoothing))
     
     if args.lr_decay != "None":
         lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, float(args.lr_decay))
@@ -167,11 +187,10 @@ def main():
             losses.append(loss.detach().item())
 
             loss.backward()
-            
             if args.momenta_dir != "None":
                 model.update_momenta()
                 
-                if (j + 1) % save_momenta_every:
+                if (j + 1) % save_momenta_every == 0:
                     np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
                     momenta_count += 1
                     

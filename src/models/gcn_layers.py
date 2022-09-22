@@ -744,7 +744,8 @@ class MLP(nn.Module):
 
     def forward(self, x):
         return self.model(x.view(x.size(0), -1))
-    
+   
+import logging
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 13, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
@@ -803,16 +804,17 @@ class GATSeqClassifier(nn.Module):
     def init_momenta(self):
         self.momenta = dict()
         
-        for param in self.parameters():
+        for param, name in self.named_parameters():
             if param.requires_grad:
-                if param.name is not None:
-                    self.momenta[param.name] = np.zeros(param.data.shape)
+                self.momenta[name] = np.zeros(tuple(param.data.shape))
         
+        logging.info('{}'.format(list(self.momenta.keys())))
+   
     def update_momenta(self):
-        for param in self.parameters():
+        for param, name in self.named_parameters():
             if param.requires_grad:
-                if param.name is not None:
-                    self.momenta[param.name] = (1 - self.momenta_gamma) * self.momenta[param.name] + self.momenta_gamma * np.abs(param.grad.data.detach().cpu().numpy())  
+
+                self.momenta[name] = (1 - self.momenta_gamma) * self.momenta[name] + self.momenta_gamma * np.abs(param.grad.data.detach().cpu().numpy())  
         
     def forward(self, x0, edge_index, batch, x1):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
@@ -839,7 +841,7 @@ class GATSeqClassifier(nn.Module):
             xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
             h = torch.cat([h, xc], dim = 1)
         
-        return self.soft(self.out(h))
+        return self.out(h)
         
 
 class Res1dGraphBlock(nn.Module):
