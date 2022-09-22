@@ -93,7 +93,7 @@ def main():
     validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch))
     model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
-                             use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers))
+                             use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
