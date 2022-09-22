@@ -805,13 +805,14 @@ class GATSeqClassifier(nn.Module):
         
         for param in self.parameters():
             if param.requires_grad:
-                self.momenta[param.name] = np.zeros(param.data.shape)
+                if param.name is not None:
+                    self.momenta[param.name] = np.zeros(param.data.shape)
         
     def update_momenta(self):
         for param in self.parameters():
             if param.requires_grad:
-                print(param.name)
-                self.momenta[param.name] = (1 - self.momenta_gamma) * self.momenta[param.name] + self.momenta_gamma * np.abs(param.grad.data.detach().cpu().numpy())  
+                if param.name is not None:
+                    self.momenta[param.name] = (1 - self.momenta_gamma) * self.momenta[param.name] + self.momenta_gamma * np.abs(param.grad.data.detach().cpu().numpy())  
         
     def forward(self, x0, edge_index, batch, x1):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
