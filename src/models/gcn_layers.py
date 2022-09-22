@@ -804,14 +804,14 @@ class GATSeqClassifier(nn.Module):
     def init_momenta(self):
         self.momenta = dict()
         
-        for param, name in self.named_parameters():
+        for name, param in self.named_parameters():
             if param.requires_grad:
                 self.momenta[name] = np.zeros(tuple(param.data.shape))
         
         logging.info('{}'.format(list(self.momenta.keys())))
    
     def update_momenta(self):
-        for param, name in self.named_parameters():
+        for name, param in self.named_parameters():
             if param.requires_grad:
 
                 self.momenta[name] = (1 - self.momenta_gamma) * self.momenta[name] + self.momenta_gamma * np.abs(param.grad.data.detach().cpu().numpy())  
