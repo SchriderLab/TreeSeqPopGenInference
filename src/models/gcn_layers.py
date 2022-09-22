@@ -749,7 +749,7 @@ class MLP(nn.Module):
 class GATSeqClassifier(nn.Module):
     def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 13, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
                              num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6,
-                             use_conv = False, conv_k = 5, conv_dim = 4, momentum_gamma = 0.9): 
+                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.9): 
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -797,13 +797,20 @@ class GATSeqClassifier(nn.Module):
             
         self.soft = nn.LogSoftmax(dim = -1)
         
-        
+        self.momenta_gamma = momenta_gamma
+        self.init_momenta()
         
     def init_momenta(self):
         self.momenta = dict()
         
         for param in self.parameters():
-            self.momenta[param.name] = np.zeros(param.grad.data.shape)
+            if param.requires_grad:
+                self.momenta[param.name] = np.zeros(param.grad.data.shape)
+        
+    def update_momenta(self):
+        for param in self.parameters():
+            if param.requires_grad:
+                self.momenta[param.name] = (1 - self.momentum_gamma) * self.momenta[param.name] + self.momenta_gamma * param.grad.data.detach().cpu().numpy()    
         
     def forward(self, x0, edge_index, batch, x1):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
