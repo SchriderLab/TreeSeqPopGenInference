@@ -830,11 +830,11 @@ class GATSeqClassifier(nn.Module):
         else:
             for i, grad in enumerate(grad_input):
                 if grad is not None:
-                    self.momenta[module.name + '_input.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input'] \
+                    self.momenta[module.name + '_input.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input.{}'.format(i)] \
                                                             + self.momenta_gamma * grad.mean(dim = 0).detach().cpu()          
             for i, grad in enumerate(grad_output):
                 if grad is not None:
-                    self.momenta[module.name + '_output.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_output'] \
+                    self.momenta[module.name + '_output.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_output.{}'.format(i)] \
                                                             + self.momenta_gamma * grad.mean(dim = 0).detach().cpu()  
    
 
