@@ -554,6 +554,7 @@ class GATv2Conv(MessagePassing):
         in_channels: Union[int, Tuple[int, int]],
         out_channels: int,
         heads: int = 1,
+        name = 'gcn',
         concat: bool = True,
         negative_slope: float = 0.2,
         dropout: float = 0.0,
@@ -576,6 +577,8 @@ class GATv2Conv(MessagePassing):
         self.edge_dim = edge_dim
         self.fill_value = fill_value
         self.share_weights = share_weights
+        
+        self.name = name
 
         if isinstance(in_channels, int):
             self.lin_l = Linear(in_channels, heads * out_channels, bias=bias,
@@ -762,6 +765,9 @@ class GATSeqClassifier(nn.Module):
         self.n_gcn_iter = n_gcn_iter
         
         self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
+        self.embedding.name = 'node_embedding'
+        self.embedding.register_backward_hook(self.update_momenta)
+        
         gcn_dim += in_dim
         
         self.embedding_norm = nn.LayerNorm((gcn_dim, ))
@@ -772,7 +778,7 @@ class GATSeqClassifier(nn.Module):
         
         for ix in range(n_gcn_iter):    
             self.norms.append(nn.LayerNorm((gcn_dim, )))
-            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout))
+            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix)))
             self.gcns[-1].register_backward_hook(self.update_momenta)
         
         self.use_conv = use_conv
@@ -790,15 +796,18 @@ class GATSeqClassifier(nn.Module):
         """  
         # we'll give it mean, max, min, std of GCN features per graph
         self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.gru.name = 'gru'
         self.gru.register_backward_hook(self.update_momenta)
         
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.graph_gru.name = 'graph_gru'
         self.graph_gru.register_backward_hook(self.update_momenta)
         
         if not self.use_conv:
             self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
         else:
             self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim, n_classes, dim = hidden_size * num_gru_layers * 3)
+        self.out.name = 'out_mlp'
         self.out.register_backward_hook(self.update_momenta)
             
         self.soft = nn.LogSoftmax(dim = -1)
@@ -987,11 +996,13 @@ class VanillaConv(MessagePassing):
     
 class Res1dBlock(nn.Module):
     def __init__(self, in_shape, out_channels, n_layers, 
-                             k = 5, pooling = None):
+                             k = 5, pooling = None, name = 'res_conv'):
         super(Res1dBlock, self).__init__()
   
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
+        
+        self.name = name
         
         for ix in range(n_layers):
             
