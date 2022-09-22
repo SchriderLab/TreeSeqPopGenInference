@@ -73,9 +73,16 @@ def parse_args():
     if args.odir != "None":
         if not os.path.exists(args.odir):
             os.system('mkdir -p {}'.format(args.odir))
-            logging.debug('root: made output directory {0}'.format(args.odir))
+            logging.info('root: made output directory {0}'.format(args.odir))
         else:
             os.system('rm -rf {0}'.format(os.path.join(args.odir, '*')))
+            
+    if args.momenta_dir != "None":
+        if not os.path.exists(args.momenta_dir):
+            os.system('mkdir -p {}'.format(args.momenta_dir))
+            logging.info('root: made output directory {0}'.format(args.momenta_dir))
+        else:
+            os.system('rm -rf {0}'.format(os.path.join(args.momenta_dir, '*')))
 
     return args
 
@@ -160,10 +167,12 @@ def main():
             losses.append(loss.detach().item())
 
             loss.backward()
-            model.update_momenta()
             
-            if (j + 1) % save_momenta_every:
-                np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
+            if args.momenta_dir != "None":
+                model.update_momenta()
+                
+                if (j + 1) % save_momenta_every:
+                    np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
             
             optimizer.step()
 

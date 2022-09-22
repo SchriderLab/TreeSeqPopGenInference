@@ -805,7 +805,7 @@ class GATSeqClassifier(nn.Module):
         
         for param in self.parameters():
             if param.requires_grad:
-                self.momenta[param.name] = np.zeros(param.grad.data.shape)
+                self.momenta[param.name] = np.zeros(param.data.shape)
         
     def update_momenta(self):
         for param in self.parameters():
