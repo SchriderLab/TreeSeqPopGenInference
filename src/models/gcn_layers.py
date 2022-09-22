@@ -773,12 +773,13 @@ class GATSeqClassifier(nn.Module):
         for ix in range(n_gcn_iter):    
             self.norms.append(nn.LayerNorm((gcn_dim, )))
             self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout))
+            self.gcns[-1].register_backward_hook(self.update_momenta)
         
         self.use_conv = use_conv
         if self.use_conv:
             # 1d convolution over graph features to cat to MLP layer
             self.conv = Res1dBlock(hidden_size * num_gru_layers * 2 + info_dim, conv_dim, conv_k)
-            
+            self.conv.register_backward_hook(self.update_momenta)
             
         """
         for ix in range(1, n_gcn_layers):
@@ -789,12 +790,16 @@ class GATSeqClassifier(nn.Module):
         """  
         # we'll give it mean, max, min, std of GCN features per graph
         self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.gru.register_backward_hook(self.update_momenta)
+        
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.graph_gru.register_backward_hook(self.update_momenta)
         
         if not self.use_conv:
             self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
         else:
             self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim, n_classes, dim = hidden_size * num_gru_layers * 3)
+        self.out.register_backward_hook(self.update_momenta)
             
         self.soft = nn.LogSoftmax(dim = -1)
         
@@ -804,17 +809,14 @@ class GATSeqClassifier(nn.Module):
     def init_momenta(self):
         self.momenta = dict()
         
-        for name, param in self.named_parameters():
-            if param.requires_grad:
-                self.momenta[name] = np.zeros(tuple(param.data.shape))
+    def update_momenta(self, module, grad_input, grad_output):
+        print(module.name)
         
-        logging.info('{}'.format(list(self.momenta.keys())))
+        # I believe this is the mean over the batch
+        # self.gradients.append(grad_output[0].mean(dim = 0).detach().cpu())
+        return
    
-    def update_momenta(self):
-        for name, param in self.named_parameters():
-            if param.requires_grad:
 
-                self.momenta[name] = (1 - self.momenta_gamma) * self.momenta[name] + self.momenta_gamma * np.abs(param.grad.data.detach().cpu().numpy())  
         
     def forward(self, x0, edge_index, batch, x1):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
