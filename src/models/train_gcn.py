@@ -58,6 +58,9 @@ def parse_args():
     parser.add_argument("--pad_l", action = "store_true")
     
     parser.add_argument("--weights", default = "None")
+    parser.add_argument("--weight_decay", default = "0.0")
+    parser.add_argument("--momenta_dir", default = "/pine/scr/d/d/ddray/seln_momenta_i1")
+    parser.add_argument("--save_momenta_every", default = "500")
 
     args = parser.parse_args()
 
@@ -101,8 +104,12 @@ def main():
     model = model.to(device)
     print(model)
     count_parameters(model)
+    
+    # momenta stuff
+    save_momenta_every = int(args.save_momenta_every)
+    momenta_count = 0
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=float(args.lr))
+    optimizer = torch.optim.Adam(model.parameters(), lr=float(args.lr), weight_decay = float(args.weight_decay))
     
     # for writing the training 
     result = dict()
@@ -153,6 +160,11 @@ def main():
             losses.append(loss.detach().item())
 
             loss.backward()
+            model.update_momenta()
+            
+            if (j + 1) % save_momenta_every:
+                np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
+            
             optimizer.step()
 
             # change back to 100
