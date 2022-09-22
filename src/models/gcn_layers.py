@@ -819,6 +819,7 @@ class GATSeqClassifier(nn.Module):
         self.momenta = dict()
         
     def update_momenta(self, module, grad_input, grad_output):
+        print(module.name, grad_input, grad_output)
         if not (module.name + '_input') in self.momenta.keys():
             self.momenta[module.name + '_input'] = grad_input[0].mean(dim = 0).detach().cpu()          
             self.momenta[module.name + '_output'] = grad_output[0].mean(dim = 0).detach().cpu() 
