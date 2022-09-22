@@ -819,11 +819,14 @@ class GATSeqClassifier(nn.Module):
         self.momenta = dict()
         
     def update_momenta(self, module, grad_input, grad_output):
-        print(module.name)
-        
-        # I believe this is the mean over the batch
-        # self.gradients.append(grad_output[0].mean(dim = 0).detach().cpu())
-        return
+        if not (module.name + '_input') in self.momenta.keys():
+            self.momenta[module.name + '_input'] = grad_input[0].mean(dim = 0).detach().cpu()          
+            self.momenta[module.name + '_output'] = grad_output[0].mean(dim = 0).detach().cpu() 
+        else:
+            self.momenta[module.name + '_input'] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input'] \
+                                                            + self.momenta_gamma * grad_input[0].mean(dim = 0).detach().cpu()          
+            self.momenta[module.name + '_output'] = (1 - self.momenta_gamma) * self.momenta[module.name + '_output'] \
+                                                            + self.momenta_gamma * grad_output[0].mean(dim = 0).detach().cpu()  
    
 
         
