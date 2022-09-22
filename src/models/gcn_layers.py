@@ -823,19 +823,19 @@ class GATSeqClassifier(nn.Module):
         if not (module.name + '_input.0') in self.momenta.keys():
             for i, grad in enumerate(grad_input):
                 if grad is not None:
-                    self.momenta[module.name + '_input.{}'.format(i)] = grad.mean(dim = 0).detach().cpu()          
+                    self.momenta[module.name + '_input.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy())          
             for i, grad in enumerate(grad_output):
                 if grad is not None:
-                    self.momenta[module.name + '_output.{}'.format(i)] = grad.mean(dim = 0).detach().cpu() 
+                    self.momenta[module.name + '_output.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy()) 
         else:
             for i, grad in enumerate(grad_input):
                 if grad is not None:
                     self.momenta[module.name + '_input.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input.{}'.format(i)] \
-                                                            + self.momenta_gamma * grad.mean(dim = 0).detach().cpu()          
+                                                            + self.momenta_gamma * np.abs(grad.mean(dim = 0).detach().cpu().numpy())          
             for i, grad in enumerate(grad_output):
                 if grad is not None:
                     self.momenta[module.name + '_output.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_output.{}'.format(i)] \
-                                                            + self.momenta_gamma * grad.mean(dim = 0).detach().cpu()  
+                                                            + self.momenta_gamma * np.abs(grad.mean(dim = 0).detach().cpu().numpy())  
    
 
         
