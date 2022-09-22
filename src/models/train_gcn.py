@@ -60,7 +60,7 @@ def parse_args():
     parser.add_argument("--weights", default = "None")
     parser.add_argument("--weight_decay", default = "0.0")
     parser.add_argument("--momenta_dir", default = "/pine/scr/d/d/ddray/seln_momenta_i1")
-    parser.add_argument("--save_momenta_every", default = "500")
+    parser.add_argument("--save_momenta_every", default = "250")
 
     args = parser.parse_args()
 
@@ -173,7 +173,8 @@ def main():
                 
                 if (j + 1) % save_momenta_every:
                     np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
-            
+                    momenta_count += 1
+                    
             optimizer.step()
 
             # change back to 100
