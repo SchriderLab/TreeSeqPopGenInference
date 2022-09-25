@@ -204,7 +204,7 @@ class TreeSeqGenerator(object):
                 for ii_ in ii:
                     x = X_[ii_]
                     
-                    ik = list(np.where(x[:,0] != 0))
+                    ik = list(np.where(x[:,0] > 0))
                     x[ik,0] = np.log(x[ik,0])
                     
                     X.append(x)
