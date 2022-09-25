@@ -146,7 +146,7 @@ def main():
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
         
         for j in range(len(generator)):
-            x, x1, edge_index, masks, global_vecs, y = generator.get_single_model_batch(sampling_mode = args.sampling_mode)
+            x, x1, edge_index, masks, global_vecs, y = generator.get_single_model_batch(sample_mode = args.sampling_mode)
             
             
             
