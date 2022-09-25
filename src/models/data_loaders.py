@@ -166,7 +166,7 @@ class TreeSeqGenerator(object):
 
                     if sample_mode == 'equi':
                         tree_bins = [0.] + list(np.cumsum(X1_[:,-2]))
-                        print(tree_bins)
+                        #print(tree_bins)
                         ii = np.random.uniform(0., max(tree_bins), self.s_length)
                         
                         ii = sorted(list(np.digitize(ii, tree_bins) - 1))
