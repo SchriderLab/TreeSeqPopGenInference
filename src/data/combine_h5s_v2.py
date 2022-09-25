@@ -92,7 +92,7 @@ def parse_args():
     parser.add_argument("--L", default = "128")
     parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
     parser.add_argument("--chunk_size", default = "5")
-    parser.add_argument("--scattered", action = "store_true")
+    parser.add_argument("--sampling_mode", default = "equi")
 
     args = parser.parse_args()
 
@@ -119,6 +119,7 @@ def main():
         data[c]['x1'] = []
         data[c]['edge_index'] = []
         data[c]['mask'] = []
+        data[c]['global_vec'] = []
         
     
     ofile = h5py.File(args.ofile, 'w')
@@ -145,7 +146,7 @@ def main():
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
         
         for j in range(len(generator)):
-            x, x1, edge_index, masks, y = generator.get_single_model_batch(scattered_sample = args.scattered)
+            x, x1, edge_index, masks, global_vecs, y = generator.get_single_model_batch(sampling_mode = args.sampling_mode)
             
             
             
@@ -164,13 +165,14 @@ def main():
              
                     n_muts.extend(np.random.choice(x[k][np.where(masks[k] != 0.)[0],:,-1].flatten(), 10, replace = False))
                 
-                    logging.info('have {} samples...'.format(len(x1_means)))
+                    
                 c = y[k]
                 
                 data[c]['x'].append(x[k])
                 data[c]['x1'].append(x1[k])
                 data[c]['edge_index'].append(edge_index[k])
                 data[c]['mask'].append(masks[k])
+                data[c]['global_vec'].append(global_vecs[k])
                 
         # append sequence lengths for histogram
         lengths.extend(generator.lengths)
@@ -180,6 +182,7 @@ def main():
             edge_index = []
             masks = []
             X1 = []
+            global_vec = []
             y = []
             
             for c in classes:
@@ -187,17 +190,20 @@ def main():
                 edge_index.append(data[c]['edge_index'][-1])
                 X1.append(data[c]['x1'][-1])
                 y.append(classes.index(c))
+                global_vec.append(data[c]['global_vec'][-1])
                 masks.append(data[c]['mask'][-1])
                 
                 del data[c]['x'][-1]
                 del data[c]['edge_index'][-1]
                 del data[c]['x1'][-1]
                 del data[c]['mask'][-1]
+                del data[c]['global_vec'][-1]
 
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
             X1 = np.array(X1)
             y = np.array(y, dtype = np.uint8)
+            global_vec = np.array(global_vec, dtype = np.float32)
             masks = np.array(masks, dtype = np.uint8)
             
             val = np.random.uniform() < val_prop
@@ -207,6 +213,7 @@ def main():
                 ofile.create_dataset('{0:06d}/x1'.format(counter), data = X1, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/edge_index'.format(counter), data = edge_index, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
+                ofile.create_dataset('{0:06d}/global_vec'.format(counter), data = global_vec, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
                 ofile.flush()
             
@@ -216,11 +223,13 @@ def main():
                 ofile_val.create_dataset('{0:06d}/x1'.format(val_counter), data = X1, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/edge_index'.format(val_counter), data = edge_index, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
                 ofile_val.flush()
             
                 val_counter += 1
         
+        logging.info('have {} samples...'.format(len(x1_means)))
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
             
         

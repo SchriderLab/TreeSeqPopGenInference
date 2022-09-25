@@ -49,12 +49,12 @@ class TreeSeqGeneratorV2(object):
             key = self.keys[self.ix]
             self.ix += 1
             
-            # log and normalize times
+            # log scale and normalize times
             x = np.array(self.ifile[key]['x'])
             ii = np.where(x[:,:,:,0] > 0) 
             x[ii[0],ii[1],ii[2],0] = (np.log(x[ii[0],ii[1],ii[2],0]) - self.t_mean) / self.t_std
             
-            # log n_mutations
+            # log scale n_mutations
             ii = np.where(x[:,:,:,-1] > 0) 
             x[ii[0],ii[1],ii[2],-1] = np.log(x[ii[0],ii[1],ii[2],-1])
             
@@ -62,6 +62,7 @@ class TreeSeqGeneratorV2(object):
             x1 = (np.array(self.ifile[key]['x1']) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]['edge_index'])
             mask = np.array(self.ifile[key]['mask'])
+            
             
             edge_index_ = []
             for k in range(x.shape[0]):
@@ -137,6 +138,7 @@ class TreeSeqGenerator(object):
         X1 = [] # tree-level features (same size as batch_)
         edge_index = []
         masks = []
+        global_vec = []
         y = []
         
         for model in self.models:
@@ -156,41 +158,31 @@ class TreeSeqGenerator(object):
                     
                     X_ = np.array(self.ifile[model][key]['x']) 
                     X1_ = np.array(self.ifile[model][key]['info'])
+                    
+                    
                     if X_.shape[0] == 0:
                         self.counts[model] += 1
                         continue
-                    
-                    if len(X_) > self.s_length:
-                        if sample_mode not in ['scattered', 'app_equi']:
-                            ii = np.random.choice(range(len(X_) - self.s_length))
-                            ii = range(ii, ii + self.s_length)
-                        elif sample_mode == 'scattered':
-                            ii = sorted(list(np.random.choice(range(len(X_)), self.s_length, replace = False)))
+
+                    if sample_mode == 'equi':
+                        tree_bins = [0.] + list(np.cumsum(X1_[:,-2]))
+                        print(tree_bins)
+                        ii = np.random.uniform(0., max(tree_bins), self.s_length)
                         
-                        
+                        ii = sorted(list(np.digitize(ii, tree_bins) - 1))
+
                         padding = False
                         pad_size = (0, 0)
-                        
-                        break
-                    elif self.pad:
-                        padding = True
-                        
-                        ii = list(range(len(X_)))
-                        
-                        if (self.s_length - len(X_)) % 2 == 0:
-                            pad_size = ((self.s_length - len(X_)) // 2, 
-                                        (self.s_length - len(X_)) // 2)
-                        else:
-                            pad_size = ((self.s_length - len(X_)) // 2 + 1, 
-                                        (self.s_length - len(X_)) // 2)
-                        
-                        break
+                    
+                    break
                 
                 # this guaruntees batches are always balanced
                 if self.counts[model] == len(self.keys[model]):
                     return None, None, None, None
                 
                 edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
+                global_vec_ = np.array(self.ifile[model][key]['global_vec'], dtype = np.float32)
+                
                 # n_nodes, n_features
                 s = (X_.shape[1], X_.shape[2])
                 
@@ -209,7 +201,6 @@ class TreeSeqGenerator(object):
                     indices.append(None)
                     mask.append(0.)
     
-                
                 for ii_ in ii:
                     x = X_[ii_]
                     
@@ -243,14 +234,15 @@ class TreeSeqGenerator(object):
                 mask = np.array(mask, dtype = np.uint8)
                 edge_index.append(np.array(indices))
                 masks.append(mask)
+                global_vec.append(global_vec_)
                 
-                if padding:
+                if padding or self.lengths[-1] < self.s_length:
                     break
             
             self.counts[model] += 1
             
             
-        return Xs, X1, edge_index, masks, y
+        return Xs, X1, edge_index, masks, global_vec, y
 
             
             
