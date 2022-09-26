@@ -55,10 +55,10 @@ def main():
             for k in range(len(v)):
                 m = mask[k]
                 v_ = v[k,np.where(m == 1)]
-                v2_ = v2[k,np.where(m == 1)]
                 
                 vs.append(v_[0])
-                v2s.append(v2_[0])
+            
+            v2s.extend(list(v2))
                 
             _.extend(x_)
             
