@@ -843,7 +843,7 @@ class GATSeqClassifier(nn.Module):
             if hasattr(module, 'weight'):
                 if module.weight.requires_grad:
                     if module.weight.grad is not None:
-                        self.momenta[module.name + '_weight'] = (1 - self.momenta_gamma) * self.momenta[module.name + 'weight'] \
+                        self.momenta[module.name + '_weight'] = (1 - self.momenta_gamma) * self.momenta[module.name + '_weight'] \
                                                                     + self.momenta_gamma * np.abs(module.weight.grad)
             
             for i, grad in enumerate(grad_input):
