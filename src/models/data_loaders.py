@@ -19,6 +19,9 @@ class TreeSeqGeneratorV2(object):
         self.info_mean = means['v_mean'].reshape(1, 1, -1)
         self.info_std = means['v_std'].reshape(1, 1, -1)
         
+        self.global_mean = means['v2_mean'].reshape(1, -1)
+        self.global_std = means['v2_std'].reshape(1, -1)
+        
         self.info_std[np.where(self.info_std == 0.)] = 1.
         self.t_mean, self.t_std = tuple(means['times'])
         
@@ -63,7 +66,7 @@ class TreeSeqGeneratorV2(object):
             x1 = (np.array(self.ifile[key]['x1']) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]['edge_index'])
             mask = np.array(self.ifile[key]['mask'])
-            global_vec = np.array(self.ifile[key]['global_vec'])
+            global_vec = (np.array(self.ifile[key]['global_vec']) - self.global_mean) / self.global_std
             
             
             edge_index_ = []
