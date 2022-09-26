@@ -751,7 +751,7 @@ class MLP(nn.Module):
 import logging
     
 class GATSeqClassifier(nn.Module):
-    def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 13, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
+    def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
                              num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6,
                              use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.9): 
         super(GATSeqClassifier, self).__init__()
@@ -765,12 +765,17 @@ class GATSeqClassifier(nn.Module):
         self.n_gcn_iter = n_gcn_iter
         
         self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
+        self.global_embedding = nn.Linear(global_dim, global_embedding_dim, bias = True)
+        self.global_embedding.register_backward_hook(self.update_momenta)
+        self.global_embedding.name = 'global_embedding'
+        
         self.embedding.name = 'node_embedding'
         self.embedding.register_backward_hook(self.update_momenta)
         
         gcn_dim += in_dim
         
         self.embedding_norm = nn.LayerNorm((gcn_dim, ))
+        self.global_embedding_norm = nn.LayerNorm((global_embedding_dim, ))
         self.dropout = nn.Dropout(0.15)
         
         self.L = L
@@ -804,13 +809,14 @@ class GATSeqClassifier(nn.Module):
         self.graph_gru.register_backward_hook(self.update_momenta)
         
         if not self.use_conv:
-            self.out = MLP(hidden_size * num_gru_layers * 4, n_classes, dim = hidden_size * num_gru_layers * 2)
+            self.out = MLP(hidden_size * num_gru_layers * 4 + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 2)
         else:
-            self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim, n_classes, dim = hidden_size * num_gru_layers * 3)
+            self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 4)
         self.out.name = 'out_mlp'
         self.out.register_backward_hook(self.update_momenta)
             
         self.soft = nn.LogSoftmax(dim = -1)
+        self.relu = nn.ReLU(inplace = False)
         
         self.momenta_gamma = momenta_gamma
         self.init_momenta()
@@ -821,13 +827,23 @@ class GATSeqClassifier(nn.Module):
     def update_momenta(self, module, grad_input, grad_output):
         
         if not (module.name + '_input.0') in self.momenta.keys():
+            if hasattr(module, 'weight'):
+                if module.weight.requires_grad:
+                    self.momenta[module.name + '_weight'] = np.abs(module.weight.grad)
+            
             for i, grad in enumerate(grad_input):
                 if grad is not None:
-                    self.momenta[module.name + '_input.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy())          
+                    self.momenta[module.name + '_input.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy())
+                    
             for i, grad in enumerate(grad_output):
                 if grad is not None:
                     self.momenta[module.name + '_output.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy()) 
         else:
+            if hasattr(module, 'weight'):
+                if module.weight.requires_grad:
+                    self.momenta[module.name + '_weight'] = (1 - self.momenta_gamma) * self.momenta[module.name + 'weight'] \
+                                                                    + self.momenta_gamma * np.abs(module.weight.grad)
+            
             for i, grad in enumerate(grad_input):
                 if grad is not None:
                     self.momenta[module.name + '_input.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input.{}'.format(i)] \
@@ -839,8 +855,9 @@ class GATSeqClassifier(nn.Module):
    
 
         
-    def forward(self, x0, edge_index, batch, x1):
+    def forward(self, x0, edge_index, batch, x1, x2):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
+        x2 = self.relu(self.global_embedding_norm(self.global_embedding(x)))
         
         for ix in range(self.n_gcn_iter):
             x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
@@ -863,6 +880,8 @@ class GATSeqClassifier(nn.Module):
         if self.use_conv:
             xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
             h = torch.cat([h, xc], dim = 1)
+        
+        h = torch.cat([h, x2], dim = 1)
         
         return self.out(h)
         

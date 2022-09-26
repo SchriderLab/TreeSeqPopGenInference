@@ -43,6 +43,7 @@ class TreeSeqGeneratorV2(object):
         X1 = [] # tree-level features (same size as batch_)
         indices = []
         y = []
+        X2 = []
         batch_ = []
         
         for ix in range(self.n_per):
@@ -62,6 +63,7 @@ class TreeSeqGeneratorV2(object):
             x1 = (np.array(self.ifile[key]['x1']) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]['edge_index'])
             mask = np.array(self.ifile[key]['mask'])
+            global_vec = np.array(self.ifile[key]['global_vec'])
             
             
             edge_index_ = []
@@ -82,16 +84,18 @@ class TreeSeqGeneratorV2(object):
             y.extend(y_)
             X.extend(list(x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
             X1.extend(list(x1))
+            X2.extend(list(global_vec))
             indices.extend(edge_index_)
 
         y = torch.LongTensor(np.array(y).astype(np.float32))
         X1 = torch.FloatTensor(np.array(X1))
+        X2 = torch.FloatTensor(np.array(X2))
     
         # use PyTorch Geometrics batch object to make one big graph
         batch = Batch.from_data_list(
             [Data(x=torch.FloatTensor(X[k]), edge_index=indices[k]) for k in range(len(indices))])
 
-        return batch, X1, y
+        return batch, X1, X2, y
 
 class TreeSeqGenerator(object):
     def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, 

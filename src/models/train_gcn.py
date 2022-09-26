@@ -162,7 +162,7 @@ def main():
         
         n_steps = int(args.n_steps)
         for j in range(int(args.n_steps)):
-            batch, x1, y = generator[j]
+            batch, x1, x2, y = generator[j]
             
             if batch is None:
                 break
@@ -174,7 +174,7 @@ def main():
 
             optimizer.zero_grad()
 
-            y_pred = model(batch.x, batch.edge_index, batch.batch, x1)
+            y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
             loss = criterion(y_pred, y)
 
@@ -215,7 +215,7 @@ def main():
         Y_pred = []
         with torch.no_grad():
             for j in range(len(validation_generator)):
-                batch, x1, y = validation_generator[j]
+                batch, x1, x2, y = validation_generator[j]
                 
                 if batch is None:
                     break
@@ -224,7 +224,7 @@ def main():
                 y = y.to(device)
                 x1 = x1.to(device)
 
-                y_pred = model(batch.x, batch.edge_index, batch.batch, x1)
+                y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
                 loss = criterion(y_pred, y)
 
