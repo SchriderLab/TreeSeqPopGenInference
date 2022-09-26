@@ -154,7 +154,7 @@ def main():
                 break
                     
             for k in range(len(x)):
-                
+                print(x.shape)
                 if np.random.uniform() < 0.02:
                     x1_means.append(np.mean(x1[k][np.where(masks[k] != 0.)[0],:], axis = 0))
                     x1_stds.append(np.std(x1[k][np.where(masks[k] != 0.)[0],:], axis = 0))
