@@ -34,6 +34,8 @@ def main():
     keys = list(ifile.keys())
     
     vs = []
+    v2s = []
+    
     _ = []
     ls = []
     for key in keys:
@@ -42,6 +44,7 @@ def main():
         if 'x' in list(ifile[key].keys()):
             x = np.array(ifile[key]['x'])
             v = np.array(ifile[key]['x1'])
+            v2 = np.array(ifile[key]['global_vec'])
             mask = np.array(ifile[key]['mask'])
             
             
@@ -52,19 +55,26 @@ def main():
             for k in range(len(v)):
                 m = mask[k]
                 v_ = v[k,np.where(m == 1)]
-                print(v_.shape)
+                v2_ = v2[k,np.where(m == 1)]
                 
                 vs.append(v_[0])
+                v2s.append(v2_[0])
+                
             _.extend(x_)
             
     vs = np.concatenate(vs)
+    v2s = np.concatenate(v2s)
         
     v_mean = np.mean(vs, axis = 0)
     v_std = np.std(vs, axis = 0)
     
-    np.savez(args.ofile, v_mean = v_mean, v_std = v_std, times = np.array([np.mean(_), np.std(_)]))
+    v2_mean = np.mean(v2s, axis = 0)
+    v2_std = np.std(v2s, axis = 0)
+    
+    np.savez(args.ofile, v_mean = v_mean, v_std = v_std, v2_mean = v2_mean, v2_std = v2_std, times = np.array([np.mean(_), np.std(_)]))
     
     print(v_mean, v_std)
+    print(v2_mean, v2_std)
     print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls), np.max(ls))
     # ${code_blocks}
 
