@@ -826,12 +826,14 @@ class GATSeqClassifier(nn.Module):
         
     def update_momenta(self, module, grad_input, grad_output):
         
+        if (not (module.name + '_weight') in self.momenta.keys()) and hasattr(module, 'weight'):
+            if module.weight.requires_grad and (module.weight.grad is not None):
+                self.momenta[module.name + '_weight'] = np.abs(module.weight.grad.data.detach().cpu().numpy())
+        elif hasattr(module, 'weight'):
+            if module.weight.requires_grad and (module.weight.grad is not None):
+                self.momenta[module.name + '_weight'] = (1 - self.momenta_gamma) * self.momenta[module.name + '_weight'] \
+                                                            + self.momenta_gamma * np.abs(module.weight.grad.data.detach().cpu().numpy())
         if not (module.name + '_input.0') in self.momenta.keys():
-            if hasattr(module, 'weight'):
-                if module.weight.requires_grad:
-                    if module.weight.grad is not None:
-                        self.momenta[module.name + '_weight'] = np.abs(module.weight.grad)
-            
             for i, grad in enumerate(grad_input):
                 if grad is not None:
                     self.momenta[module.name + '_input.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy())
@@ -840,12 +842,6 @@ class GATSeqClassifier(nn.Module):
                 if grad is not None:
                     self.momenta[module.name + '_output.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy()) 
         else:
-            if hasattr(module, 'weight'):
-                if module.weight.requires_grad:
-                    if module.weight.grad is not None:
-                        self.momenta[module.name + '_weight'] = (1 - self.momenta_gamma) * self.momenta[module.name + '_weight'] \
-                                                                    + self.momenta_gamma * np.abs(module.weight.grad)
-            
             for i, grad in enumerate(grad_input):
                 if grad is not None:
                     self.momenta[module.name + '_input.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input.{}'.format(i)] \
