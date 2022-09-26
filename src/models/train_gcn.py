@@ -171,6 +171,7 @@ def main():
             batch = batch.to(device)
             y = y.to(device)
             x1 = x1.to(device)
+            x2 = x2.to(device)
 
             optimizer.zero_grad()
 
@@ -223,6 +224,7 @@ def main():
                 batch = batch.to(device)
                 y = y.to(device)
                 x1 = x1.to(device)
+                x2 = x2.to(device)
 
                 y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
