@@ -23,6 +23,7 @@ class TreeSeqGeneratorV2(object):
         self.global_std = means['v2_std'].reshape(1, -1)
         
         self.info_std[np.where(self.info_std == 0.)] = 1.
+        self.global_std[np.where(self.info_std == 0.)] = 1.
         self.t_mean, self.t_std = tuple(means['times'])
         
         self.n_per = n_samples_per
