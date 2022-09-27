@@ -187,7 +187,7 @@ def main():
 
             losses.append(loss.detach().item())
 
-            loss.backward()
+            loss.backward(retain_graph = True)
             
             
             
