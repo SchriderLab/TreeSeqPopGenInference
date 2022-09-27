@@ -820,9 +820,9 @@ class GATSeqClassifier(nn.Module):
     def update_momenta(self, grads):
         for key in grads.keys():
             if key not in self.momenta.keys():
-                self.momenta[key] = grads[key]
+                self.momenta[key] = np.abs(grads[key])
             else:
-                self.momenta[key] = self.momenta_gamma * grads[key] + (1 - self.momenta_gamma) * self.momenta[key]
+                self.momenta[key] = self.momenta_gamma * np.abs(grads[key]) + (1 - self.momenta_gamma) * self.momenta[key]
         
 
         
