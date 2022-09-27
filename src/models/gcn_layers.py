@@ -766,11 +766,11 @@ class GATSeqClassifier(nn.Module):
         
         self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
         self.global_embedding = nn.Linear(global_dim, global_embedding_dim, bias = True)
-        #self.global_embedding.register_backward_hook(self.update_momenta)
+        self.global_embedding.register_backward_hook(self.update_momenta)
         self.global_embedding.name = 'global_embedding'
         
         self.embedding.name = 'node_embedding'
-        #self.embedding.register_backward_hook(self.update_momenta)
+        self.embedding.register_backward_hook(self.update_momenta)
         
         gcn_dim += in_dim
         
@@ -802,18 +802,18 @@ class GATSeqClassifier(nn.Module):
         # we'll give it mean, max, min, std of GCN features per graph
         self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         self.gru.name = 'gru'
-        #self.gru.register_backward_hook(self.update_momenta)
+        self.gru.register_backward_hook(self.update_momenta)
         
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
         self.graph_gru.name = 'graph_gru'
-        #self.graph_gru.register_backward_hook(self.update_momenta)
+        self.graph_gru.register_backward_hook(self.update_momenta)
         
         if not self.use_conv:
             self.out = MLP(hidden_size * num_gru_layers * 4 + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 2)
         else:
             self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 4)
         self.out.name = 'out_mlp'
-        #self.out.register_backward_hook(self.update_momenta)
+        self.out.register_backward_hook(self.update_momenta)
             
         self.soft = nn.LogSoftmax(dim = -1)
         self.relu = nn.ReLU(inplace = False)
