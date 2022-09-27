@@ -752,7 +752,7 @@ import logging
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
-                             num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6,
+                             num_gru_layers = 2, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 6,
                              use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8): 
         super(GATSeqClassifier, self).__init__()
 
@@ -781,7 +781,7 @@ class GATSeqClassifier(nn.Module):
         
         for ix in range(n_gcn_iter):    
             self.norms.append(nn.LayerNorm((gcn_dim, )))
-            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix)))
+            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix), share_weights = True))
         
         self.use_conv = use_conv
         if self.use_conv:
@@ -796,16 +796,16 @@ class GATSeqClassifier(nn.Module):
         self.final_gat = GATv2Conv(gcn_dim, gcn_dim)
         """  
         # we'll give it mean, max, min, std of GCN features per graph
-        self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.gru = nn.GRU(hidden_size * num_gru_layers + info_dim, hidden_size * num_gru_layers, num_layers = num_gru_layers, batch_first = True, bidirectional = False)
         self.gru.name = 'gru'
         
-        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
+        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = False)
         self.graph_gru.name = 'graph_gru'
         
         if not self.use_conv:
-            self.out = MLP(hidden_size * num_gru_layers * 4 + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 2)
+            self.out = MLP(hidden_size * num_gru_layers + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 2)
         else:
-            self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 4)
+            self.out = MLP(hidden_size * num_gru_layers + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 4)
         self.out.name = 'out_mlp'
             
         self.soft = nn.LogSoftmax(dim = -1)
