@@ -187,10 +187,12 @@ def main():
 
             losses.append(loss.detach().item())
 
-            loss.backward(retain_graph = True)
+            loss.backward()
+            for idx, param in enumerate(model.parameters()):
+                if param.requires_grad:
+                    print(param.name, param.grad.shape)
             
-            
-            
+            sys.exit()
             if args.momenta_dir != "None":
                 #model.update_momenta()
                 sys.exit()
