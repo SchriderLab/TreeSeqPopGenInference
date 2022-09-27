@@ -188,7 +188,12 @@ def main():
             losses.append(loss.detach().item())
 
             loss.backward()
+            
+            
+            
             if args.momenta_dir != "None":
+                model.update_momenta()
+                sys.exit()
                 if (j + 1) % save_momenta_every == 0:
                     np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
                     momenta_count += 1
