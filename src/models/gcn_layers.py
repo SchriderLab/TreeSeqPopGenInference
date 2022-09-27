@@ -837,7 +837,7 @@ class GATConvClassifier(nn.Module):
         x = self.graph_conv(x.transpose(1, 2)).flatten(1, 2)
         
         x = self.global_transform(x)
-        x = x.view(bs, self.L, x.shape[-1])
+        x = torch.cat([x.view(bs, self.L, x.shape[-1]), x1], dim = -1)
                 
         xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
 
