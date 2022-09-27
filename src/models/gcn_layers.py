@@ -822,6 +822,7 @@ class GATConvClassifier(nn.Module):
         
     def forward(self, x0, edge_index, batch, x1, x2):
         x = torch.cat([self.embedding(x0), x0], dim = -1)
+        bs = x2.shape[0]
         
         for ix in range(self.n_gcn_iter):
             x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
@@ -831,7 +832,7 @@ class GATConvClassifier(nn.Module):
        
         # (bs, n_nodes, gcn_dim + in_dim)
         x = to_dense_batch(x, batch)[0]
-        bs, n_nodes, _ = x.shape
+        _, n_nodes, _ = x.shape
         
         x = self.graph_conv(x.transpose(1, 2)).flatten(1, 2)
         
