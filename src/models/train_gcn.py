@@ -222,7 +222,7 @@ def main():
         Y = []
         Y_pred = []
         with torch.no_grad():
-            for j in range(len(validation_generator)):
+            for j in range(1000):
                 batch, x1, x2, y = validation_generator[j]
                 
                 if batch is None:
@@ -274,7 +274,7 @@ def main():
             if early_count > int(args.n_early):
                 break
         
-        validation_generator.on_epoch_end()
+        validation_generator.on_epoch_end(False)
     
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
