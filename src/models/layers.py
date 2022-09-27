@@ -50,4 +50,43 @@ class RNNSegmenter(torch.nn.Module):
     def __init__(self, window_size = 128):
         return
     
+#updated LexStyleNet with model from paper
+class LexStyleNet(nn.Module):
+    def __init__(self, h = 34, w = 508):
+        super(LexStyleNet, self).__init__()
+        
+        self.firstconv = nn.Conv1d(h,256,2)
+        self.convs = nn.ModuleList()
+        
+        self.down = nn.AvgPool1d(2)
+        
+        in_channels = 256 
+        out_channels = [128, 128] 
+        for ix in range(2):   
+            self.convs.append(nn.Sequential(nn.Conv1d(in_channels, out_channels[ix], 2), 
+                                            nn.InstanceNorm1d(out_channels[ix]), 
+                                            nn.ReLU(), 
+                                            #nn.Dropout(0.25)
+            )) 
+            
+            in_channels = copy.copy(out_channels[ix])
+            
+            w = w // 2
+        
+        features = 3
+        
+        self.out_size = 8064
+        self.out = nn.Sequential(nn.Linear(63872, 128), nn.LayerNorm((128,)), nn.ReLU(),
+                                 nn.Linear(128, 3), nn.LogSoftmax(dim = -1))#<- use if not LabelSmoothing  #31872 if original, 63872 if lex's
+    def forward(self, x):
+        x = self.firstconv(x)  
+        for ix in range(len(self.convs)):
+            x = self.convs[ix](x)
+            x = self.down(x)
+        
+        
+        x = x.flatten(1,2)
+        
+        
+        return self.out(x)
 

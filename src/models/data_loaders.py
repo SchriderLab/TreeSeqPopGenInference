@@ -356,7 +356,7 @@ def pad_matrix(x, new_size, axis = 0):
     
     if new_size > s:
         x_ = np.zeros((new_size - s, x.shape[1]))
-        x = np.concatenate(x_)
+        x = np.concatenate([x,x_],axis=0)
     elif new_size < s:
         return None
     
@@ -387,9 +387,10 @@ class GenotypeMatrixGenerator(TreeSeqGenerator):
                     if not 'x' in skeys:
                         continue
                     
-                    X_ = np.array(self.ifile[model][key]['x_0'])
+                    X_ = np.array(self.ifile[model][key]['seriated_real'])
                     
-                    X_ = pad_matrix(X_, self.padded_size)
+                    X_ = pad_matrix(np.transpose(X_), self.padded_size)
+                    X_ = np.transpose(X_,(1,0))
                     if X_ is None:
                         continue
                     
