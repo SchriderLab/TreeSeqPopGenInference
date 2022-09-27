@@ -786,7 +786,7 @@ class GATSeqClassifier(nn.Module):
         self.use_conv = use_conv
         if self.use_conv:
             # 1d convolution over graph features to cat to MLP layer
-            self.conv = Res1dBlock(hidden_size * num_gru_layers * 2 + info_dim, conv_dim, conv_k)
+            self.conv = Res1dBlock(hidden_size * num_gru_layers + info_dim, conv_dim, conv_k)
             
         """
         for ix in range(1, n_gcn_layers):
