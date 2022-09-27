@@ -188,14 +188,14 @@ def main():
             losses.append(loss.detach().item())
 
             loss.backward()
-            for name, param in model.named_parameters():
-                if param.requires_grad:
-                    print(name, param.grad.shape)
-            
-            sys.exit()
+
             if args.momenta_dir != "None":
-                #model.update_momenta()
-                sys.exit()
+                ret = dict()
+                for name, param in model.named_parameters():
+                    if param.requires_grad and param.grad is not None:
+                        ret[name] = param.grad.detach().cpu().numpy()
+                model.update_momenta(ret)
+                
                 if (j + 1) % save_momenta_every == 0:
                     np.savez(os.path.join(args.momenta_dir, '{0:06d}.npz'.format(momenta_count)), **model.momenta)
                     momenta_count += 1
