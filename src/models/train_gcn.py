@@ -8,7 +8,7 @@ import configparser
 from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
-from gcn_layers import GATSeqClassifier
+from gcn_layers import GATSeqClassifier, GATConvClassifier
 
 from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel, BCEWithLogitsLoss
 from collections import deque
@@ -81,6 +81,8 @@ def parse_args():
     parser.add_argument("--momenta_dir", default = "/pine/scr/d/d/ddray/seln_momenta_i1")
     parser.add_argument("--save_momenta_every", default = "250")
     parser.add_argument("--label_smoothing", default = "0.0")
+    
+    parser.add_argument("--model", default = "conv")
 
     args = parser.parse_args()
 
@@ -118,7 +120,13 @@ def main():
 
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), n_samples_per = int(args.n_per_batch))
     validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch))
-    model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+    
+    if args.model == 'gru':
+        model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+                             n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
+                             use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
+    elif args.model == 'conv':
+        model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     
