@@ -787,9 +787,9 @@ class GATConvClassifier(nn.Module):
         self.global_transform = MLP((in_dim + gcn_dim) * (n_nodes // 2 // 2), hidden_size, hidden_size)
         
         # 1d convolution over graph features to cat to MLP layer
-        self.graph_conv = nn.Sequential([Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, pooling = 'max'), nn.InstanceNorm1d(in_dim + gcn_dim), nn.ReLU(),
-                                         Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, pooling = 'max')])
-        self.conv = Res1dBlock(hidden_size + info_dim, conv_dim, conv_k)
+        self.graph_conv = nn.Sequential([Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, 3, pooling = 'max'), nn.InstanceNorm1d(in_dim + gcn_dim), nn.ReLU(),
+                                         Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, 3, pooling = 'max')])
+        self.conv = Res1dBlock(hidden_size + info_dim, conv_dim, 3)
             
         """
         for ix in range(1, n_gcn_layers):
