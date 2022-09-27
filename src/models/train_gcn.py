@@ -188,9 +188,9 @@ def main():
             losses.append(loss.detach().item())
 
             loss.backward()
-            for idx, param in enumerate(model.parameters()):
+            for name, param in model.named_parameters():
                 if param.requires_grad:
-                    print(param.name, param.grad.shape)
+                    print(name, param.grad.shape)
             
             sys.exit()
             if args.momenta_dir != "None":
