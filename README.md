@@ -49,7 +49,8 @@ Leaderboard:
 
 |Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |tree_sequence_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric
 |---|---|---|---|---|---|---|---|---|---|---|
-|CNN |**0.322143**  |0.873530 |5  |2000  |16  |8292611   |1e-5,3000   |sequential |True |cosine
+|CNN |0.322143  |0.873530 |5  |2000  |16  |8292611   |1e-5,3000   |sequential |True |cosine
+|CNN |**0.311942**  |0.875257 |5  |2000  |16  |8292611   |1e-6,3000   |sequential |True |cosine
 
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
