@@ -749,12 +749,14 @@ class MLP(nn.Module):
         return self.model(x.view(x.size(0), -1))
    
 import logging
-    
-class GATSeqClassifier(nn.Module):
-    def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
-                             num_gru_layers = 1, hidden_size = 128, L = 32, n_heads = 1, n_gcn_iter = 6,
-                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.9): 
-        super(GATSeqClassifier, self).__init__()
+
+class GATConvClassifier(nn.Module):
+    def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 12, n_nodes = 207, global_dim = 37, global_embedding_dim = 128, 
+                             gcn_dim = 28, n_gcn_layers = 4, gcn_dropout = 0.,
+                             hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 6,
+                             conv_k = 5, conv_dim = 4, momenta_gamma = 0.8): 
+        super(
+            GATConvClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
         self.norms = nn.ModuleList()
@@ -766,11 +768,8 @@ class GATSeqClassifier(nn.Module):
         
         self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
         self.global_embedding = nn.Linear(global_dim, global_embedding_dim, bias = True)
-        self.global_embedding.register_backward_hook(self.update_momenta)
         self.global_embedding.name = 'global_embedding'
-        
         self.embedding.name = 'node_embedding'
-        self.embedding.register_backward_hook(self.update_momenta)
         
         gcn_dim += in_dim
         
@@ -783,14 +782,14 @@ class GATSeqClassifier(nn.Module):
         
         for ix in range(n_gcn_iter):    
             self.norms.append(nn.LayerNorm((gcn_dim, )))
-            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix)))
-            self.gcns[-1].register_backward_hook(self.update_momenta)
+            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix), share_weights = True))
         
-        self.use_conv = use_conv
-        if self.use_conv:
-            # 1d convolution over graph features to cat to MLP layer
-            self.conv = Res1dBlock(hidden_size * num_gru_layers * 2 + info_dim, conv_dim, conv_k)
-            self.conv.register_backward_hook(self.update_momenta)
+        self.global_transform = MLP((in_dim + gcn_dim) * (n_nodes // 2 // 2), hidden_size, hidden_size)
+        
+        # 1d convolution over graph features to cat to MLP layer
+        self.graph_conv = nn.Sequential(*[Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, 3, pooling = 'max'), nn.InstanceNorm1d(in_dim + gcn_dim), nn.ReLU(),
+                                         Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, 3, pooling = 'max')])
+        self.conv = Res1dBlock(hidden_size + info_dim, conv_dim, 3)
             
         """
         for ix in range(1, n_gcn_layers):
@@ -799,21 +798,9 @@ class GATSeqClassifier(nn.Module):
             
         self.final_gat = GATv2Conv(gcn_dim, gcn_dim)
         """  
-        # we'll give it mean, max, min, std of GCN features per graph
-        self.gru = nn.GRU(hidden_size * num_gru_layers * 2 + info_dim, hidden_size * num_gru_layers * 2, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
-        self.gru.name = 'gru'
-        self.gru.register_backward_hook(self.update_momenta)
-        
-        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = True)
-        self.graph_gru.name = 'graph_gru'
-        self.graph_gru.register_backward_hook(self.update_momenta)
-        
-        if not self.use_conv:
-            self.out = MLP(hidden_size * num_gru_layers * 4 + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 2)
-        else:
-            self.out = MLP(hidden_size * num_gru_layers * 4 + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers * 4)
+
+        self.out = MLP(L * conv_dim + global_embedding_dim, n_classes, L * conv_dim + global_embedding_dim)
         self.out.name = 'out_mlp'
-        self.out.register_backward_hook(self.update_momenta)
             
         self.soft = nn.LogSoftmax(dim = -1)
         self.relu = nn.ReLU(inplace = False)
@@ -824,33 +811,117 @@ class GATSeqClassifier(nn.Module):
     def init_momenta(self):
         self.momenta = dict()
         
-    def update_momenta(self, module, grad_input, grad_output):
+    def update_momenta(self, grads):
+        for key in grads.keys():
+            if key not in self.momenta.keys():
+                self.momenta[key] = np.abs(grads[key])
+            else:
+                self.momenta[key] = self.momenta_gamma * np.abs(grads[key]) + (1 - self.momenta_gamma) * self.momenta[key]
         
-        if (not (module.name + '_weight') in self.momenta.keys()) and hasattr(module, 'weight'):
-            if module.weight.requires_grad and (module.weight.grad is not None):
-                self.momenta[module.name + '_weight'] = np.abs(module.weight.grad.data.detach().cpu().numpy())
-        elif hasattr(module, 'weight'):
-            if module.weight.requires_grad and (module.weight.grad is not None):
-                self.momenta[module.name + '_weight'] = (1 - self.momenta_gamma) * self.momenta[module.name + '_weight'] \
-                                                            + self.momenta_gamma * np.abs(module.weight.grad.data.detach().cpu().numpy())
-        if not (module.name + '_input.0') in self.momenta.keys():
-            for i, grad in enumerate(grad_input):
-                if grad is not None:
-                    self.momenta[module.name + '_input.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy())
-                    
-            for i, grad in enumerate(grad_output):
-                if grad is not None:
-                    self.momenta[module.name + '_output.{}'.format(i)] = np.abs(grad.mean(dim = 0).detach().cpu().numpy()) 
+
+        
+    def forward(self, x0, edge_index, batch, x1, x2):
+        x = torch.cat([self.embedding(x0), x0], dim = -1)
+        bs = x2.shape[0]
+        
+        for ix in range(self.n_gcn_iter):
+            x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
+            x = self.act(x)
+            
+        x = torch.cat([x0, x], dim = -1)
+       
+        # (bs, n_nodes, gcn_dim + in_dim)
+        x = to_dense_batch(x, batch)[0]
+        _, n_nodes, _ = x.shape
+        
+        x = self.graph_conv(x.transpose(1, 2)).flatten(1, 2)
+        
+        x = self.global_transform(x)
+        x = torch.cat([x.view(bs, self.L, x.shape[-1]), x1], dim = -1)
+                
+        xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
+
+        x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
+        x = torch.cat([xc, x2], dim = 1)
+        
+        return self.out(x)
+    
+class GATSeqClassifier(nn.Module):
+    def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
+                             num_gru_layers = 2, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 6,
+                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8): 
+        super(GATSeqClassifier, self).__init__()
+
+        self.gcns = nn.ModuleList()
+        self.norms = nn.ModuleList()
+        self.act = nn.ReLU()
+        
+        self.batch_size = batch_size
+        
+        self.n_gcn_iter = n_gcn_iter
+        
+        self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
+        self.global_embedding = nn.Linear(global_dim, global_embedding_dim, bias = True)
+        self.global_embedding.name = 'global_embedding'
+        
+        self.embedding.name = 'node_embedding'
+        
+        gcn_dim += in_dim
+        
+        self.embedding_norm = nn.LayerNorm((gcn_dim, ))
+        self.global_embedding_norm = nn.LayerNorm((global_embedding_dim, ))
+        self.dropout = nn.Dropout(0.15)
+        
+        self.L = L
+        self.gcns = nn.ModuleList()
+        
+        for ix in range(n_gcn_iter):    
+            self.norms.append(nn.LayerNorm((gcn_dim, )))
+            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix), share_weights = True))
+        
+        self.use_conv = use_conv
+        if self.use_conv:
+            # 1d convolution over graph features to cat to MLP layer
+            self.conv = Res1dBlock(hidden_size * num_gru_layers + info_dim, conv_dim, conv_k)
+            
+        """
+        for ix in range(1, n_gcn_layers):
+            self.gcns.extend([GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads)])
+            self.norms.append(nn.LayerNorm((gcn_dim, )))
+            
+        self.final_gat = GATv2Conv(gcn_dim, gcn_dim)
+        """  
+        # we'll give it mean, max, min, std of GCN features per graph
+        self.gru = nn.GRU(hidden_size * num_gru_layers + info_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = False)
+        self.gru.name = 'gru'
+        
+        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = False)
+        self.graph_gru.name = 'graph_gru'
+        
+        print(hidden_size * num_gru_layers, )
+        
+        if not self.use_conv:
+            self.out = MLP(hidden_size * num_gru_layers + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers)
         else:
-            for i, grad in enumerate(grad_input):
-                if grad is not None:
-                    self.momenta[module.name + '_input.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_input.{}'.format(i)] \
-                                                            + self.momenta_gamma * np.abs(grad.mean(dim = 0).detach().cpu().numpy())          
-            for i, grad in enumerate(grad_output):
-                if grad is not None:
-                    self.momenta[module.name + '_output.{}'.format(i)] = (1 - self.momenta_gamma) * self.momenta[module.name + '_output.{}'.format(i)] \
-                                                            + self.momenta_gamma * np.abs(grad.mean(dim = 0).detach().cpu().numpy())  
-   
+            self.out = MLP(hidden_size * num_gru_layers + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers)
+        self.out.name = 'out_mlp'
+            
+        self.soft = nn.LogSoftmax(dim = -1)
+        self.relu = nn.ReLU(inplace = False)
+        
+        self.momenta_gamma = momenta_gamma
+        self.init_momenta()
+        
+    def init_momenta(self):
+        self.momenta = dict()
+        
+    def update_momenta(self, grads):
+        for key in grads.keys():
+            if key not in self.momenta.keys():
+                self.momenta[key] = np.abs(grads[key])
+            else:
+                self.momenta[key] = self.momenta_gamma * np.abs(grads[key]) + (1 - self.momenta_gamma) * self.momenta[key]
+        
 
         
     def forward(self, x0, edge_index, batch, x1, x2):
@@ -1042,7 +1113,7 @@ class Res1dBlock(nn.Module):
             in_shape = out_channels
         
         if pooling == 'max':
-            self.pool = nn.MaxPool2d((1, 2), stride = (1, 2))
+            self.pool = nn.MaxPool1d(2, stride = 2)
         else:
             self.pool = None
             
