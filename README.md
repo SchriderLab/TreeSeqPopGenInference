@@ -47,9 +47,9 @@ Leaderboard:
 |GATConvRNN   |0.327077   |0.86688   |12   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
 |GATConvRNN   |**0.29515**   |0.88429   |16   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
 
-|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |tree_sequence_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling
-|---|---|---|---|---|---|---|---|---|
-|CNN |**0.322143**  |0.873530 |5  |54  |16  |8292611   |1e-5,3000   |sequential
+|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |tree_sequence_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric
+|---|---|---|---|---|---|---|---|---|---|---|
+|CNN |**0.322143**  |0.873530 |5  |2000  |16  |8292611   |1e-5,3000   |sequential |True |cosine
 
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
