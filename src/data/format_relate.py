@@ -267,7 +267,7 @@ def main():
                                r = regions[k][1] - regions[k][0],
                                rp = np.mean(regions[k]))
 
-                indices = list(itertools.combinations(master_nodes, 2))
+                indices = list(itertools.combinations([u.name for u in master_nodes], 2))
                 D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
                 D_mut = []
                 for i,j in indices:
