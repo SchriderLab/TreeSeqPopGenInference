@@ -143,11 +143,20 @@ def main():
                 current_day_nodes = list(range(sum(pop_sizes)))
                 
             lines = anc_file.readlines()[2:]
-            l = x[ix].shape[1]
+            
      
             comm.Barrier()
             if comm.rank == 0:
                 logging.info('done reading...')
+                l = x[ix].shape[1]
+            else:
+                l = None
+                
+            comm.Barrier()
+            
+            l = comm.bcast(l, root = 0)
+            
+            comm.Barrier()
             
             if comm.rank != 0:
                 for ij in range(comm.rank - 1, len(lines), comm.size - 1):
