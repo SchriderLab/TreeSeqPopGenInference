@@ -100,6 +100,8 @@ def main():
         
         
         if comm.rank == 0:
+            t0 = time.time()
+            
             # load the genotype matrices that correspond to the trees
             logging.info('reading data, {}...'.format(ifile))
             x, y, p, intros = load_data(ifile, None)
@@ -162,7 +164,7 @@ def main():
             
             comm.Barrier()
             
-            t0 = time.time()
+            
             if comm.rank != 0:
                 for ij in range(comm.rank - 1, len(lines), comm.size - 1):
                     line = lines[ij]
@@ -467,6 +469,7 @@ def main():
                 comm.send([None, None, None, None, None], dest = 0)
                     
             else:
+                t0 = time.time()
                 n_done = 0
                 
                 Xs = []
@@ -534,6 +537,8 @@ def main():
                     if A.shape[0] > 0:
                         ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
                     ofile_val.flush()
+                    
+                logging.info('iteration with {} graphs took {} seconds...'.format(len(Xs), time.time() - t0))
                 
     if comm.rank == 0:      
         ofile.close()
