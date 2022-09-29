@@ -21,6 +21,7 @@ import random
 
 from ete3 import Tree
 import itertools
+from scipy.spatial.distance import squareform
 
 """
 notes:
@@ -243,11 +244,7 @@ def main():
                             
                     cs = copy.copy(_)
                                                 
-                Tr = root_ete.get_tree_root()
-                master_nodes = list(Tr.iter_descendants()) + [Tr]
-                _ = [u.name for u in master_nodes]
-                
-                level_order = [u.name for u in list(root.levelorder())]
+
                 
                 
                                                 
@@ -263,6 +260,10 @@ def main():
                         data[node] = np.array([0., 1., 0., mut_dict[node]])
                 
                 nodes = copy.copy(current_day_nodes)
+                
+                Tr = root_ete.get_tree_root()
+                master_nodes = list(Tr.iter_descendants()) + [Tr]
+                _ = [u.name for u in master_nodes]
                 
                 T = Tr.get_common_ancestor([u for u in Tr.get_descendants() if u.name in nodes])
                 
@@ -357,6 +358,11 @@ def main():
     
                     D_r.append(np.mean(_))
                     
+                D = squareform(np.array(D))
+                D_mut = squareform(np.array(D_mut))
+                D_r = squareform(np.array(D_r))
+                D_branch = squareform(np.array(D_branch))
+                    
                 X = []
                 for node in T_names:
                     X.append(data[node])
@@ -371,6 +377,9 @@ def main():
                     G = nx.DiGraph()
                     G.add_edges_from(edges)
                     
+                    level_order = []
+                    for node in T.traverse("levelorder"):
+                        level_order.append(node.name)
                     # slim adjacency representation we have for TreeGANs
                     # for a potential RNN or CNN route
                     G_ = G.to_undirected()
