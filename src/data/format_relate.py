@@ -339,9 +339,9 @@ def main():
                 ################ --
                 # ******************************************* #
                 # =========================================== #
-                lengths = dict(zip([T_names.index(u.name) for u in master_nodes], lengths))
-                n_mutations = dict(zip([T_names.index(u.name) for u in master_nodes], n_mutations))
-                regions = dict(zip([T_names.index(u.name) for u in master_nodes], regions))
+                lengths = dict(zip(range(len(T_names)), [lengths[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
+                n_mutations = dict(zip(range(len(T_names)), [n_mutations[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
+                regions = dict(zip(range(len(T_names)), [regions[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
 
                 
                 Gu = nx.Graph()
