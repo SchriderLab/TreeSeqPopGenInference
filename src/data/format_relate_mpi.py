@@ -459,7 +459,7 @@ def main():
                     # X, edges, info_vec, D, A
                     comm.send([ij, X, edges, info_vec, D, A], dest = 0)
                     
-                comm.send([None, None, None, None, None], dest = 0)
+                comm.send([None, None, None, None, None, None], dest = 0)
                     
             else:
                 t0 = time.time()
