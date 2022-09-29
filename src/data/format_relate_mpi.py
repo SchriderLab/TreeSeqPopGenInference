@@ -127,36 +127,27 @@ def main():
             comm.Barrier()
             
             if comm.rank == 0:
-                if (ix + 1) % 5 == 0:
-                    logging.info('on replicate {}...'.format(ix))
+                logging.info('on replicate {}...'.format(ix))
                 
             if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
                 logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
                 continue
             
-            if comm.rank == 0:
-                anc_file = open(anc_files[ix], 'r')
+            anc_file = open(anc_files[ix], 'r')
+            
+            if args.n_sample != "None":
+                n_sample = int(args.n_sample)
                 
-                if args.n_sample != "None":
-                    n_sample = int(args.n_sample)
-                    
-                    current_day_nodes = list(np.random.choice(range(sum(pop_sizes)), n_sample, replace = False))
-                else:
-                    current_day_nodes = list(range(sum(pop_sizes)))
-                    
-                lines = anc_file.readlines()[2:]
-                l = x[ix].shape[1]
+                current_day_nodes = list(np.random.choice(range(sum(pop_sizes)), n_sample, replace = False))
             else:
-                lines = None
-                l = None
+                current_day_nodes = list(range(sum(pop_sizes)))
                 
+            lines = anc_file.readlines()[2:]
+            l = x[ix].shape[1]
+     
             comm.Barrier()
-            
-            l = comm.gather(l, root = 0)
-            lines = comm.gather(lines, root = 0)
-            
-            comm.Barrier()
-            
+            if comm.rank == 0:
+                logging.info('done reading...')
             
             if comm.rank != 0:
                 for ij in range(comm.rank - 1, len(lines), comm.size - 1):
