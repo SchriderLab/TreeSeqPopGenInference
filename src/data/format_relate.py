@@ -249,36 +249,7 @@ def main():
                 
                 level_order = [u.name for u in list(root.levelorder())]
                 
-                # let's do this to save time in the cases we don't want this anyway
-                if args.topological_order:
-                    G = nx.DiGraph()
-                    G.add_edges_from(edges)
-                    
-                    # slim adjacency representation we have for TreeGANs
-                    # for a potential RNN or CNN route
-                    G_ = G.to_undirected()
-                    
-                    s0, s1 = pop_sizes        
-                            
-                    i0 = current_day_nodes[:s0]
-                    i1 = current_day_nodes[s0:s0 + s1]
-                    
-                    ii = [u for u in level_order if u in i0] + [u for u in level_order if u in i1] + [u for u in level_order if not ((u in i0) or (u in i1))]
-                    
-                    A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
-                    
-                    i, j = np.tril_indices(A.shape[0])
-                    A[i, j] = 0.
-    
-                    A = A[:,len(current_day_nodes):]
-                    indices = [nodes.index(u) for u in ii]
-                    indices_ = dict(zip(nodes, [ii.index(u) for u in nodes]))
-                    
-                    lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
-                    
-                    A = np.concatenate([A.astype(np.float32), lengths_], 1)
-                    
-                    As.append(A)
+                
                                                 
                 data = dict()
                 if s1 > 0:
@@ -390,12 +361,42 @@ def main():
                 for node in T_names:
                     X.append(data[node])
                     
+                    
                 X = np.array(X)
                 
                 #print(len(edges), X.shape)
                 edges = edges[:X.shape[0]]
                 
                 if args.topological_order:
+                    G = nx.DiGraph()
+                    G.add_edges_from(edges)
+                    
+                    # slim adjacency representation we have for TreeGANs
+                    # for a potential RNN or CNN route
+                    G_ = G.to_undirected()
+                    
+                    s0, s1 = pop_sizes        
+                            
+                    i0 = current_day_nodes[:s0]
+                    i1 = current_day_nodes[s0:s0 + s1]
+                    
+                    ii = [u for u in level_order if u in i0] + [u for u in level_order if u in i1] + [u for u in level_order if not ((u in i0) or (u in i1))]
+                    
+                    A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
+                    
+                    i, j = np.tril_indices(A.shape[0])
+                    A[i, j] = 0.
+    
+                    A = A[:,len(current_day_nodes):]
+                    indices = [nodes.index(u) for u in ii]
+                    indices_ = dict(zip(nodes, [ii.index(u) for u in nodes]))
+                    
+                    lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
+                    
+                    A = np.concatenate([A.astype(np.float32), lengths_], 1)
+                    
+                    As.append(A)
+                    
                     # topologically order nodes
                     X = X[indices,:]
                     
