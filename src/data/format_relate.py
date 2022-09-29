@@ -22,6 +22,7 @@ import random
 from ete3 import Tree
 import itertools
 from scipy.spatial.distance import squareform
+import time
 
 """
 notes:
@@ -148,6 +149,7 @@ def main():
             As = []
             Ds = []
             
+            t0 = time.time()
             for ij in range(len(lines)):
                 line = lines[ij]
                 
@@ -454,6 +456,7 @@ def main():
                 Edges.append(edges)
                 infos.append(info_vec)
             
+            logging.info('iteration took {} seconds...'.format(time.time() - t0))
             infos = np.array(infos)
             global_vec = np.array(list(np.mean(infos, axis = 0)) + list(np.std(infos, axis = 0)) + list(np.median(infos, axis = 0)) + [infos.shape[0]], dtype = np.float32)
             
@@ -464,7 +467,6 @@ def main():
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
-                    ofile.create_dataset('{')
                 else:
                     ofile_val.create_dataset('{1}/{0}/global_vec'.format(ix - N, tag), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
