@@ -107,10 +107,9 @@ def main():
             x, y, p, intros = load_data(ifile, None)
             del y    
         
-        
-        if len(x) == 0:
-            logging.info('ERROR: have no genotype matrices! for {}...'.format(ifile))
-            continue
+            if len(x) == 0:
+                logging.info('ERROR: have no genotype matrices! for {}...'.format(ifile))
+                continue
         
         if args.n_samples == "None":
             N = len(anc_files)
