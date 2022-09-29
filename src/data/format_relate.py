@@ -342,7 +342,6 @@ def main():
                 lengths = dict(zip(range(len(T_names)), [lengths[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
                 n_mutations = dict(zip(range(len(T_names)), [n_mutations[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
                 regions = dict(zip(range(len(T_names)), [regions[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
-
                 
                 Gu = nx.Graph()
                 for k in range(len(edges)):
@@ -361,7 +360,7 @@ def main():
                     
                 paths = nx.shortest_path(Gu)
 
-                indices = list(itertools.combinations([u.name for u in master_nodes], 2))
+                indices = list(itertools.combinations(range(len(T_names)), 2))
                 D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
                 D_mut = []
                 for i,j in indices:
@@ -386,11 +385,6 @@ def main():
                     _ = [Gu.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
     
                     D_r.append(np.mean(_))
-    
-                # hops, mutations, branch lengths, and mean region size along shortest paths
-                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
-                Ds.append(D)
-                
                     
                 X = []
                 for node in T_names:
@@ -404,9 +398,19 @@ def main():
                 if args.topological_order:
                     # topologically order nodes
                     X = X[indices,:]
+                    
                     # change the edge indexes to topologically (levelorder) ordered
                     # as we ordered the node features
                     edges = [(indices_[u], indices_[v]) for u,v in edges]
+                
+                    D = D[np.ix_(indices, indices)]
+                    D_mut = D_mut[np.ix_(indices, indices)]
+                    D_branch = D_branch[np.ix_(indices, indices)]
+                    D_r = D_r[np.ix_(indices, indices)]
+                
+                # hops, mutations, branch lengths, and mean region size along shortest paths
+                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
+                Ds.append(D)
                 
                 
                 Xs.append(X)
