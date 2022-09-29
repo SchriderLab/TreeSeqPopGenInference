@@ -130,9 +130,9 @@ def main():
                 if (ix + 1) % 5 == 0:
                     logging.info('on replicate {}...'.format(ix))
                 
-                if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
-                    logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
-                    continue
+            if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
+                logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
+                continue
             
             if comm.rank == 0:
                 anc_file = open(anc_files[ix], 'r')
@@ -152,8 +152,8 @@ def main():
                 
             comm.Barrier()
             
-            l = comm.scatter(l, root = 0)
-            lines = comm.scatter(lines, root = 0)
+            l = comm.gather(l, root = 0)
+            lines = comm.gather(lines, root = 0)
             
             comm.Barrier()
             
