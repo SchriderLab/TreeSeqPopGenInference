@@ -339,12 +339,10 @@ def main():
                 ################ --
                 # ******************************************* #
                 # =========================================== #
-                lengths = dict(zip(master_nodes, lengths))
-                n_mutations = dict(zip(master_nodes, n_mutations))
-                regions = dict(zip(master_nodes, regions))
-                
-                print(lengths)
-                print(lengths.keys(), len(length.keys()))
+                lengths = dict(zip([u.name for u in master_nodes], lengths))
+                n_mutations = dict(zip([u.name for u in master_nodes], n_mutations))
+                regions = dict(zip([u.name for u in master_nodes], regions))
+
                 
                 Gu = nx.Graph()
                 for k in range(len(edges)):
@@ -356,11 +354,6 @@ def main():
     
                 for k in range(len(edges)):
                     child = edges[k][0]
-                    
-                    if child in lengths.keys():
-                        w = lengths[child]
-                    else:
-                        w = 0.
                     
                     Gu.add_edge(edges[k][1], edges[k][0], weight = lengths[child], 
                                n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
