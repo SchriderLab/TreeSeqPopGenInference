@@ -433,6 +433,8 @@ def main():
                 std_time = np.std(X[ii,0])
                 median_time = np.median(X[ii,0])
                 
+                lengths = list(lengths.values())
+                
                 mean_branch_length = np.mean(lengths)
                 median_branch_length = np.median(lengths)
                 std_branch_length = np.std(lengths)
