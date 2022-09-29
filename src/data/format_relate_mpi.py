@@ -105,14 +105,8 @@ def main():
             # load the genotype matrices that correspond to the trees
             logging.info('reading data, {}...'.format(ifile))
             x, y, p, intros = load_data(ifile, None)
-            
-    
+            del y    
         
-        if ('mig12' in ifile) or ('mig21' in ifile):
-            filter_zeros = True
-        else:
-            filter_zeros = False
-        del y
         
         if len(x) == 0:
             logging.info('ERROR: have no genotype matrices! for {}...'.format(ifile))
