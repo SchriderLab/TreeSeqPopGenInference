@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import random
 
 from ete3 import Tree
+import itertools
 
 """
 notes:
@@ -144,6 +145,8 @@ def main():
             infos = []
             
             As = []
+            Ds = []
+            
             for ij in range(len(lines)):
                 line = lines[ij]
                 
@@ -244,20 +247,65 @@ def main():
                 master_nodes = list(Tr.iter_descendants()) + [Tr]
                 _ = [u.name for u in master_nodes]
                 
-                master_node_dict = dict(zip(_, master_nodes))
-                
                 level_order = [u.name for u in list(root.levelorder())]
-                #sys.exit()
                 
-                G = nx.DiGraph()
-                G.add_edges_from(edges)
+                ## Generating Distance matrices (via networkx)
+                ################ --
+                # ******************************************* #
+                # =========================================== #
+                Gu = nx.Graph()
                 
-                # slim adjacency representation we have for TreeGANs
-                # for a potential RNN or CNN route
-                G_ = G.to_undirected()
+                for k in range(len(edges)):
+                    Gu.add_edge(edges[k][0], edges[k][1], weight = lengths[k], 
+                               n_mutations = n_mutations[k], hop = 0.5, r = regions[k][1] - regions[k][0],
+                               rp = np.mean(regions[k]))
+                    
+                paths = nx.shortest_path(Gu)
+                
+                for k in range(len(edges)):
+                    Gu.add_edge(edges[k][1], edges[k][0], weight = lengths[k], n_mutations = n_mutations[k], hop = 0.5, 
+                               r = regions[k][1] - regions[k][0],
+                               rp = np.mean(regions[k]))
+
+                indices = list(itertools.combinations(master_nodes, 2))
+                D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
+                D_mut = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['n_mutations'] for k in range(len(path) - 1)]
+
+                    D_mut.append(sum(_))
+                        
+                D_branch = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
+    
+                    D_branch.append(sum(_))
+    
+                D_r = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
+    
+                    D_r.append(np.mean(_))
+    
+                # hops, mutations, branch lengths, and mean region size along shortest paths
+                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
+                Ds.append(D)
                 
                 # let's do this to save time in the cases we don't want this anyway
                 if args.topological_order:
+                    G = nx.DiGraph()
+                    G.add_edges_from(edges)
+                    
+                    # slim adjacency representation we have for TreeGANs
+                    # for a potential RNN or CNN route
+                    G_ = G.to_undirected()
+                    
                     s0, s1 = pop_sizes        
                             
                     i0 = current_day_nodes[:s0]
@@ -391,11 +439,13 @@ def main():
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
+                    ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
                 else:
                     ofile_val.create_dataset('{1}/{0}/global_vec'.format(ix - N, tag), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/edge_index'.format(ix - N, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/info'.format(ix - N, tag), data = np.array(infos), compression = 'lzf')
+                    ofile_val.create_dataset('{1}/{0}/D'.format(ix - N, tag), data = np.array(Ds), compression = 'lzf')
             
             Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
             A = np.array(As)
