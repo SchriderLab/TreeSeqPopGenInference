@@ -398,7 +398,7 @@ def main():
     
                     A = A[:,len(current_day_nodes):]
                     indices = [T_names.index(u) for u in ii]
-                    indices_ = dict(zip(nodes, [ii.index(u) for u in nodes]))
+                    indices_ = dict(zip(range(len(T_names)), [ii.index(u) for u in T_names]))
                     
                     lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
                     
