@@ -249,54 +249,6 @@ def main():
                 
                 level_order = [u.name for u in list(root.levelorder())]
                 
-                ## Generating Distance matrices (via networkx)
-                ################ --
-                # ******************************************* #
-                # =========================================== #
-                Gu = nx.Graph()
-                
-                for k in range(len(edges)):
-                    Gu.add_edge(edges[k][0], edges[k][1], weight = lengths[k], 
-                               n_mutations = n_mutations[k], hop = 0.5, r = regions[k][1] - regions[k][0],
-                               rp = np.mean(regions[k]))
-                    
-                paths = nx.shortest_path(Gu)
-                
-                for k in range(len(edges)):
-                    Gu.add_edge(edges[k][1], edges[k][0], weight = lengths[k], n_mutations = n_mutations[k], hop = 0.5, 
-                               r = regions[k][1] - regions[k][0],
-                               rp = np.mean(regions[k]))
-
-                indices = list(itertools.combinations([u.name for u in master_nodes], 2))
-                D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
-                D_mut = []
-                for i,j in indices:
-                    path = paths[i][j]
-                    
-                    _ = [Gu.edges[path[k], path[k + 1]]['n_mutations'] for k in range(len(path) - 1)]
-
-                    D_mut.append(sum(_))
-                        
-                D_branch = []
-                for i,j in indices:
-                    path = paths[i][j]
-                    
-                    _ = [Gu.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
-    
-                    D_branch.append(sum(_))
-    
-                D_r = []
-                for i,j in indices:
-                    path = paths[i][j]
-                    
-                    _ = [Gu.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
-    
-                    D_r.append(np.mean(_))
-    
-                # hops, mutations, branch lengths, and mean region size along shortest paths
-                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
-                Ds.append(D)
-                
                 # let's do this to save time in the cases we don't want this anyway
                 if args.topological_order:
                     G = nx.DiGraph()
@@ -329,7 +281,6 @@ def main():
                     As.append(A)
                                                 
                 data = dict()
-                
                 if s1 > 0:
                     for node in current_day_nodes[:s0]:
                         data[node] = np.array([0., 1., 0., 0., 0., 0.])
@@ -383,6 +334,62 @@ def main():
                         
                         
                     T_present = copy.copy(_)
+                    
+                ## Generating Distance matrices (via networkx)
+                ################ --
+                # ******************************************* #
+                # =========================================== #
+                lengths = dict(zip(master_nodes, lengths))
+                n_mutations = dict(zip(master_nodes, n_mutations))
+                regions = dict(zip(master_nodes, regions))
+                
+                Gu = nx.Graph()
+                for k in range(len(edges)):
+                    child = edges[k][0]
+                    
+                    Gu.add_edge(edges[k][0], edges[k][1], weight = lengths[child], 
+                               n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
+                               rp = np.mean(regions[k]))
+    
+                for k in range(len(edges)):
+                    child = edges[k][0]
+                    
+                    Gu.add_edge(edges[k][1], edges[k][0], weight = lengths[child], 
+                               n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
+                               rp = np.mean(regions[k]))
+                    
+                paths = nx.shortest_path(Gu)
+
+                indices = list(itertools.combinations([u.name for u in master_nodes], 2))
+                D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
+                D_mut = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['n_mutations'] for k in range(len(path) - 1)]
+
+                    D_mut.append(sum(_))
+                        
+                D_branch = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
+    
+                    D_branch.append(sum(_))
+    
+                D_r = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
+    
+                    D_r.append(np.mean(_))
+    
+                # hops, mutations, branch lengths, and mean region size along shortest paths
+                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
+                Ds.append(D)
+                
                     
                 X = []
                 for node in T_names:
@@ -440,6 +447,7 @@ def main():
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
+                    ofile.create_dataset('{')
                 else:
                     ofile_val.create_dataset('{1}/{0}/global_vec'.format(ix - N, tag), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
