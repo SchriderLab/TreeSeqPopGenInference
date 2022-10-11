@@ -41,7 +41,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=16G -t 1-00:00:00 -o {3} --wrap "python3 src/data/format_relate.py --idir {0} --ms_dir {1} --ofile {2} --pop_sizes {4} --n_sample {5} --topological_order"'
+    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {3} --wrap "python3 src/data/format_relate.py --idir {0} --ms_dir {1} --ofile {2} --pop_sizes {4} --n_sample {5} --topological_order"'
     idirs = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u])
     
     if not args.topological_order:
