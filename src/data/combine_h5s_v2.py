@@ -93,6 +93,8 @@ def parse_args():
     parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
     parser.add_argument("--chunk_size", default = "5")
     parser.add_argument("--sampling_mode", default = "equi")
+    
+    parser.add_argument("--n_sample", default = "None")
 
     args = parser.parse_args()
 
@@ -120,7 +122,7 @@ def main():
         data[c]['edge_index'] = []
         data[c]['mask'] = []
         data[c]['global_vec'] = []
-        
+        data[c]['D'] = []
     
     ofile = h5py.File(args.ofile, 'w')
     ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
@@ -140,13 +142,20 @@ def main():
     
     val_prop = 0.1
     
+    
+    
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
         
-        for j in range(len(generator)):
-            x, x1, edge_index, masks, global_vecs, y = generator.get_single_model_batch(sample_mode = args.sampling_mode)
+        if args.n_sample == "None":
+            N = len(generator)
+        else:
+            N = int(args.n_sample)
+        
+        for j in range(N):
+            x, x1, edge_index, masks, global_vecs, y, D = generator.get_single_model_batch(sample_mode = args.sampling_mode)
             
             if x is None:
                 break
@@ -171,12 +180,14 @@ def main():
                 data[c]['edge_index'].append(edge_index[k])
                 data[c]['mask'].append(masks[k])
                 data[c]['global_vec'].append(global_vecs[k])
+                data[c]['D'].append(D[k])
                 
         # append sequence lengths for histogram
         lengths.extend(generator.lengths)
         
         while all([len(data[u]['x']) > 0 for u in classes]):
             X = []
+            Ds = []
             edge_index = []
             masks = []
             X1 = []
@@ -190,12 +201,14 @@ def main():
                 y.append(classes.index(c))
                 global_vec.append(data[c]['global_vec'][-1])
                 masks.append(data[c]['mask'][-1])
+                Ds.append(data[c]['D'][-1])
                 
                 del data[c]['x'][-1]
                 del data[c]['edge_index'][-1]
                 del data[c]['x1'][-1]
                 del data[c]['mask'][-1]
                 del data[c]['global_vec'][-1]
+                del data[c]['D'][-1]
 
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
@@ -203,6 +216,7 @@ def main():
             y = np.array(y, dtype = np.uint8)
             global_vec = np.array(global_vec, dtype = np.float32)
             masks = np.array(masks, dtype = np.uint8)
+            Ds = np.array(Ds, dtype = np.float32)
             
             val = np.random.uniform() < val_prop
             
@@ -213,6 +227,7 @@ def main():
                 ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
                 ofile.create_dataset('{0:06d}/global_vec'.format(counter), data = global_vec, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
+                ofile.create_dataset('{0:06d}/D'.format(counter), data = Ds, compression = 'lzf')
                 ofile.flush()
             
                 counter += 1
@@ -223,6 +238,7 @@ def main():
                 ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
+                ofile_val.create_dataset('{0:06d}/D'.format(val_counter), data = Ds, compression = 'lzf')
                 ofile_val.flush()
             
                 val_counter += 1

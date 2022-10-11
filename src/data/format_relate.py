@@ -20,6 +20,9 @@ import matplotlib.pyplot as plt
 import random
 
 from ete3 import Tree
+import itertools
+from scipy.spatial.distance import squareform
+import time
 
 """
 notes:
@@ -144,6 +147,9 @@ def main():
             infos = []
             
             As = []
+            Ds = []
+            
+            t0 = time.time()
             for ij in range(len(lines)):
                 line = lines[ij]
                 
@@ -240,48 +246,11 @@ def main():
                             
                     cs = copy.copy(_)
                                                 
-                Tr = root_ete.get_tree_root()
-                master_nodes = list(Tr.iter_descendants()) + [Tr]
-                _ = [u.name for u in master_nodes]
+
                 
-                master_node_dict = dict(zip(_, master_nodes))
                 
-                level_order = [u.name for u in list(root.levelorder())]
-                #sys.exit()
-                
-                G = nx.DiGraph()
-                G.add_edges_from(edges)
-                
-                # slim adjacency representation we have for TreeGANs
-                # for a potential RNN or CNN route
-                G_ = G.to_undirected()
-                
-                # let's do this to save time in the cases we don't want this anyway
-                if args.topological_order:
-                    s0, s1 = pop_sizes        
-                            
-                    i0 = current_day_nodes[:s0]
-                    i1 = current_day_nodes[s0:s0 + s1]
-                    
-                    ii = [u for u in level_order if u in i0] + [u for u in level_order if u in i1] + [u for u in level_order if not ((u in i0) or (u in i1))]
-                    
-                    A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
-                    
-                    i, j = np.tril_indices(A.shape[0])
-                    A[i, j] = 0.
-    
-                    A = A[:,len(current_day_nodes):]
-                    indices = [nodes.index(u) for u in ii]
-                    indices_ = dict(zip(nodes, [ii.index(u) for u in nodes]))
-                    
-                    lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
-                    
-                    A = np.concatenate([A.astype(np.float32), lengths_], 1)
-                    
-                    As.append(A)
                                                 
                 data = dict()
-                
                 if s1 > 0:
                     for node in current_day_nodes[:s0]:
                         data[node] = np.array([0., 1., 0., 0., 0., 0.])
@@ -293,6 +262,10 @@ def main():
                         data[node] = np.array([0., 1., 0., mut_dict[node]])
                 
                 nodes = copy.copy(current_day_nodes)
+                
+                Tr = root_ete.get_tree_root()
+                master_nodes = list(Tr.iter_descendants()) + [Tr]
+                _ = [u.name for u in master_nodes]
                 
                 T = Tr.get_common_ancestor([u for u in Tr.get_descendants() if u.name in nodes])
                 
@@ -336,9 +309,66 @@ def main():
                         
                     T_present = copy.copy(_)
                     
+                ## Generating Distance matrices (via networkx)
+                ################ --
+                # ******************************************* #
+                # =========================================== #
+                lengths = dict(zip(range(len(T_names)), [lengths[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
+                n_mutations = dict(zip(range(len(T_names)), [n_mutations[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
+                regions = dict(zip(range(len(T_names)), [regions[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
+                
+                Gu = nx.Graph()
+                for k in range(len(edges)):
+                    child = edges[k][0]
+                    
+                    Gu.add_edge(edges[k][0], edges[k][1], weight = lengths[child], 
+                               n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
+                               rp = np.mean(regions[k]))
+    
+                for k in range(len(edges)):
+                    child = edges[k][0]
+                    
+                    Gu.add_edge(edges[k][1], edges[k][0], weight = lengths[child], 
+                               n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
+                               rp = np.mean(regions[k]))
+                    
+                paths = nx.shortest_path(Gu)
+
+                indices = list(itertools.combinations(range(len(T_names)), 2))
+                D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
+                D_mut = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['n_mutations'] for k in range(len(path) - 1)]
+
+                    D_mut.append(sum(_))
+                        
+                D_branch = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
+    
+                    D_branch.append(sum(_))
+    
+                D_r = []
+                for i,j in indices:
+                    path = paths[i][j]
+                    
+                    _ = [Gu.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
+    
+                    D_r.append(np.mean(_))
+                    
+                D = squareform(np.array(D))
+                D_mut = squareform(np.array(D_mut))
+                D_r = squareform(np.array(D_r))
+                D_branch = squareform(np.array(D_branch))
+                    
                 X = []
                 for node in T_names:
                     X.append(data[node])
+                    
                     
                 X = np.array(X)
                 
@@ -346,11 +376,53 @@ def main():
                 edges = edges[:X.shape[0]]
                 
                 if args.topological_order:
+                    G = nx.DiGraph()
+                    G.add_edges_from(edges)
+                    
+                    level_order = []
+                    for node in T.traverse("levelorder"):
+                        level_order.append(node.name)
+                    # slim adjacency representation we have for TreeGANs
+                    # for a potential RNN or CNN route
+                    G_ = G.to_undirected()
+                    
+                    s0, s1 = pop_sizes        
+                            
+                    i0 = current_day_nodes[:s0]
+                    i1 = current_day_nodes[s0:s0 + s1]
+                    
+                    ii = [u for u in level_order if u in i0] + [u for u in level_order if u in i1] + [u for u in level_order if not ((u in i0) or (u in i1))]
+                    
+                    A = np.array(nx.adjacency_matrix(G_, nodelist = ii).todense())
+                    
+                    i, j = np.tril_indices(A.shape[0])
+                    A[i, j] = 0.
+    
+                    A = A[:,len(current_day_nodes):]
+                    indices = [T_names.index(u) for u in ii]
+                    indices_ = dict(zip(range(len(T_names)), [ii.index(u) for u in T_names]))
+                    
+                    lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
+                    
+                    A = np.concatenate([A.astype(np.float32), lengths_], 1)
+                    
+                    As.append(A)
+                    
                     # topologically order nodes
                     X = X[indices,:]
+                    
                     # change the edge indexes to topologically (levelorder) ordered
                     # as we ordered the node features
                     edges = [(indices_[u], indices_[v]) for u,v in edges]
+                
+                    D = D[np.ix_(indices, indices)]
+                    D_mut = D_mut[np.ix_(indices, indices)]
+                    D_branch = D_branch[np.ix_(indices, indices)]
+                    D_r = D_r[np.ix_(indices, indices)]
+                
+                # hops, mutations, branch lengths, and mean region size along shortest paths
+                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
+                Ds.append(D)
                 
                 
                 Xs.append(X)
@@ -362,6 +434,8 @@ def main():
                 mean_time = np.mean(X[ii,0])
                 std_time = np.std(X[ii,0])
                 median_time = np.median(X[ii,0])
+                
+                lengths = list(lengths.values())
                 
                 mean_branch_length = np.mean(lengths)
                 median_branch_length = np.median(lengths)
@@ -382,6 +456,7 @@ def main():
                 Edges.append(edges)
                 infos.append(info_vec)
             
+            logging.info('iteration took {} seconds...'.format(time.time() - t0))
             infos = np.array(infos)
             global_vec = np.array(list(np.mean(infos, axis = 0)) + list(np.std(infos, axis = 0)) + list(np.median(infos, axis = 0)) + [infos.shape[0]], dtype = np.float32)
             
@@ -391,11 +466,13 @@ def main():
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
+                    ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
                 else:
                     ofile_val.create_dataset('{1}/{0}/global_vec'.format(ix - N, tag), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/edge_index'.format(ix - N, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/info'.format(ix - N, tag), data = np.array(infos), compression = 'lzf')
+                    ofile_val.create_dataset('{1}/{0}/D'.format(ix - N, tag), data = np.array(Ds), compression = 'lzf')
             
             Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
             A = np.array(As)

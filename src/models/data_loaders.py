@@ -110,16 +110,20 @@ class TreeSeqGenerator(object):
         else:
             self.models = models
 
+        
         # hdf5 file we are reading from
         self.ifile = ifile
-        means = np.load(means)
-        
-        self.pad = pad
-        
-        self.info_mean = means['v_mean'].reshape(1, -1)
-        self.info_std = means['v_std'].reshape(1, -1)
-        
-        self.info_std[np.where(self.info_std == 0.)] = 1.
+        try:
+            means = np.load(means)
+            
+            self.pad = pad
+            
+            self.info_mean = means['v_mean'].reshape(1, -1)
+            self.info_std = means['v_std'].reshape(1, -1)
+            
+            self.info_std[np.where(self.info_std == 0.)] = 1.
+        except:
+            pass
 
         # how many tree sequences from each demographic model are included in a batch?
         self.n_samples_per = n_samples_per
@@ -143,6 +147,7 @@ class TreeSeqGenerator(object):
     # for internal use
     def get_single_model_batch(self, n_samples = 3, sample_mode = 'scattered'):
         Xs = []
+        Ds = [] # branch length distance matrices
         X1 = [] # tree-level features (same size as batch_)
         edge_index = []
         masks = []
@@ -166,7 +171,10 @@ class TreeSeqGenerator(object):
                     
                     X_ = np.array(self.ifile[model][key]['x']) 
                     X1_ = np.array(self.ifile[model][key]['info'])
+                    D_ = np.array(self.ifile[model][key]['D'])[:,-2,:,:]
                     
+                    u, v = np.triu_indices(D_.shape[1])
+                    D_ = D_[:,u,v]
                     
                     if X_.shape[0] == 0:
                         self.counts[model] += 1
@@ -186,7 +194,7 @@ class TreeSeqGenerator(object):
                 
                 # this guaruntees batches are always balanced
                 if self.counts[model] == len(self.keys[model]):
-                    return None, None, None, None
+                    return None, None, None, None, None, None, None
                 
                 edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
                 global_vec_ = np.array(self.ifile[model][key]['global_vec'], dtype = np.float32)
@@ -201,21 +209,25 @@ class TreeSeqGenerator(object):
                 mask = []
                 
                 X = []
+                D = []
                 
                 for j in range(pad_size[0]):
                     x = np.zeros(s)
                     
                     X.append(x)
+                    D.append(np.zeros(D_[0].shape))
                     indices.append(None)
                     mask.append(0.)
     
                 for ii_ in ii:
                     x = X_[ii_]
+                    d = D_[ii_]
                     
                     ik = list(np.where(x[:,0] > 0))
                     x[ik,0] = np.log(x[ik,0])
                     
                     X.append(x)
+                    D.append(d)
                     mask.append(1.)
                     indices.append(edges[ii_])
                     
@@ -225,11 +237,15 @@ class TreeSeqGenerator(object):
                     x = np.zeros(s)
                     
                     X.append(x)
+                    D.append(np.zeros(D_[0].shape))
                     indices.append(None)
                     mask.append(0.)
                     
                 X = np.array(X)
+                D = np.array(D)
+                
                 Xs.append(X)
+                Ds.append(D)
                 
                 y.append(model)
                 s = [u for u in indices if u is not None][-1].shape
@@ -250,7 +266,7 @@ class TreeSeqGenerator(object):
             self.counts[model] += 1
             
             
-        return Xs, X1, edge_index, masks, global_vec, y
+        return Xs, X1, edge_index, masks, global_vec, y, Ds
 
             
             
