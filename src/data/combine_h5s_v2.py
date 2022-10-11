@@ -93,6 +93,8 @@ def parse_args():
     parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
     parser.add_argument("--chunk_size", default = "5")
     parser.add_argument("--sampling_mode", default = "equi")
+    
+    parser.add_argument("--n_sample", default = "None")
 
     args = parser.parse_args()
 
@@ -140,12 +142,19 @@ def main():
     
     val_prop = 0.1
     
+    
+    
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
         
-        for j in range(len(generator)):
+        if args.n_sample == "None":
+            N = len(generator)
+        else:
+            N = int(args.n_sample)
+        
+        for j in range(N):
             x, x1, edge_index, masks, global_vecs, y, D = generator.get_single_model_batch(sample_mode = args.sampling_mode)
             
             if x is None:
