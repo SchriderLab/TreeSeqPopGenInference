@@ -194,7 +194,7 @@ class TreeSeqGenerator(object):
                 
                 # this guaruntees batches are always balanced
                 if self.counts[model] == len(self.keys[model]):
-                    return None, None, None, None
+                    return None, None, None, None, None, None, None
                 
                 edges = np.array(self.ifile[model][key]['edge_index'], dtype = np.int32)
                 global_vec_ = np.array(self.ifile[model][key]['global_vec'], dtype = np.float32)
