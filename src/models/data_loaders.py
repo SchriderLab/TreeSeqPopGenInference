@@ -266,7 +266,7 @@ class TreeSeqGenerator(object):
             self.counts[model] += 1
             
             
-        return Xs, X1, edge_index, masks, global_vec, y, D
+        return Xs, X1, edge_index, masks, global_vec, y, Ds
 
             
             
