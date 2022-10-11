@@ -51,7 +51,7 @@ Leaderboard:
 |---|---|---|---|---|---|---|---|---|---|---|---|
 |PyTorch CNN |0.311942  |0.875257 |5  |2000  |16  |8,292,611   |1e-6,3000   |sequential |True |cosine |intro_trees
 |ResNet|**0.308413** |0.881486 |20 |2000 |16  |11,174,915 |1e-5,3000 |sequential |True |cosine |intro_trees
-|Keras CNN |0.2991 |0.8955 |3 |1201 |256 |5,032,067 |1e03,870 |sequential |False |N/A |big_sim
+|Keras CNN |0.2991 |0.8955 |3 |1201 |256 |5,032,067 |1e-3,870 |sequential |False |N/A |big_sim
 
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
