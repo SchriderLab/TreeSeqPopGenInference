@@ -110,16 +110,20 @@ class TreeSeqGenerator(object):
         else:
             self.models = models
 
+        
         # hdf5 file we are reading from
         self.ifile = ifile
-        means = np.load(means)
-        
-        self.pad = pad
-        
-        self.info_mean = means['v_mean'].reshape(1, -1)
-        self.info_std = means['v_std'].reshape(1, -1)
-        
-        self.info_std[np.where(self.info_std == 0.)] = 1.
+        try:
+            means = np.load(means)
+            
+            self.pad = pad
+            
+            self.info_mean = means['v_mean'].reshape(1, -1)
+            self.info_std = means['v_std'].reshape(1, -1)
+            
+            self.info_std[np.where(self.info_std == 0.)] = 1.
+        except:
+            pass
 
         # how many tree sequences from each demographic model are included in a batch?
         self.n_samples_per = n_samples_per
