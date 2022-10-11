@@ -47,10 +47,11 @@ Leaderboard:
 |GATConvRNN   |0.327077   |0.86688   |12   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
 |GATConvRNN   |**0.29515**   |0.88429   |16   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
 
-|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |tree_sequence_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric
+|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |tree_sequence_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric |data
 |---|---|---|---|---|---|---|---|---|---|---|
-|CNN |0.322143  |0.873530 |5  |2000  |16  |8292611   |1e-5,3000   |sequential |True |cosine
-|CNN |**0.311942**  |0.875257 |5  |2000  |16  |8292611   |1e-6,3000   |sequential |True |cosine
+|PyTorch CNN |0.311942  |0.875257 |5  |2000  |16  |8,292,611   |1e-6,3000   |sequential |True |cosine |intro_trees
+|ResNet|**0.308413** |0.881486 |20 |2000 |16  |11,174,915 |1e-5,3000 |sequential |True |cosine |intro_trees
+|Keras CNN |0.2991 |0.8955 |3 |1201 |256 |5,032,067 |1e03,870 |sequential |False |N/A |big_sim
 
 - D. simulans and D. sechelia
 - Would we want to still compare to FILET?
