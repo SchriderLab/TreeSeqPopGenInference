@@ -47,7 +47,7 @@ Leaderboard:
 |GATConvRNN   |0.327077   |0.86688   |12   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
 |GATConvRNN   |**0.29515**   |0.88429   |16   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
 
-|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |tree_sequence_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric |data
+|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |SNP_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric |data
 |---|---|---|---|---|---|---|---|---|---|---|---|
 |PyTorch CNN |0.311942  |0.875257 |5  |2000  |16  |8,292,611   |1e-6,3000   |sequential |True |cosine |intro_trees
 |ResNet|0.308413 |0.881486 |20 |2000 |16  |11,174,915 |1e-5,3000 |sequential |True |cosine |intro_trees
