@@ -52,6 +52,9 @@ def main():
     
     for key in keys:
         d = np.array(ifile[key]['D']).reshape(20, -1)
+        print(d.shape)
+        print(np.mean(d, axis = 0).shape)
+        
         
         d_mean += np.mean(d, axis = 0)
         count += 1
