@@ -51,7 +51,7 @@ def main():
     count = 0
     
     for key in keys:
-        d = np.array(ifile[key]['D']).reshape(20, -1)
+        d = np.log(np.array(ifile[key]['D']).reshape(20, -1))
         
         
         d_mean += np.mean(d, axis = 0)
@@ -72,7 +72,7 @@ def main():
     count = 0
     
     for key in keys:
-        d = np.array(ifile[key]['D']).reshape(20, -1)
+        d = np.log(np.array(ifile[key]['D']).reshape(20, -1))
         
         d = (d - d_mean)**2
         d = np.mean(d, axis = 0)
