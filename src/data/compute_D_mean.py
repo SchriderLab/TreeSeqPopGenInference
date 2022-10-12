@@ -51,7 +51,9 @@ def main():
     count = 0
     
     for key in keys:
-        d = np.log(np.array(ifile[key]['D']).reshape(20, -1))
+        d = np.array(ifile[key]['D']).reshape(20, -1)
+        i, j = np.where(d > 0)
+        d[i, j] = np.log(d[i, j])
         
         
         d_mean += np.mean(d, axis = 0)
@@ -73,6 +75,8 @@ def main():
     
     for key in keys:
         d = np.log(np.array(ifile[key]['D']).reshape(20, -1))
+        i, j = np.where(d > 0)
+        d[i, j] = np.log(d[i, j])
         
         d = (d - d_mean)**2
         d = np.mean(d, axis = 0)
@@ -81,6 +85,11 @@ def main():
         count += 1
     
     d_var = d_var / (count - 1)
+    plt.imshow(d_var)
+    plt.colorbar()
+    
+    plt.savefig(os.path.join(args.odir, 'D_var.png'), dpi = 100)
+    plt.close()
     
     np.savez(os.path.join(args.odir, 'D_mean.npz'), mean = d_mean, var = d_var)
     
