@@ -74,7 +74,7 @@ def main():
     count = 0
     
     for key in keys:
-        d = np.log(np.array(ifile[key]['D']).reshape(20, -1))
+        d = np.array(ifile[key]['D']).reshape(20, -1)
         i, j = np.where(d > 0)
         d[i, j] = np.log(d[i, j])
         
