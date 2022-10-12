@@ -85,7 +85,7 @@ def main():
         count += 1
     
     d_var = d_var / (count - 1)
-    plt.imshow(d_var)
+    plt.imshow(squareform(d_var))
     plt.colorbar()
     
     plt.savefig(os.path.join(args.odir, 'D_var.png'), dpi = 100)
