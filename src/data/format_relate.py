@@ -365,8 +365,7 @@ def main():
                 D_branch = squareform(np.array(D_branch))
                 
                 print(D.shape)
-                sys.exit()
-                    
+
                 X = []
                 for node in T_names:
                     X.append(data[node])
@@ -424,6 +423,10 @@ def main():
                 
                 # hops, mutations, branch lengths, and mean region size along shortest paths
                 D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
+                print(D.shape)
+                
+                sys.exit()
+                
                 Ds.append(D)
                 
                 
