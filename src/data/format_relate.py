@@ -332,7 +332,6 @@ def main():
 
                 print(len(edges))                
                 print(len(list(Gu.nodes)))
-                sys.exit()
 
                 indices = list(itertools.combinations(range(len(T_names)), 2))
                 D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
@@ -364,6 +363,9 @@ def main():
                 D_mut = squareform(np.array(D_mut))
                 D_r = squareform(np.array(D_r))
                 D_branch = squareform(np.array(D_branch))
+                
+                print(D.shape)
+                sys.exit()
                     
                 X = []
                 for node in T_names:
