@@ -135,11 +135,9 @@ def main():
             else:
                 current_day_nodes = list(range(sum(pop_sizes)))
                 
-                                        
-            
             lines = anc_file.readlines()[2:]
             
-            l = x[ix].shape[1]
+            l = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1].shape[1]
             #snp_widths.append(l)
             
             Xs = []
@@ -173,7 +171,7 @@ def main():
                     
                         end_snp = int(next_line[0])
                     else:
-                        end_snp = x[ix].shape[1]
+                        end_snp = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1].shape[1]
                 except:
                     break
     
@@ -246,10 +244,6 @@ def main():
                             
                     cs = copy.copy(_)
                                                 
-
-                
-                
-                                                
                 data = dict()
                 if s1 > 0:
                     for node in current_day_nodes[:s0]:
@@ -281,6 +275,8 @@ def main():
 
                 T_nodes = list(T.iter_descendants()) + [T]
                 T_names = [u.name for u in T_nodes]
+                
+                print(len(T_names))
 
                 edges = []
                 while len(T_present) > 0:
@@ -333,6 +329,10 @@ def main():
                                rp = np.mean(regions[k]))
                     
                 paths = nx.shortest_path(Gu)
+
+                print(len(edges))                
+                print(len(list(Gu.nodes)))
+                sys.exit()
 
                 indices = list(itertools.combinations(range(len(T_names)), 2))
                 D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
