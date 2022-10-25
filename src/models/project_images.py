@@ -235,9 +235,9 @@ def main():
 
                 if (i + 1) % 100 == 0:
                     latent_path.append(latent_in.detach().clone())
+                    
+                    logging.info('step {}: mse loss {}...'.format(i + 1, mse_loss.item()))
 
-                
-                
                 if mse_loss.item() < 0.01:
                     break
             
