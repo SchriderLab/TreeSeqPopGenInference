@@ -103,6 +103,7 @@ def parse_args():
     parser.add_argument("--ckpt", default = "None")
     
     parser.add_argument("--batch_size", default = "8")
+    parser.add_argument("--lr", default = "0.1")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -182,7 +183,7 @@ def main():
             for noise in noises:
                 noise.requires_grad = True
 
-            optimizer = optim.Adam([latent_in] + noises, lr=args.lr)
+            optimizer = optim.Adam([latent_in] + noises, lr=float(args.lr))
             
             pbar = tqdm(range(args.step))
             latent_path = []
