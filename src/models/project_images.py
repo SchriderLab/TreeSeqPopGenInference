@@ -194,7 +194,7 @@ def main():
                 t = i / args.step
                 lr = get_lr(t, float(args.lr))
                 optimizer.param_groups[0]["lr"] = lr
-                noise_strength = latent_std * args.noise * max(0, 1 - t / args.noise_ramp) ** 2
+                noise_strength = latent_std * 0.05 * max(0, 1 - t / 0.75) ** 2
                 latent_n = latent_noise(latent_in, noise_strength.item())
 
                 img_gen, _ = g_ema([latent_n], input_is_latent=True, noise=noises)
