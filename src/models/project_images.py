@@ -21,6 +21,7 @@ import glob
 import lpips
 from swagan import Generator
 import numpy as np
+import random
 
 def noise_regularize(noises):
     loss = 0
@@ -105,6 +106,7 @@ def parse_args():
     
     parser.add_argument("--batch_size", default = "256")
     parser.add_argument("--lr", default = "0.1")
+    parser.add_argument("--n_chunks", default = "10")
     
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
 
@@ -167,7 +169,9 @@ def main():
         indices = even_chunks(range(len(ifiles)), int(args.batch_size))
         logging.info('on class {}...'.format(cl))
         
-        for ix in range(len(indices)):
+        random.shuffle(ifiles)
+        
+        for ix in range(int(args.n_chunks)):
             ii = indices[ix]
             
             logging.info('working on chunk {} of {}...'.format(ix + 1, len(indices)))
