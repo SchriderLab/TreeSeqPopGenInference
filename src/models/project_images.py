@@ -156,7 +156,7 @@ def main():
     for idir in idirs:
         cl = idir.split('/')[-1]
         
-        ifiles = sorted(glob.glob(os.path.join(args.idir, '*.png')))
+        ifiles = sorted(glob.glob(os.path.join(idir, '*.png')))
         result[cl] = []
         
         indices = even_chunks(range(len(ifiles)), int(args.batch_size))
