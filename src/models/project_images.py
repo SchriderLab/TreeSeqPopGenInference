@@ -132,9 +132,7 @@ def main():
     g_ema.eval()
     g_ema = g_ema.to(device)
     
-    percept = lpips.PerceptualLoss(
-        model="net-lin", net="vgg", use_gpu=device.startswith("cuda")
-    )
+    
     n_mean_latent = 10000
     
     with torch.no_grad():
@@ -208,11 +206,11 @@ def main():
                     )
                     img_gen = img_gen.mean([3, 5])
 
-                p_loss = percept(img_gen, imgs).sum()
+                #p_loss = percept(img_gen, imgs).sum()
                 n_loss = noise_regularize(noises)
                 mse_loss = F.mse_loss(img_gen, imgs)
 
-                loss = mse_loss
+                loss = mse_loss + 1e-5 * n_loss
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -225,7 +223,7 @@ def main():
 
                 pbar.set_description(
                     (
-                        f"perceptual: {p_loss.item():.4f}; noise regularize: {n_loss.item():.4f};"
+                        f" noise regularize: {n_loss.item():.4f};"
                         f" mse: {mse_loss.item():.4f}; lr: {lr:.4f}"
                     )
                 )
