@@ -20,6 +20,7 @@ import glob
 
 import lpips
 from swagan import Generator
+import numpy as np
 
 def noise_regularize(noises):
     loss = 0
@@ -102,12 +103,13 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--ckpt", default = "None")
     
-    parser.add_argument("--batch_size", default = "8")
+    parser.add_argument("--batch_size", default = "256")
     parser.add_argument("--lr", default = "0.1")
     
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
 
     parser.add_argument("--odir", default = "None")
+    parser.add_argument("--ofile", default = "/pine/scr/d/d/ddray/test_latent.npz")
     args = parser.parse_args()
 
     if args.verbose:
@@ -163,8 +165,13 @@ def main():
         result[cl] = []
         
         indices = even_chunks(range(len(ifiles)), int(args.batch_size))
+        logging.info('on class {}...'.format(cl))
         
-        for ii in indices:
+        for ix in range(len(indices)):
+            ii = indices[ix]
+            
+            logging.info('working on chunk {} of {}...'.format(ix + 1, len(indices)))
+            
             imgs = []
             
             ifiles_ = [ifiles[u] for u in ii]
@@ -187,10 +194,11 @@ def main():
 
             optimizer = optim.Adam([latent_in] + noises, lr=float(args.lr))
             
-            pbar = tqdm(range(args.step))
+            #pbar = tqdm(range(args.step))
             latent_path = []
 
-            for i in pbar:
+            for i in range(args.step):
+                
                 t = i / args.step
                 lr = get_lr(t, float(args.lr))
                 optimizer.param_groups[0]["lr"] = lr
@@ -224,15 +232,19 @@ def main():
                 if (i + 1) % 100 == 0:
                     latent_path.append(latent_in.detach().clone())
 
-                pbar.set_description(
-                    (
-                        f" noise regularize: {n_loss.item():.4f};"
-                        f" mse: {mse_loss.item():.4f}; lr: {lr:.4f}"
-                    )
-                )
+                
+                
+                if mse_loss.item() < 0.01:
+                    break
             
-            print(latent_in.shape)
+            latent_in = latent_in.detach().cpu().numpy()
             
+            result[cl].extend(list(latent_in))
+            
+        result[cl] = np.array(result[cl], dtype = np.float32)
+        
+    np.savez(args.ofile, **result)
+    
             
         
 
