@@ -7,6 +7,8 @@ import glob
 import numpy as np
 import cv2
 
+from scipy.spatial.distance import squareform
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -51,7 +53,7 @@ def main():
         D = x['D']
         
         for ix in range(len(D)):
-            d = D[ix]
+            d = squareform(D[ix])
             
             i, j = np.where(d > 0)
             d[i, j] = np.log(d[i, j])
