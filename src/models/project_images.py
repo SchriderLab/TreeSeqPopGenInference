@@ -233,7 +233,7 @@ def main():
     noises = dict(zip(list(map(str, list(range(len(noises))))), [u.detach().cpu().numpy() for u in noises]))
     
     logging.info('saving...')
-    np.savez(args.ofile, latent = latent_in, y = np.array(y, dtype = np.int32), **noises))
+    np.savez(args.ofile, latent = latent_in, y = np.array(y, dtype = np.int32), **noises)
     # ${code_blocks}
 
 if __name__ == '__main__':
