@@ -63,12 +63,15 @@ def main():
         ofile = os.path.join(args.odir, '{0:05d}.npz'.format(ix))
         
         cmd_ = cmd.format(ifiles_, ofile, args.ckpt)
-        print(cmd_)
+        
         if not args.only_print:
             if not args.slurm:
                 os.system(cmd_)
             else:
+                cmd_ = slurm_cmd.format(ifiles_, ofile, args.ckpt, os.path.join(args.odir, '{0:05}_slurm.out'.format(ix)))
                 os.system(slurm_cmd.format(ifiles_, ofile, args.ckpt, os.path.join(args.odir, '{0:05}_slurm.out'.format(ix))))
+                
+        print(cmd_)
 
 if __name__ == '__main__':
     main()
