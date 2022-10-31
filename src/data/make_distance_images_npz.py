@@ -60,7 +60,7 @@ def main():
             
             d = ((d - np.min(d)) / (np.max(d) - np.min(d)) * 255.).astype(np.uint8)
             
-            d = np.vstack([d, d, d]).transpose(1, 2, 0)
+            d = np.array([d, d, d], dtype = np.uint8).transpose(1, 2, 0)
             
             cv2.imwrite(os.path.join(odir, '{0:05d}.png'.format(ix)), d)
             
