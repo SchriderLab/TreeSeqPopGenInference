@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--ckpt", default = "None")    
     
     parser.add_argument("--idir", default = "None")
+    parser.add_argument("--only_print", action = "store_true")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
