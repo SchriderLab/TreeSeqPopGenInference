@@ -106,6 +106,7 @@ def parse_args():
     parser.add_argument("--n_chunks", default = "10")
     
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
+    parser.add_argument("--device", default = "cuda")
 
     parser.add_argument("--odir", default = "None")
     parser.add_argument("--ofile", default = "/pine/scr/d/d/ddray/test_latent.npz")
@@ -129,7 +130,7 @@ def main():
     args = parse_args()
     
     resize = min(int(args.size), 256)
-    device = torch.device('cpu')
+    device = torch.device(args.device)
     
     g_ema = Generator(int(args.size), 512, 8)
     g_ema.load_state_dict(torch.load(args.ckpt)["g_ema"], strict=False)
