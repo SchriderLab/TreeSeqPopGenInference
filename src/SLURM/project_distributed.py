@@ -49,21 +49,22 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {2} --wrap "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"'
+    slurm_cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {2} --wrap "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"'
+    cmd = "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"
     
     ifiles = glob.glob(os.path.join(args.idir, '*/*.png'))
     
     chunks = even_chunks(ifiles, int(args.batch_size))
+    print(len(chunks))
+    
     for ix in range(len(chunks)):
         ifiles_ = ','.join(chunks[ix])
         ofile = os.path.join(args.odir, '{0:05d}.npz'.format(ix))
         
         cmd_ = cmd.format(ifiles_, ofile, args.ckpt)
-        
+        print(cmd_)
         if not args.only_print:
             os.system(cmd_)
-            
-        print(cmd_)
 
 if __name__ == '__main__':
     main()
