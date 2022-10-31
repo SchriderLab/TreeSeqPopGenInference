@@ -230,10 +230,10 @@ def main():
             break
     
     latent_in = latent_in.detach().cpu().numpy()
-    noises = [u.detach().cpu().numpy() for u in noises]
+    noises = dict(zip(list(map(str, list(range(len(noises))))), [u.detach().cpu().numpy() for u in noises]))
     
     logging.info('saving...')
-    np.savez(args.ofile, latent = latent_in, noises = noises, y = np.array(y, dtype = np.int32))
+    np.savez(args.ofile, latent = latent_in, y = np.array(y, dtype = np.int32), **noises))
     # ${code_blocks}
 
 if __name__ == '__main__':
