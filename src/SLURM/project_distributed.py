@@ -49,7 +49,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {2} --wrap "python3 src/models/project_images.py --ifiles {} --ofile {} --ckpt {}"'
+    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {2} --wrap "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"'
     
     ifiles = glob.glob(os.path.join(args.idir, '*/*.png'))
     
