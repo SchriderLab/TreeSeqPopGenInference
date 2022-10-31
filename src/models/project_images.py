@@ -231,11 +231,8 @@ def main():
     
     latent_in = latent_in.detach().cpu().numpy()
     noises = [u.detach().cpu().numpy() for u in noises]
-    print([u.shape for u in noises])
     
     logging.info('saving...')
-    logging.ingo('latent shape: {}, noise shape: {}'.format(latent_in.shape, noises.shape))
-    
     np.savez(args.ofile, latent = latent_in, noises = noises, y = np.array(y, dtype = np.int32))
     # ${code_blocks}
 
