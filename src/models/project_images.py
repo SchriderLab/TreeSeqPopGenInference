@@ -230,7 +230,8 @@ def main():
             break
     
     latent_in = latent_in.detach().cpu().numpy()
-    noises = np.array([u.detach().cpu().numpy() for u in noises], dtype = np.float32)
+    noises = [u.detach().cpu().numpy() for u in noises]
+    print([u.shape for u in noises])
     
     logging.info('saving...')
     logging.ingo('latent shape: {}, noise shape: {}'.format(latent_in.shape, noises.shape))
