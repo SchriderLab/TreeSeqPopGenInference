@@ -49,7 +49,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    slurm_cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {2} --wrap "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"'
+    slurm_cmd = 'sbatch --mem=16G --time=02:00:00 -o {3} --gres=gpu:1 --qos=gpu_access --partition=volta-gpu --wrap "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"'
     cmd = "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"
     
     ifiles = glob.glob(os.path.join(args.idir, '*/*.png'))
@@ -64,7 +64,10 @@ def main():
         cmd_ = cmd.format(ifiles_, ofile, args.ckpt)
         print(cmd_)
         if not args.only_print:
-            os.system(cmd_)
+            if not args.slurm:
+                os.system(cmd_)
+            else:
+                os.system(slurm_cmd.format(ifiles_, ofile, args.ckpt, os.path.join(args.odir, '{0:05}_slurm.out'.format(ix))))
 
 if __name__ == '__main__':
     main()
