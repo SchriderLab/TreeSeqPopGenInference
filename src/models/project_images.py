@@ -247,7 +247,7 @@ def main():
                 break
         
 
-        latent.append(latent_in)
+        latent.append(latent_in.detach().cpu().numpy())
         
         for k in range(len(noises)):
             if str(k) not in noises_d.keys():
