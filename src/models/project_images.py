@@ -157,6 +157,8 @@ def main():
     noises = dict()
     latent = []
     
+    save_every = 4
+    
     for ix in range(len(ifile_chunks)):
         logging.info('working on chunk {} of {}...'.format(ix + 1, len(ifile_chunks)))
         ifiles = ifile_chunks[ix]
@@ -243,14 +245,27 @@ def main():
                 
         latent.append(latent_in)
         
-        noises = dict(zip(list(map(str, list(range(len(noises))))), [u.detach().cpu().numpy() for u in noises]))
+        if (ix + 1) % save_every:
+            latent = np.concatenate(latent, 0)
+            for k in noises.keys():
+                noises[k] = np.concatenate(noises[k], 0)
+            
+            logging.info('saving...')
+            np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), 
+                             latent = latent, y = np.array(y, dtype = np.int32), **noises)
+            
+            y = []
+            noises = dict()
+            latent = []
     
-    latent = np.concatenate(latent, 0)
-    for k in noises.keys():
-        noises[k] = np.concatenate(noises[k], 0)
+    if len(latent) > 0:
+        latent = np.concatenate(latent, 0)
+        for k in noises.keys():
+            noises[k] = np.concatenate(noises[k], 0)
+        
+        logging.info('saving...')
+        np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), latent = latent, y = np.array(y, dtype = np.int32), **noises)
     
-    logging.info('saving...')
-    np.savez(args.ofile, latent = latent, y = np.array(y, dtype = np.int32), **noises)
     # ${code_blocks}
 
 if __name__ == '__main__':
