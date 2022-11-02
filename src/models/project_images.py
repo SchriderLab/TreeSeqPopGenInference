@@ -161,7 +161,7 @@ def main():
     ifile_chunks = even_chunks(ifiles, int(args.batch_size))
     
     y = []
-    noises = dict()
+    noises_d = dict()
     latent = []
     
     save_every = 4
@@ -246,32 +246,32 @@ def main():
             if mse_loss.item() < e_tol:
                 break
         
-        latent_in = latent_in.detach().cpu().numpy()
-        for k in range(len(noises)):
-            if str(k) not in noises.keys():
-                noises[str(k)] = [noises[k].detach().cpu().numpy()]
-            else:
-                noises[str(k)].append(noises[k].detach().cpu().numpy())
-                
+
         latent.append(latent_in)
+        
+        for k in range(len(noises)):
+            if str(k) not in noises_d.keys():
+                noises_d[str(k)] = [noises[k].detach().cpu().numpy()]
+            else:
+                noises_d[str(k)].append(noises[k].detach().cpu().numpy())
         
         if (ix + 1) % save_every:
             latent = np.concatenate(latent, 0)
-            for k in noises.keys():
-                noises[k] = np.concatenate(noises[k], 0)
+            for k in range(len(noises)):
+                noises_d[str(k)] = np.concatenate(noises[k], 0)
             
             logging.info('saving...')
             np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), 
                              latent = latent, y = np.array(y, dtype = np.int32), **noises)
             
             y = []
-            noises = dict()
+            noises_d = dict()
             latent = []
     
     if len(latent) > 0:
         latent = np.concatenate(latent, 0)
-        for k in noises.keys():
-            noises[k] = np.concatenate(noises[k], 0)
+        for k in range(len(noises)):
+            noises_d[str(k)] = np.concatenate(noises[k], 0)
         
         logging.info('saving...')
         np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), latent = latent, y = np.array(y, dtype = np.int32), **noises)
