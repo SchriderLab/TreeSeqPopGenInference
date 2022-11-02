@@ -258,7 +258,7 @@ def main():
         if (ix + 1) % save_every:
             latent = np.concatenate(latent, 0)
             for k in range(len(noises)):
-                noises_d[str(k)] = np.concatenate(noises[k], 0)
+                noises_d[str(k)] = np.concatenate(noises_d[str(k)], 0)
             
             logging.info('saving...')
             np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), 
@@ -271,7 +271,7 @@ def main():
     if len(latent) > 0:
         latent = np.concatenate(latent, 0)
         for k in range(len(noises)):
-            noises_d[str(k)] = np.concatenate(noises[k], 0)
+            noises_d[str(k)] = np.concatenate(noises_d[str(k)], 0)
         
         logging.info('saving...')
         np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), latent = latent, y = np.array(y, dtype = np.int32), **noises)
