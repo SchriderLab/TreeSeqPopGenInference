@@ -255,7 +255,7 @@ def main():
             else:
                 noises_d[str(k)].append(noises[k].detach().cpu().numpy())
         
-        if (ix + 1) % save_every:
+        if (ix + 1) % save_every == 0:
             latent = np.concatenate(latent, 0)
             for k in range(len(noises)):
                 noises_d[str(k)] = np.concatenate(noises_d[str(k)], 0)
