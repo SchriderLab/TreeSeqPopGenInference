@@ -93,7 +93,8 @@ def make_image(tensor):
 # where to insert certain parts of the script
 # ${imports}
 
-
+# python3 src/models/project_images.py --ckpt /proj/dschridelab/ddray/styleGAN_trainings/D_branch_grid_a001/checkpoint/100000.pt 
+# 
 
 def parse_args():
     # Argument Parser
@@ -188,8 +189,11 @@ def main():
             imgs.append(img)
             
             c = imgfile.split('/')[-2]
-            y.append(classes.index(c))
-    
+            try:
+                y.append(classes.index(c))
+            except:
+                y.append(0)
+                
         imgs = torch.stack(imgs, 0).to(device)
         
         noises_single = g_ema.make_noise()
