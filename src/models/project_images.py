@@ -100,7 +100,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--size", default = "256")
+    parser.add_argument("--size", default = "128")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--idir", default = "None")
@@ -116,7 +116,7 @@ def parse_args():
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
     parser.add_argument("--device", default = "cuda")
 
-    parser.add_argument("--ofile", default = "None")
+    parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
 
     if args.verbose:
@@ -124,6 +124,12 @@ def parse_args():
         logging.debug("running in verbose mode")
     else:
         logging.basicConfig(level=logging.INFO)
+        
+    if args.odir != "None":
+        if not os.path.exists(args.odir):
+            os.system('mkdir -p {}'.format(args.odir))
+            logging.debug('root: made output directory {0}'.format(args.odir))
+    # ${odir_del_block}
 
     # ${odir_del_block}
 
