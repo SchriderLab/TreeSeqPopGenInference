@@ -111,6 +111,7 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--i", default = "None")
     
+    parser.add_argument("--K", default = "10")
     
 
     parser.add_argument("--ofile", default = "test.npz")
@@ -193,7 +194,7 @@ def main():
         
 
     ii = sorted(list(set(list(range(len(ifiles)))).difference([ix])))
-    for ij in ii:
+    for ij in ii[:int(args.K)]:
         logging.info('getting probabilities for q_i = {}...'.format(ij))
         trees_ = np.load(ifiles[ij], allow_pickle = True)
         
