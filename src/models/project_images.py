@@ -105,8 +105,8 @@ def parse_args():
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--idir", default = "None")
-    parser.add_argument("--e_tol", default = "0.008")
-    parser.add_argument("--max_step", default = "3000")
+    parser.add_argument("--e_tol", default = "0.009")
+    parser.add_argument("--max_step", default = "1250")
     
     parser.add_argument("--ckpt", default = "None")
     
@@ -163,6 +163,7 @@ def main():
     y = []
     noises_d = dict()
     latent = []
+    mses = []
     
     save_every = 4
     
@@ -246,7 +247,7 @@ def main():
             if mse_loss.item() < e_tol:
                 break
         
-
+        mses.append(mse_loss.item())
         latent.append(latent_in.detach().cpu().numpy())
         
         for k in range(len(noises)):
@@ -262,11 +263,12 @@ def main():
             
             logging.info('saving...')
             np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), 
-                             latent = latent, y = np.array(y, dtype = np.int32), **noises)
+                             latent = latent, y = np.array(y, dtype = np.int32), mse = np.array(mses), **noises_d)
             
             y = []
             noises_d = dict()
             latent = []
+            mses = []
     
     if len(latent) > 0:
         latent = np.concatenate(latent, 0)
@@ -274,7 +276,8 @@ def main():
             noises_d[str(k)] = np.concatenate(noises_d[str(k)], 0)
         
         logging.info('saving...')
-        np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), latent = latent, y = np.array(y, dtype = np.int32), **noises)
+        np.savez(os.path.join(args.odir, '{0:05d}.npz'.format(ix // save_every)), 
+                 latent = latent, y = np.array(y, dtype = np.int32), mse = np.array(mses), **noises_d)
     
     # ${code_blocks}
 
