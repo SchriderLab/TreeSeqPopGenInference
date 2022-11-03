@@ -105,7 +105,7 @@ def parse_args():
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--idir", default = "None")
-    parser.add_argument("--e_tol", default = "0.009")
+    parser.add_argument("--e_tol", default = "0.01")
     parser.add_argument("--max_step", default = "1250")
     
     parser.add_argument("--ckpt", default = "None")

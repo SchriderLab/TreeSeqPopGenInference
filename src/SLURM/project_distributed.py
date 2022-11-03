@@ -50,27 +50,23 @@ def parse_args():
 def main():
     args = parse_args()
     
-    slurm_cmd = 'sbatch --mem=16G --time=02:00:00 -o {3} --gres=gpu:1 --qos=gpu_access --partition=volta-gpu --wrap "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"'
+    slurm_cmd = 'sbatch --mem=16G --time=02:00:00 -o {3} --gres=gpu:1 --qos=gpu_access --partition=volta-gpu --wrap "python3 src/models/project_images.py --idir {0} --odir {1} --ckpt {2}"'
     cmd = "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"
     
-    ifiles = glob.glob(os.path.join(args.idir, '*/*.png'))
+    idirs = [u for u in glob.glob(os.path.join(args.idir, '*')) if not '.' in u]
     
-    chunks = even_chunks(ifiles, int(args.batch_size))
-    print(len(chunks))
-    
-    for ix in range(len(chunks)):
-        ifiles_ = ','.join(chunks[ix])
-        ofile = os.path.join(args.odir, '{0:05d}.npz'.format(ix))
+    for ix in range(len(idirs)):
+        idir = idirs[ix]
+        odir = os.path.join(args.odir, '{0:05d}'.format(ix))
         
-        cmd_ = cmd.format(ifiles_, ofile, args.ckpt)
+        if not args.slurm:
+            cmd_ = cmd.format(idir, odir, args.ckpt)
+        else:
+            cmd_ = slurm_cmd.format(idir, odir, args.ckpt, os.path.join(args.odir, '{0:05}_slurm.out'.format(ix)))
         
         if not args.only_print:
-            if not args.slurm:
-                os.system(cmd_)
-            else:
-                cmd_ = slurm_cmd.format(ifiles_, ofile, args.ckpt, os.path.join(args.odir, '{0:05}_slurm.out'.format(ix)))
-                os.system(slurm_cmd.format(ifiles_, ofile, args.ckpt, os.path.join(args.odir, '{0:05}_slurm.out'.format(ix))))
-                
+            os.system(cmd_)
+            
         print(cmd_)
 
 if __name__ == '__main__':
