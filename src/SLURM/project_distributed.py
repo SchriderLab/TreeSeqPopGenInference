@@ -50,10 +50,10 @@ def parse_args():
 def main():
     args = parse_args()
     
-    slurm_cmd = 'sbatch --mem=16G --time=02:00:00 -o {3} --gres=gpu:1 --qos=gpu_access --partition=volta-gpu --wrap "python3 src/models/project_images.py --idir {0} --odir {1} --ckpt {2}"'
+    slurm_cmd = 'sbatch --mem=16G --time=08:00:00 -o {3} --gres=gpu:1 --qos=gpu_access --partition=volta-gpu --wrap "python3 src/models/project_images.py --idir {0} --odir {1} --ckpt {2}"'
     cmd = "python3 src/models/project_images.py --ifiles {0} --ofile {1} --ckpt {2}"
     
-    idirs = [u for u in glob.glob(os.path.join(args.idir, '*')) if not '.' in u]
+    idirs = sorted([u for u in glob.glob(os.path.join(args.idir, '*')) if not '.' in u])
     
     for ix in range(len(idirs)):
         idir = idirs[ix]
