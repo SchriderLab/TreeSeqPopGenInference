@@ -131,7 +131,7 @@ def parse_args():
 
 from scipy.stats import norm, gaussian_kde
 
-def compute_P(events, n, a1, a2, m, pop_sizes, kde_ma, kde_mi, n_reps = 100):
+def compute_P(events, n, a1, a2, m, pop_sizes, kde_ma, kde_mi, n_reps = 50):
     ret = []
     for k in range(n_reps):
         T_ma = kde_ma.resample(1)[0,0]
@@ -144,12 +144,12 @@ def compute_P(events, n, a1, a2, m, pop_sizes, kde_ma, kde_mi, n_reps = 100):
         
         # go to distance and normalize
         Tl = [u[-1] for u in events]
-        Tl = np.log(2 * Tl)
+        Tl = np.log(Tl * 2)
         Tl = (Tl - np.min(Tl)) / (np.max(Tl) - np.min(Tl))
         
         Tl *= (T_ma - T_mi)
         Tl += T_mi
-        Tl = np.exp(Tl)
+        Tl = np.exp(Tl) / 2.
         
         for ix in range(len(events)):
             e = events[ix]
