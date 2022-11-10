@@ -357,6 +357,7 @@ def parse_args():
     parser.add_argument("--alpha", default = "1e-4")
     
     parser.add_argument("--ij", default = "0,1")
+    parser.add_argument("--n_dim", default = "16")
     
     parser.add_argument("--odir", default = "None")
     parser.add_argument("--ofile", default = "test.txt")
@@ -426,7 +427,7 @@ def main():
         err.append(np.mean(np.sqrt((X - X_rec)**2)))
     """
         
-    X = PCA(32).fit_transform(X)
+    X = PCA(int(args.n_dim)).fit_transform(X)
     
     indices = np.array(indices, dtype = np.int32)
 
@@ -442,7 +443,7 @@ def main():
     logging.info('computing kl for pair {}, {}...'.format(i, j))
 
     for K in range(2, 11):
-        for ix in range(100):
+        for ix in range(50):
             ii = np.random.choice(range(len(p)), n_per, replace = False)
             ij = np.random.choice(range(len(q)), n_per, replace = False)
             
@@ -458,7 +459,7 @@ def main():
     
     _ = []
     for K in range(2, 11):
-        for ix in range(100):
+        for ix in range(50):
             ii = np.random.choice(range(len(p)), n_per, replace = False)
             ij = np.random.choice(range(len(q)), n_per, replace = False)
             
