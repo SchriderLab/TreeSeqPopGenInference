@@ -37,7 +37,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch -t 04:00:00 --mem=16G --wrap "python3 src/models/estimate_kl_minimax.py --ij {} --idir {} --ofile"'
+    cmd = 'sbatch -t 04:00:00 --mem=16G --wrap "python3 src/models/estimate_kl_minimax.py --ij {} --idir {} --ofile {}"'
 
     ifiles = [u for u in sorted(glob.glob(os.path.join(args.idir, '*'))) if not '.' in u]
     
