@@ -119,7 +119,7 @@ def main():
     
     P, ll, Nref = parameters_df(df, 0, 1., 0., 0., n)
     print(P[0,-4])
-    sys.exit()
+    #sys.exit()
     
     for p in params:
         migTime, migProb, rho, T = p
@@ -147,7 +147,7 @@ def main():
         P[:,5] *= T_
         
         P[:,-4] = T
-        P[:,-4] /= (4*Nref / 15.)
+        #P[:,-4] /= (4*Nref / 15.)
         
         # rescale alpha1 and alpha2
         P[:,4] /= P[:,-4]
