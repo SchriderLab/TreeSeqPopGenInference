@@ -137,7 +137,7 @@ def main():
         
         migProb = 1 - migProb
         
-        t_range = tuple(list(map(float, args.t_range.split(','))))
+        #t_range = tuple(list(map(float, args.t_range.split(','))))
         T_ = copy.copy(P[:,-4])
         
         # rescale alpha1 and alpha2
