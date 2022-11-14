@@ -138,13 +138,13 @@ def main():
         migProb = 1 - migProb
         
         t_range = tuple(list(map(float, args.t_range.split(','))))
-        T = copy.copy(P[:,-4])
+        T_ = copy.copy(P[:,-4])
         
         # rescale alpha1 and alpha2
-        P[:,4] *= T
-        P[:,5] *= T
+        P[:,4] *= T_
+        P[:,5] *= T_
         
-        P[:,-4] = np.random.uniform(t_range[0], t_range[1], (P.shape[0], ))
+        P[:,-4] = T
         P[:,-4] /= (4*Nref / 15.)
         
         # rescale alpha1 and alpha2
