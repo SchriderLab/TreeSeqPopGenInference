@@ -142,11 +142,13 @@ def main():
         #t_range = tuple(list(map(float, args.t_range.split(','))))
         T_ = copy.copy(P[:,-4])
         
+        
         # rescale alpha1 and alpha2
         P[:,4] *= T_
         P[:,5] *= T_
         
         P[:,-4] = T
+        P[:,-5] = T
         #P[:,-4] /= (4*Nref / 15.)
         
         # rescale alpha1 and alpha2
