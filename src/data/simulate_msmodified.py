@@ -191,7 +191,7 @@ def main():
         cmd = slurm_cmd.format(fout, cmd)
         
         print(cmd)
-        os.system(cmd)
+        #os.system(cmd)
         
         
         
