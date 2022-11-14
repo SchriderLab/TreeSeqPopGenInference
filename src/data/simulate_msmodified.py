@@ -118,6 +118,8 @@ def main():
     SIZE_B = 32
     
     P, ll, Nref = parameters_df(df, 0, 1., 0., 0., n)
+    print(P[0,-4])
+    sys.exit()
     
     for p in params:
         migTime, migProb, rho, T = p
