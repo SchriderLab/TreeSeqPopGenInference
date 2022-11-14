@@ -57,12 +57,12 @@ def parse_args():
     parser.add_argument("--direction", default = "ab", help = "directionality of migration. only applicable for the drosophila case; --model dros")
     parser.add_argument("--slurm", action = "store_true")
     
-    parser.add_argument("--window_size", default = "50000", help = "size in base pairs of the region to simulate")
+    parser.add_argument("--window_size", default = "10000", help = "size in base pairs of the region to simulate")
     
     parser.add_argument("--mt_range", default = "None")
     parser.add_argument("--t_range", default = "None")
     
-    parser.add_argument("--n_grid_points", deafult = "5")
+    parser.add_argument("--n_grid_points", default = "5")
     
     parser.add_argument("--trees", action = "store_true")
 
