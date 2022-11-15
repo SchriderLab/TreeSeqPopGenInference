@@ -167,7 +167,7 @@ def main():
         skeys = list(ifile[key].keys())
         
         for skey in skeys:
-            D = np.array(ifile[key][skey]['D'])[:,-2,:,:]
+            D = np.log(np.array(ifile[key][skey]['D'])[:,-2,:,:])
             global_v = np.array(ifile[key][skey]['global_vec'])
 
             x = []
