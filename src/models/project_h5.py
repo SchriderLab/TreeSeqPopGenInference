@@ -41,6 +41,9 @@ def map_to_im(x, size = 256, viridis = True):
     im = (im * 255).astype(np.uint8)
     
     im = cv2.resize(im, (size, size))
+    plt.imshow(im)
+    plt.show()
+    
     im = (im.astype(np.float32) / 255.)[:,:,:3].transpose(2, 0, 1)
 
     return im    
