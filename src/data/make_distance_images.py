@@ -68,21 +68,19 @@ def main():
         os.system('mkdir -p {}'.format(odir))
         
         for key in keys:
-            d = np.array(ifile[key]['D'])[c_ix_].reshape(4, -1)[:,ii]
+            D = np.array(ifile[key]['D'])[c_ix_].reshape(4, -1)[:,ii]
             
-            i, j = np.where(d > 0)
-            d[i, j] = np.log(d[i, j])
+            i, j = np.where(D > 0)
+            D[i, j] = np.log(D[i, j])
             
-            for k in range(d.shape[0]):
-                # a colormap and a normalization instance
-                cmap = plt.cm.viridis
-                norm = plt.Normalize(vmin = np.min(d[k]), vmax = np.max(d[k]))
+            for k in range(D.shape[0]):
+                d = squareform(D[k])
                 
-                image = cmap(norm(squareform(d[k])))
+                d = ((d - np.min(d)) / (np.max(d) - np.min(d)) * 255.).astype(np.uint8)
                 
-                image = (image[:,:,:3] * 255).astype(np.uint8)[:,:,::-1]
+                d = np.array([d, d, d], dtype = np.uint8).transpose(1, 2, 0)
                 
-                cv2.imwrite(os.path.join(odir, '{0:06d}.png'.format(counter)), image)
+                cv2.imwrite(os.path.join(odir, '{0:05d}.png'.format(k)), d)
                 counter += 1
 
     # ${code_blocks}
