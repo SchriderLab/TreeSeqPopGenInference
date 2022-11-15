@@ -80,7 +80,7 @@ def main():
                 
                 d = np.array([d, d, d], dtype = np.uint8).transpose(1, 2, 0)
                 
-                cv2.imwrite(os.path.join(odir, '{0:05d}.png'.format(k)), d)
+                cv2.imwrite(os.path.join(odir, '{0:05d}.png'.format(counter)), d)
                 counter += 1
 
     # ${code_blocks}
