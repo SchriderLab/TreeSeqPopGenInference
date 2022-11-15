@@ -183,7 +183,7 @@ def main():
                 x_ = x[ix].to(device)
                 print(x_.shape)
                 
-                v_, _, _ = optimize(x, latent_mean, latent_std, float(args.lr), max_step, e_tol, g_ema)
+                v_, _, _ = optimize(x_, latent_mean, latent_std, float(args.lr), max_step, e_tol, g_ema)
                 
                 v.append(v_)
                 
