@@ -64,7 +64,7 @@ def parse_args():
     parser.add_argument("--batch_size", default = "8")
     parser.add_argument("--lr", default = "0.2")
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
-    parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
+
     parser.add_argument("--latent", default = "512")
 
 
