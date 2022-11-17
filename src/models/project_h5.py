@@ -24,6 +24,8 @@ from project_images import noise_regularize, noise_normalize_, even_chunks, make
 import h5py
 import matplotlib.pyplot as plt
 
+from torch.nn import SmoothL1Loss
+
 import cv2
 
 # use this format to tell the parsers
@@ -32,20 +34,13 @@ import cv2
 
 def map_to_im(x, size = 256, viridis = True):
     # x is (n, n) matrix of floats to (n, n, 3)
-    if viridis:
-        cmap = plt.cm.viridis
-        norm = plt.Normalize(vmin = np.min(x), vmax = np.max(x))
-        
-        im = cmap(norm(x))
-
-    im = (im * 255).astype(np.uint8)
+    i, j = np.where(x > 0)
+    x[i, j] = np.log(x[i, j])
     
-    im = cv2.resize(im, (size, size))
-    plt.imshow(im)
-    plt.show()
-    
-    im = (im.astype(np.float32) / 255.)[:,:,:3].transpose(2, 0, 1)
+    x = ((x - np.min(x)) / (np.max(x) - np.min(x)) * 255.).astype(np.uint8)
 
+    im = np.array([x, x, x], dtype = np.uint8).transpose(1, 2, 0)
+    
     return im    
 
 def parse_args():
@@ -59,16 +54,18 @@ def parse_args():
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--idir", default = "None")
-    parser.add_argument("--e_tol", default = "0.01")
-    parser.add_argument("--max_step", default = "1250")
+    parser.add_argument("--e_tol", default = "0.001")
+    parser.add_argument("--max_step", default = "5000")
     
     parser.add_argument("--device", default = "cuda")
     
-    parser.add_argument("--ckpt", default = "120000.pt")
+    parser.add_argument("--ckpt", default = "050000.pt")
     
     parser.add_argument("--batch_size", default = "8")
-    parser.add_argument("--lr", default = "0.1")
+    parser.add_argument("--lr", default = "0.2")
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
+    parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
+    parser.add_argument("--latent", default = "512")
 
 
     parser.add_argument("--odir", default = "None")
@@ -97,14 +94,19 @@ def optimize(imgs, latent_mean, latent_std, lr, max_step, e_tol, g_ema, step = 1
         noises.append(noise.repeat(imgs.shape[0], 1, 1, 1).normal_())
 
     latent_in = latent_mean.detach().clone().unsqueeze(0).repeat(imgs.shape[0], 1)
+    print(latent_in.shape)
     latent_in.requires_grad = True
     
     for noise in noises:
         noise.requires_grad = True
 
     optimizer = optim.Adam([latent_in] + noises, lr=lr)
+    
+    L = SmoothL1Loss()
 
     for i in range(max_step):
+        optimizer.zero_grad()
+        
         t = i / step
         lr = get_lr(t, lr)
         optimizer.param_groups[0]["lr"] = lr
@@ -117,11 +119,9 @@ def optimize(imgs, latent_mean, latent_std, lr, max_step, e_tol, g_ema, step = 1
 
         #p_loss = percept(img_gen, imgs).sum()
         n_loss = noise_regularize(noises)
-        mse_loss = F.mse_loss(img_gen, imgs)
+        mse_loss = L(img_gen, imgs)
 
         loss = mse_loss + 1e-5 * n_loss
-
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -139,7 +139,7 @@ def optimize(imgs, latent_mean, latent_std, lr, max_step, e_tol, g_ema, step = 1
         else:
             noises_d[str(k)].append(noises[k].detach().cpu().numpy())
     
-    return latent_in.detach().cpu().numpy(), noises_d, mse_loss.item()
+    return latent_in.detach().cpu().numpy(), noises, mse_loss.item()
 
 def main():
     args = parse_args()
@@ -147,14 +147,24 @@ def main():
     resize = int(args.size)
     device = torch.device(args.device)
     
-    g_ema = Generator(int(args.size), 512, 8)
+    g_ema = Generator(int(args.size), int(args.latent), 8)
     g_ema.load_state_dict(torch.load(args.ckpt)["g_ema"], strict=False)
-    g_ema.eval()
     g_ema = g_ema.to(device)
+    g_ema.eval()
     
     max_step = int(args.max_step)
     e_tol = float(args.e_tol)
     n_mean_latent = 10000
+    
+    classes = args.classes.split(',')
+    
+    transform = transforms.Compose(
+        [
+            transforms.Resize(resize),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+        ]
+    )
     
     with torch.no_grad():
         noise_sample = torch.randn(n_mean_latent, 512, device=device)
@@ -166,35 +176,90 @@ def main():
     ifile = h5py.File(args.ifile, 'r')
     keys = list(ifile.keys())
     
+    
     for key in keys:
         skeys = list(ifile[key].keys())
         
         for skey in skeys:
             D = np.array(ifile[key][skey]['D'])[:,-2,:,:]
-            D[np.where(D > 0.)] = np.log(D[np.where(D > 0.)])
             global_v = np.array(ifile[key][skey]['global_vec'])
+            info_v = np.array(ifile[key][skey]['info'])
 
             x = []
+            
+            ims = []
             for k in range(D.shape[0]):
-                x.append(map_to_im(D[k], size = int(args.size)))
+                im = map_to_im(D[k], size = int(args.size))
+                #plt.imshow(im)
+                #plt.show()
                 
-            x = torch.FloatTensor(np.array(x))
+                im = transform(Image.fromarray(im))
+                im_ = im.detach().cpu().numpy()
+                ims.append(im_)
+                
+                #plt.imshow(im_.transpose(1, 2, 0))
+                #plt.show()
+                
+                
+                x.append(im)
+                
+            x = torch.stack(x, 0)
             
             ii = even_chunks(list(range(x.shape[0])), int(args.batch_size))
 
             v = []
             for ix in ii:
-                x_ = x[ix].to(device)
-                print(x_.shape)
+                imgs = x[ix].to(device)
+                noises_single = g_ema.make_noise()
+                noises = []
+                for noise in noises_single:
+                    noises.append(noise.repeat(imgs.shape[0], 1, 1, 1).normal_())
+
+                latent_in = latent_mean.detach().clone().unsqueeze(0).repeat(imgs.shape[0], 1)
+                print(latent_in.shape)
+                latent_in.requires_grad = True
                 
-                v_, _, _ = optimize(x_, latent_mean, latent_std, float(args.lr), max_step, e_tol, g_ema)
+                for noise in noises:
+                    noise.requires_grad = True
+
+                optimizer = optim.Adam([latent_in] + noises, lr=float(args.lr))
+
+                for i in range(max_step):
+                    optimizer.zero_grad()
+                    
+                    t = i / 1000
+                    lr = get_lr(t, float(args.lr))
+                    optimizer.param_groups[0]["lr"] = lr
+                    noise_strength = latent_std * 0.1 * max(0, 1 - t / 0.75) ** 2
+                    latent_n = latent_noise(latent_in, noise_strength.item())
+
+                    img_gen, _ = g_ema([latent_n], input_is_latent=True, noise=noises)
+
+                    batch, channel, height, width = img_gen.shape
+
+                    #p_loss = percept(img_gen, imgs).sum()
+                    n_loss = noise_regularize(noises)
+                    mse_loss = F.mse_loss(img_gen, imgs)
+
+                    loss = mse_loss + 1e-5 * n_loss
+                    loss.backward()
+                    optimizer.step()
+
+                    noise_normalize_(noises)
+
+                    if (i + 1) % 100 == 0:
+                        logging.info('step {}: mse loss {}...'.format(i + 1, mse_loss.item()))
+
+                    if mse_loss.item() < e_tol:
+                        break
                 
-                v.append(v_)
-                
-            v = np.hstack(v)
             
-            print(v.shape, x.shape)
-            sys.exit()
+                v.append(latent_in.detach().cpu().numpy())
+                
+            v = np.concatenate(v, 0)
+            
+            np.savez(os.path.join(args.odir, '{}_{}.npz'.format(key, skey)), x = v, x1 = info_v, x2 = global_v)
+                
             
 
     # ${code_blocks}
