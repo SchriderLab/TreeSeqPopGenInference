@@ -180,9 +180,11 @@ def main():
         
         logging.info('on key {}...'.format(key))
         for skey in skeys:
-            logging.info('on skey {}...'.format(key))
+            logging.info('on skey {}...'.format(skey))
             
             D = np.array(ifile[key][skey]['D'])[:,-2,:,:]
+            logging.info('shape: {}'.format(D.shape))
+            
             global_v = np.array(ifile[key][skey]['global_vec'])
             info_v = np.array(ifile[key][skey]['info'])
 
