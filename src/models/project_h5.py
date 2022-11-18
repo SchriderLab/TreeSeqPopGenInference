@@ -127,9 +127,6 @@ def optimize(imgs, latent_mean, latent_std, lr, max_step, e_tol, g_ema, step = 1
 
         noise_normalize_(noises)
 
-        if (i + 1) % 100 == 0:
-            logging.info('step {}: mse loss {}...'.format(i + 1, mse_loss.item()))
-
         if mse_loss.item() < e_tol:
             break
     
@@ -175,12 +172,16 @@ def main():
         
     ifile = h5py.File(args.ifile, 'r')
     keys = list(ifile.keys())
-    
+    L = SmoothL1Loss()
     
     for key in keys:
         skeys = list(ifile[key].keys())
+        random.shuffle(skeys)
         
+        logging.info('on key {}...'.format(key))
         for skey in skeys:
+            logging.info('on skey {}...'.format(key))
+            
             D = np.array(ifile[key][skey]['D'])[:,-2,:,:]
             global_v = np.array(ifile[key][skey]['global_vec'])
             info_v = np.array(ifile[key][skey]['info'])
@@ -230,7 +231,7 @@ def main():
                     t = i / 1000
                     lr = get_lr(t, float(args.lr))
                     optimizer.param_groups[0]["lr"] = lr
-                    noise_strength = latent_std * 0.1 * max(0, 1 - t / 0.75) ** 2
+                    noise_strength = latent_std * 0.05 * max(0, 1 - t / 0.75) ** 2
                     latent_n = latent_noise(latent_in, noise_strength.item())
 
                     img_gen, _ = g_ema([latent_n], input_is_latent=True, noise=noises)
@@ -239,7 +240,7 @@ def main():
 
                     #p_loss = percept(img_gen, imgs).sum()
                     n_loss = noise_regularize(noises)
-                    mse_loss = F.mse_loss(img_gen, imgs)
+                    mse_loss = L(img_gen, imgs)
 
                     loss = mse_loss + 1e-5 * n_loss
                     loss.backward()
@@ -247,8 +248,6 @@ def main():
 
                     noise_normalize_(noises)
 
-                    if (i + 1) % 100 == 0:
-                        logging.info('step {}: mse loss {}...'.format(i + 1, mse_loss.item()))
 
                     if mse_loss.item() < e_tol:
                         break
