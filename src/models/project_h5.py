@@ -138,6 +138,46 @@ def optimize(imgs, latent_mean, latent_std, lr, max_step, e_tol, g_ema, step = 1
     
     return latent_in.detach().cpu().numpy(), noises, mse_loss.item()
 
+import copy
+from auction_lap import auction_lap
+
+def get_starting_points(imgs, g_ema, 
+                        n_steps = 100, device = torch.device('cuda')):
+    
+    # on CPU regardless
+    L = np.zeros((imgs.shape[0], 512))
+    
+    imgs = imgs.to(device)
+    imgs = torch.unsqueeze(torch.flatten(imgs, 1, -1), 0)
+    g_ema.eval()
+    
+    N = imgs.shape[-1]
+    
+    min_errs = np.array([np.inf for k in range(imgs.shape[1])])
+    for ix in range(n_steps):
+        with torch.no_grad():
+            noise_sample = torch.randn(imgs.shape[1], 512, device=device)
+            l = g_ema.style(noise_sample)
+            
+            imgs_, _ = g_ema([l], input_is_latent = True)
+            imgs_ = torch.unsqueeze(torch.flatten(imgs_, 1, -1), 0)
+            
+            D = torch.cdist(imgs, imgs_)[0]
+            
+            score, ii, _ = auction_lap(torch.round(D * 100))
+            D = D.detach().cpu().numpy()
+            l = l.detach().cpu().numpy()
+            ii = ii.detach().cpu().numpy()
+            ij = list(zip(list(range(imgs.shape[1])), list(ii)))
+
+            l = l[ii]
+            D = np.array([D[i, j] / N for i, j in ij])
+
+            L[np.where(D < min_errs)] = l[np.where(D < min_errs)]
+            min_errs[np.where(D < min_errs)] = D[np.where(D < min_errs)]
+
+    return L
+
 def main():
     args = parse_args()
     
@@ -208,25 +248,65 @@ def main():
                 
             x = torch.stack(x, 0)
             
+            """
+            errs = []
+            
+            min_err = np.inf
+            for ix in range(500):
+                with torch.no_grad():
+                    noise_sample = torch.randn(1, 512, device=device)
+                    l = g_ema.style(noise_sample)
+                    print(l.shape)
+                    
+                    img_, _ = g_ema([l], input_is_latent = True)
+                    
+                    err = F.mse_loss(img_, img.to(device))
+                    errs.append(err.item())
+                    
+                    if errs[-1] < min_err:
+                        latent_ = l
+                        min_err = copy.copy(errs[-1])
+            
+            img_, _ = g_ema([latent_], input_is_latent = True)
+            img_ = img_.detach().cpu().numpy()
+            
+            print(min_err)
+            
+            plt.hist(errs, bins = 35)
+            plt.show()
+            
+            plt.imshow(img_[0].transpose(1, 2, 0))
+            plt.show()
+            
+            plt.imshow(img[0].detach().cpu().numpy().transpose(1, 2, 0))
+            plt.show()
+            """
             ii = even_chunks(list(range(x.shape[0])), int(args.batch_size))
 
             v = []
+            mses = []
+            
             for ix in ii:
-                imgs = x[ix].to(device)
+                imgs = x[ix]
+                
+                logging.info('getting starting points via random search...')
+                latent_in = torch.FloatTensor(get_starting_points(imgs, g_ema)).to(device)
+                latent_in.requires_grad = True
+
+                logging.info('optimizing...')
+                imgs = imgs.to(device)
+                
                 noises_single = g_ema.make_noise()
                 noises = []
                 for noise in noises_single:
                     noises.append(noise.repeat(imgs.shape[0], 1, 1, 1).normal_())
-
-                latent_in = latent_mean.detach().clone().unsqueeze(0).repeat(imgs.shape[0], 1)
-                print(latent_in.shape)
-                latent_in.requires_grad = True
                 
                 for noise in noises:
                     noise.requires_grad = True
 
                 optimizer = optim.Adam([latent_in] + noises, lr=float(args.lr))
 
+                min_loss = np.inf
                 for i in range(max_step):
                     optimizer.zero_grad()
                     
@@ -242,24 +322,29 @@ def main():
 
                     #p_loss = percept(img_gen, imgs).sum()
                     n_loss = noise_regularize(noises)
-                    mse_loss = L(img_gen, imgs)
+                    mse_loss = F.mse_loss(img_gen, imgs)
 
                     loss = mse_loss + 1e-5 * n_loss
                     loss.backward()
                     optimizer.step()
 
                     noise_normalize_(noises)
-
-
+                    
                     if mse_loss.item() < e_tol:
                         break
                 
+                    if mse_loss.item() < min_loss:
+                        min_loss = copy.copy(mse_loss.item())
+                        V = latent_in.detach().cpu().numpy()
             
-                v.append(latent_in.detach().cpu().numpy())
+                logging.info('have min mse: {}...'.format(min_loss))
+                v.append(V)
+                
+                mses.append(min_loss)
                 
             v = np.concatenate(v, 0)
             
-            np.savez(os.path.join(args.odir, '{}_{}.npz'.format(key, skey)), x = v, x1 = info_v, x2 = global_v)
+            np.savez(os.path.join(args.odir, '{}_{}.npz'.format(key, skey)), x = v, x1 = info_v, x2 = global_v, mses = np.array(mses))
                 
             
 
