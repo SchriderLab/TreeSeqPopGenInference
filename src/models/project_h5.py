@@ -54,15 +54,15 @@ def parse_args():
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--idir", default = "None")
-    parser.add_argument("--e_tol", default = "0.001")
-    parser.add_argument("--max_step", default = "5000")
+    parser.add_argument("--e_tol", default = "0.002")
+    parser.add_argument("--max_step", default = "2000")
     
     parser.add_argument("--device", default = "cuda")
     
     parser.add_argument("--ckpt", default = "050000.pt")
     
     parser.add_argument("--batch_size", default = "8")
-    parser.add_argument("--lr", default = "0.2")
+    parser.add_argument("--lr", default = "0.1")
     parser.add_argument("--step", type=int, default=1000, help="optimize iterations")
 
     parser.add_argument("--latent", default = "512")
