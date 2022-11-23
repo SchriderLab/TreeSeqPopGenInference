@@ -3,7 +3,7 @@ import os
 import argparse
 import logging
 
-from torch_vision_mod_layers import resnet34
+from torchvision_mod_layers import resnet34
 
 import argparse
 from model_viz import cm_analysis, count_parameters
