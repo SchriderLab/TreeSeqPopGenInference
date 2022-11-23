@@ -87,10 +87,10 @@ def main():
     print("Using " + str(device) + " as device")
     # model = Classifier(config)
     
-    ckpt = torch.load(args.ckpt, map_location = torch.device('cpu'))
+    ckpt = torch.load(args.ckpt, map_location = device)
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
-    )
+    ).to(device)
     generator.load_state_dict(ckpt["g_ema"], strict=False)
     generator.eval()
     
