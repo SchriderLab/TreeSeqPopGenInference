@@ -132,6 +132,14 @@ def main():
     ifile = h5py.File(args.ifile, 'r')
     ofile = h5py.File(args.ofile, 'w')
     
+    transform = transforms.Compose(
+        [
+            transforms.Resize(args.size),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+        ]
+    )
+    
     keys = list(ifile.keys())
     for key in keys:
         skeys = list(ifile[key].keys())
@@ -152,12 +160,20 @@ def main():
             global_v = np.array(ifile[key][skey]['global_vec'])
             info_v = np.array(ifile[key][skey]['info'])
             
-            _ = []
+            x = []
+            
+            ims = []
             for k in range(D.shape[0]):
-                _.append(map_to_im(D[k]))
-             
-            # down-project
-            x = torch.FloatTensor(np.array(_, dtype = np.float32))
+                im = map_to_im(D[k], size = int(args.size))
+                #plt.imshow(im)
+                #plt.show()
+                
+                im = transform(Image.fromarray(im))
+                im_ = im.detach().cpu().numpy()
+                ims.append(im_)
+                x.append(im)
+                
+            x = torch.stack(x, 0).to(device)
             
             with torch.no_grad():
                 v = model(x)
