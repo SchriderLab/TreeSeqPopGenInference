@@ -49,7 +49,7 @@ def map_to_im(x, size = 256, viridis = True):
     
     x = ((x - np.min(x)) / (np.max(x) - np.min(x)) * 255.).astype(np.uint8)
 
-    im = np.array([x, x, x], dtype = np.uint8)
+    im = np.array([x, x, x], dtype = np.uint8).transpose(1, 2, 0)
     
     return im    
 
