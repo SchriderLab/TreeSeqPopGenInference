@@ -179,7 +179,7 @@ def main():
                 v = model(x)
             
                 # up-project:
-                x_pred = generator([v], input_is_latent = True)
+                x_pred = generator([v], input_is_latent = True)[0]
                 
                 loss = L(x_pred, x)
                 
