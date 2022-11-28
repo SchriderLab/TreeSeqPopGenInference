@@ -59,7 +59,7 @@ def prepare(
             for size, img, c in zip(sizes, imgs, cs):
                 key = f"{size}-{str(i).zfill(5)}-{c}".encode("utf-8")
 
-                keys.write(key + '\n')
+                keys.write(str(key, encoding = 'utf-8') + '\n')
 
                 with env.begin(write=True) as txn:
                     txn.put(key, img)
