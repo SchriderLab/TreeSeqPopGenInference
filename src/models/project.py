@@ -124,7 +124,7 @@ def main():
     generator.load_state_dict(ckpt["g_ema"], strict=False)
     generator.eval()
     
-    model = resnet34(num_classes = args.latent)
+    model = resnet34(num_classes = args.latent).to(device)
     checkpoint = torch.load(args.proj_ckpt, map_location = device)
     model.load_state_dict(checkpoint)
     model.eval()
