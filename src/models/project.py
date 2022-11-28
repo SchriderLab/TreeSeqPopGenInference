@@ -90,8 +90,7 @@ def parse_args():
     parser.add_argument("--n_steps", default = "80000")
     parser.add_argument("--ckpt", default = "None")
     parser.add_argument("--proj_ckpt", default = "None")
-    parser.add_argument("--ifile", default = "None")
-    parser.add_argument("--ofile", default = "None")
+    parser.add_argument("--idir", default = "None")
     
     parser.add_argument("--odir", default = "None")
     
@@ -106,7 +105,7 @@ def parse_args():
     if args.odir != "None":
         if not os.path.exists(args.odir):
             os.system('mkdir -p {}'.format(args.odir))
-            logging.debug('root: made output directory {0}'.format(args.odir))
+            logging.info('root: made output directory {0}'.format(args.odir))
     # ${odir_del_block}
 
     return args
@@ -129,9 +128,6 @@ def main():
     model.load_state_dict(checkpoint)
     model.eval()
     
-    ifile = h5py.File(args.ifile, 'r')
-    ofile = h5py.File(args.ofile, 'w')
-    
     transform = transforms.Compose(
         [
             transforms.Resize(args.size),
@@ -139,61 +135,72 @@ def main():
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
         ]
     )
-    
-    keys = list(ifile.keys())
-    for key in keys:
-        skeys = list(ifile[key].keys())
-    
     L = SmoothL1Loss()
     
-    for key in keys:
-        skeys = list(ifile[key].keys())
-        random.shuffle(skeys)
+    ifiles = sorted(glob.glob(os.path.join(args.idir, '*.hdf5')))
+    
+    for ifile in ifiles:
+        logging.info('on file {}...'.format(ifile))
         
-        logging.info('on key {}...'.format(key))
-        for skey in skeys:
-            logging.info('on skey {}...'.format(skey))
+        ofile = os.path.join(args.odir, ifile.split('/')[-1])        
+        ifile = h5py.File(ifile, 'r')
+        ofile = h5py.File(ofile, 'w')
+        
+        keys = list(ifile.keys())
+        for key in keys:
+            skeys = list(ifile[key].keys())
+        
+        logging.info('have keys {}...'.format(keys))
+        
+        losses = []
+        for key in keys:
+            skeys = list(ifile[key].keys())
+            random.shuffle(skeys)
             
-            D = np.array(ifile[key][skey]['D'])[:,-2,:,:]
-            logging.info('shape: {}'.format(D.shape))
-            
-            global_v = np.array(ifile[key][skey]['global_vec'])
-            info_v = np.array(ifile[key][skey]['info'])
-            
-            x = []
-            
-            ims = []
-            for k in range(D.shape[0]):
-                im = map_to_im(D[k], size = int(args.size))
-                #plt.imshow(im)
-                #plt.show()
+            logging.info('on key {}...'.format(key))
+            for skey in skeys:
                 
-                im = transform(Image.fromarray(im))
-                im_ = im.detach().cpu().numpy()
-                ims.append(im_)
-                x.append(im)
+                D = np.array(ifile[key][skey]['D'])[:,-2,:,:]
                 
-            x = torch.stack(x, 0).to(device)
-            
-            with torch.no_grad():
-                v = model(x)
-            
-                # up-project:
-                x_pred = generator([v], input_is_latent = True)[0]
+                global_v = np.array(ifile[key][skey]['global_vec'])
+                info_v = np.array(ifile[key][skey]['info'])
                 
-                loss = L(x_pred, x)
+                x = []
                 
+                ims = []
+                for k in range(D.shape[0]):
+                    im = map_to_im(D[k], size = int(args.size))
+                    #plt.imshow(im)
+                    #plt.show()
+                    
+                    im = transform(Image.fromarray(im))
+                    im_ = im.detach().cpu().numpy()
+                    ims.append(im_)
+                    x.append(im)
+                    
+                x = torch.stack(x, 0).to(device)
                 
-            v = v.detach().cpu().numpy()
-            
-            logging.info('got l1 loss of {}...'.format(loss.item()))
-            ofile.create_dataset('{}/{}/x'.format(key, skey), data = v)
-            ofile.create_dataset('{}/{}/x1'.format(key, skey), data = info_v)
-            ofile.create_dataset('{}/{}/x2'.format(key, skey), data = global_v)
-            
-            ofile.flush()
+                with torch.no_grad():
+                    v = model(x)
+                
+                    # up-project:
+                    x_pred = generator([v], input_is_latent = True)[0]
+                    
+                    loss = L(x_pred, x)
+                    
+                    
+                v = v.detach().cpu().numpy()
+                
+                losses.append(loss.item())
+                ofile.create_dataset('{}/{}/x'.format(key, skey), data = v)
+                ofile.create_dataset('{}/{}/x1'.format(key, skey), data = info_v)
+                ofile.create_dataset('{}/{}/x2'.format(key, skey), data = global_v)
+                
+                ofile.flush()
 
-    ofile.close()
+        logging.info('have mean loss of {}...'.format(np.mean(losses)))
+
+        ofile.close()
     
             
 
