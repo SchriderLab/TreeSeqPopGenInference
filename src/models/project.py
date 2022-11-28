@@ -90,7 +90,7 @@ def parse_args():
     parser.add_argument("--n_steps", default = "80000")
     parser.add_argument("--ckpt", default = "None")
     parser.add_argument("--proj_ckpt", default = "None")
-    parser.add_argument("--ifile", deafult = "None")
+    parser.add_argument("--ifile", default = "None")
     
     parser.add_argument("--odir", default = "None")
     
