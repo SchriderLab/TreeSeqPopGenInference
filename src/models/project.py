@@ -116,13 +116,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using " + str(device) + " as device")
     
-    ckpt = torch.load(args.ckpt, map_location = device)
-    generator = Generator(
-        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
-    ).to(device)
-    generator.load_state_dict(ckpt["g_ema"], strict=False)
-    generator.eval()
-    
+
     model = resnet34(num_classes = args.latent).to(device)
     checkpoint = torch.load(args.proj_ckpt, map_location = device)
     model.load_state_dict(checkpoint)
@@ -135,14 +129,19 @@ def main():
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
         ]
     )
-    L = SmoothL1Loss()
     
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.hdf5')))
+    random.shuffle(ifiles)
     
     for ifile in ifiles:
         logging.info('on file {}...'.format(ifile))
         
         ofile = os.path.join(args.odir, ifile.split('/')[-1])        
+        
+        if os.path.exists(ofile):
+            logging.info('already written. moving on...')
+            continue
+        
         ifile = h5py.File(ifile, 'r')
         ofile = h5py.File(ofile, 'w')
         
@@ -152,7 +151,6 @@ def main():
         
         logging.info('have keys {}...'.format(keys))
         
-        losses = []
         for key in keys:
             skeys = list(ifile[key].keys())
             random.shuffle(skeys)
@@ -182,23 +180,16 @@ def main():
                 
                 with torch.no_grad():
                     v = model(x)
-                
-                    # up-project:
-                    x_pred = generator([v], input_is_latent = True)[0]
-                    
-                    loss = L(x_pred, x)
                     
                     
                 v = v.detach().cpu().numpy()
-                
-                losses.append(loss.item())
+
                 ofile.create_dataset('{}/{}/x'.format(key, skey), data = v)
                 ofile.create_dataset('{}/{}/x1'.format(key, skey), data = info_v)
                 ofile.create_dataset('{}/{}/x2'.format(key, skey), data = global_v)
                 
                 ofile.flush()
 
-        logging.info('have mean loss of {}...'.format(np.mean(losses)))
 
         ofile.close()
     
