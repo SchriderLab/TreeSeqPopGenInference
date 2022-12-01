@@ -22,6 +22,33 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+class OrthogonalProjectionLoss(nn.Module):
+    def __init__(self, gamma=0.5):
+        super(OrthogonalProjectionLoss, self).__init__()
+        self.gamma = gamma
+
+    def forward(self, features, labels=None):
+        device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
+
+        #  features are normalized
+        features = F.normalize(features, p=2, dim=1)
+
+        labels = labels[:, None]  # extend dim
+
+        mask = torch.eq(labels, labels.t()).bool().to(device)
+        eye = torch.eye(mask.shape[0], mask.shape[1]).bool().to(device)
+
+        mask_pos = mask.masked_fill(eye, 0).float()
+        mask_neg = (~mask).float()
+        dot_prod = torch.matmul(features, features.t())
+
+        pos_pairs_mean = (mask_pos * dot_prod).sum() / (mask_pos.sum() + 1e-6)
+        neg_pairs_mean = (mask_neg * dot_prod).sum() / (mask_neg.sum() + 1e-6)
+
+        loss = (1.0 - pos_pairs_mean) + self.gamma * neg_pairs_mean
+
+        return loss
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -37,8 +64,8 @@ def parse_args():
     parser.add_argument("--weight_decay", default = "0.0")
     
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
-    
-    parser.add_argument("--batch_size", default = "16")
+    parser.add_argument("--lambda_ortho", default = "0.1")
+    parser.add_argument("--n_per", default = "16")
     
     args = parser.parse_args()
 
@@ -63,10 +90,10 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using " + str(device) + " as device")
     
-    n_per = 4
+    n_per = int(args.n_per)
     
-    generator = ProjGenerator(h5py.File(args.ifile), args.ifile.replace('.hdf5', '.npz'))
-    validation_generator = ProjGenerator(h5py.File(args.ifile_val), args.ifile.replace('.hdf5', '.npz'))
+    generator = ProjGenerator(h5py.File(args.ifile), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
+    validation_generator = ProjGenerator(h5py.File(args.ifile_val), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
     
     model = TransformerClassifier()
     model = model.to(device)
@@ -82,6 +109,9 @@ def main():
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
     criterion = torch.nn.NLLLoss(weight = weights)
+    ortho_criterion = OrthogonalProjectionLoss()
+    
+    
 
     # for writing the training 
     result = dict()
@@ -109,9 +139,9 @@ def main():
 
             optimizer.zero_grad()
 
-            y_pred = model(x, x1, x2)
+            y_pred, f = model(x, x1, x2)
 
-            loss = criterion(y_pred, y)
+            loss = criterion(y_pred, y) + float(args.lambda_ortho) * ortho_criterion(f, y)
 
             y_pred = y_pred.detach().cpu().numpy()
             y_pred = np.argmax(y_pred, axis=1)
@@ -152,9 +182,9 @@ def main():
                 x1 = x1.to(device)
                 x2 = x2.to(device)
 
-                y_pred = model(x, x1, x2)
+                y_pred, f = model(x, x1, x2)
 
-                loss = criterion(y_pred, y)
+                loss = criterion(y_pred, y) + float(args.lambda_ortho) * ortho_criterion(f, y)
 
                 y_pred = y_pred.detach().cpu().numpy()
                 y = y.detach().cpu().numpy()
