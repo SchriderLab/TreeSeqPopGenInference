@@ -52,7 +52,8 @@ class ProjGenerator(object):
         Y = []
         
         for ix in range(self.n_per):
-            key = self.keys[-1]
+            key = self.keys[self.ix]
+            self.ix += 1
             
             x = torch.FloatTensor((np.array(self.ifile[key]['x']) - self.x_mean) / self.x_std)
             x1 = torch.FloatTensor((np.array(self.ifile[key]['x1']) - self.x1_mean) / self.x1_std)
