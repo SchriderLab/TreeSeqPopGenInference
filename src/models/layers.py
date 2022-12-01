@@ -53,8 +53,8 @@ class RNNSegmenter(torch.nn.Module):
     
     
 class TransformerClassifier(nn.Module):
-    def __init__(self, in_dim = 128, n_heads = 8, 
-                         n_transformer_layers = 3, n_convs = 4, L = 351, 
+    def __init__(self, in_dim = 128, n_heads = 4, 
+                         n_transformer_layers = 2, n_convs = 4, L = 351, 
                          info_dim = 12, global_dim = 37):
         super(TransformerClassifier, self).__init__()
         

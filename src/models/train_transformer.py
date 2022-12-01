@@ -97,7 +97,7 @@ def main():
         model.train()
         
         n_steps = int(args.n_steps)
-        for j in range(int(args.n_steps)):
+        for j in range(len(generator)):
             x, x1, x2, y = generator[j]
             
             #print(batch.edge_index.shape, batch.x.shape, batch.edge_index.max())
@@ -143,7 +143,7 @@ def main():
         Y = []
         Y_pred = []
         with torch.no_grad():
-            for j in range(1000):
+            for j in range(len(validation_generator)):
                 x, x1, x2, y = validation_generator[j]
                 
                 x = x.to(device)
