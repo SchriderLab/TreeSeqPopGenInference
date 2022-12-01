@@ -39,6 +39,8 @@ def parse_args():
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
+    parser.add_argument("--chunk_size", default = "4")
+    
     parser.add_argument("--L", default = "448")
     parser.add_argument("--p", default = "95")
     parser.add_argument("--compute_info", action = "store_true", help = "display messages")
@@ -196,10 +198,10 @@ def main():
             Y.append(classes.index(key))
             
             if len(X) >= int(args.chunk_size):
-                ofile.create_dataset('{}/x'.format(counter), data = np.array(X[-chunk_size:]))
-                ofile.create_dataset('{}/x1'.format(counter), data = np.array(X1[-chunk_size:]))
-                ofile.create_dataset('{}/x2'.format(counter), data = np.array(X2[-chunk_size:]))
-                ofile.create_dataset('{}/y'.format(counter), data = np.array(Y[-chunk_size:]))
+                ofile.create_dataset('{}/x'.format(counter), data = np.array(X[-chunk_size:]), compression = 'lzf')
+                ofile.create_dataset('{}/x1'.format(counter), data = np.array(X1[-chunk_size:]), compression = 'lzf')
+                ofile.create_dataset('{}/x2'.format(counter), data = np.array(X2[-chunk_size:]), compression = 'lzf')
+                ofile.create_dataset('{}/y'.format(counter), data = np.array(Y[-chunk_size:]), compression = 'lzf')
 
                 del X[-chunk_size:]
                 del X1[-chunk_size:]
@@ -250,10 +252,10 @@ def main():
             Y.append(classes.index(key))
             
             if len(X) >= int(args.chunk_size):
-                ofile_val.create_dataset('{}/x'.format(counter), data = np.array(X[-chunk_size:]))
-                ofile_val.create_dataset('{}/x1'.format(counter), data = np.array(X1[-chunk_size:]))
-                ofile_val.create_dataset('{}/x2'.format(counter), data = np.array(X2[-chunk_size:]))
-                ofile_val.create_dataset('{}/y'.format(counter), data = np.array(Y[-chunk_size:]))
+                ofile_val.create_dataset('{}/x'.format(counter), data = np.array(X[-chunk_size:]), compression = 'lzf')
+                ofile_val.create_dataset('{}/x1'.format(counter), data = np.array(X1[-chunk_size:]), compression = 'lzf')
+                ofile_val.create_dataset('{}/x2'.format(counter), data = np.array(X2[-chunk_size:]), compression = 'lzf')
+                ofile_val.create_dataset('{}/y'.format(counter), data = np.array(Y[-chunk_size:]), compression = 'lzf')
 
                 del X[-chunk_size:]
                 del X1[-chunk_size:]
