@@ -72,8 +72,7 @@ class TransformerClassifier(nn.Module):
         self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
             
         self.down_conv = Res1dBlock(in_dim + 16, in_dim, 2)
-        self.mlp = nn.Sequential(MLP(in_dim * L + 32, 2048, 2048, dropout = 0.05), nn.ReLU())
-        
+        self.mlp = nn.Sequential(MLP(in_dim * L + 32, 2048, 2048, dropout = 0.05))
         
         self.final = nn.Sequential(nn.Linear(2048, 5), nn.LogSoftmax())
         
