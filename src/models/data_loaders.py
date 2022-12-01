@@ -14,7 +14,7 @@ from scipy.special import expit
 from scipy.spatial.distance import squareform
 
 class ProjGenerator(object):
-    def __init__(self, ifile, means, n_per = 4):
+    def __init__(self, ifile, means, n_per = 8):
         self.n_per = n_per
         
         self.ifile = ifile
