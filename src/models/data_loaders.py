@@ -8,6 +8,174 @@ import glob
 import os
 import copy
 
+import matplotlib.pyplot as plt
+
+from scipy.special import expit
+from scipy.spatial.distance import squareform
+
+class ProjGenerator(object):
+    def __init__(self, ifile, means, n_per = 4):
+        self.n_per = n_per
+        
+        self.ifile = ifile
+        means = np.load(means)
+        
+        self.x_mean = means['x_mean']
+        self.x_std = means['x_std']
+        
+        self.x1_mean = means['x1_mean']
+        self.x1_std = means['x1_std']
+        
+        self.x2_mean = means['x2_mean']
+        self.x2_std = means['x2_std']
+        
+        
+        
+        self.counts = means['counts']
+        
+        self.on_epoch_end()
+        
+    def on_epoch_end(self, shuffle = True):
+        self.keys = sorted(list(self.ifile.keys()))
+        if shuffle:
+            random.shuffle(self.keys)
+        
+        self.ix = 0
+        
+    def __len__(self):
+        return len(self.keys) // self.n_per
+        
+    def __getitem__(self, index):
+        X = []
+        X1 = []
+        X2 = []
+        Y = []
+        
+        for ix in range(self.n_per):
+            key = self.keys[-1]
+            
+            x = torch.FloatTensor((np.array(self.ifile[key]['x']) - self.x_mean) / self.x_std)
+            x1 = torch.FloatTensor((np.array(self.ifile[key]['x1']) - self.x1_mean) / self.x1_std)
+            
+            x2 = np.array(self.ifile[key]['x2'])
+            ii = np.where(self.x2_std != 0)
+            x2[:,ii[0]] = (x2[:,ii[0]] - self.x2_mean[ii]) / self.x2_std[ii]
+            x2 = torch.FloatTensor(x2)
+            
+            y = np.array(self.ifile[key]['y'])
+            
+            X.append(x)
+            X1.append(x1)
+            X2.append(x2)
+            Y.extend(list(y))
+            
+        X = torch.cat(X, dim = 0)
+        X1 = torch.cat(X1, dim = 0)
+        X2 = torch.cat(X2, dim = 0)
+        Y = torch.LongTensor(Y)
+        
+        return X, X1, X2, Y
+            
+class AutoGenerator(object):
+    def __init__(self, ifile, means = 'seln_means.npz', D_means = './D_mean_stuff_v2/D_mean.npz', n_samples_per = 20, 
+                 chunk_size = 5, models = "hard,hard-near,neutral,soft,soft-near"): # must be in order, see combine_h5s_v2
+        self.ifile = ifile
+        
+        self.models = models.split(',')
+        
+        means = np.load(means)
+        
+        self.t_mean, self.t_std = tuple(means['times'])
+        
+        self.info_mean = means['v_mean'].reshape(1, 1, -1)
+        self.info_std = means['v_std'].reshape(1, 1, -1)
+        
+        self.global_mean = means['v2_mean'].reshape(1, -1)
+        self.global_std = means['v2_std'].reshape(1, -1)
+        
+        means = np.load(D_means)
+        
+        i,j = np.triu_indices(191)
+        ii = list(np.where(i != j)[0])
+        
+        self.D_mean = means['mean']
+        self.D_std = np.sqrt(means['var'])
+        
+        self.ii = ii
+        
+        self.info_std[np.where(self.info_std == 0.)] = 1.
+        self.global_std[np.where(self.global_std == 0.)] = 1.
+        self.D_std[np.where(self.D_std == 0.)] = 1.
+        
+        
+        
+        self.n_per = n_samples_per
+        
+        self.on_epoch_end()
+        
+    def on_epoch_end(self, shuffle = True):
+        self.keys = sorted(list(self.ifile.keys()))
+        if shuffle:
+            random.shuffle(self.keys)
+        
+        self.ix = 0
+        
+    def __len__(self):
+        return len(self.keys)
+    
+    def __getitem__(self, index):
+        
+        if self.ix >= len(self.keys):
+            return None, None
+        
+        # features, edge_indices, and label, what sequence the graphs belong to
+        key = self.keys[self.ix]
+        self.ix += 1
+        
+        # log scale and normalize times
+        x = np.array(self.ifile[key]['x'])
+        edge_index = np.array(self.ifile[key]['edge_index'])
+        D = np.array(self.ifile[key]['D'])
+        
+        edge_index = edge_index.reshape(x.shape[0] * x.shape[1], 2, -1)
+        D = D.reshape(x.shape[0] * x.shape[1], -1)[:,self.ii]
+        x = x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])
+        
+        ii = np.where(x[:,:,0] > 0) 
+        x[ii[0],ii[1],0] = (np.log(x[ii[0],ii[1],0]) - self.t_mean) / self.t_std
+        
+        # log scale n_mutations
+        ii = np.where(x[:,:,-1] > 0) 
+        x[ii[0],ii[1],-1] = np.log(x[ii[0],ii[1],-1])
+        
+        ix = list(np.random.choice(range(x.shape[0]), self.n_per, replace = False))
+        
+        x = x[ix]
+        edge_index = list(edge_index[ix])
+        D = D[ix]
+        
+        i, j = np.where(D > 0)
+        D[i, j] = np.log(D[i, j])
+
+        Ds = []
+        # mean normalize
+        #D = (D - self.D_mean) / self.D_std
+        for k in range(len(D)):
+            #D[k] = (D[k] - np.min(D[k])) / (np.max(D[k]) - np.min(D[k]))
+            
+            Ds.append(squareform(D[k]))
+        
+        D = torch.FloatTensor(D)
+        
+        # use PyTorch Geometrics batch object to make one big graph
+        batch = Batch.from_data_list(
+            [Data(x=torch.FloatTensor(x[k]), edge_index=torch.LongTensor(edge_index[k])) for k in range(len(edge_index))])
+        
+        
+        
+        return batch, D
+        
+
 class TreeSeqGeneratorV2(object):
     def __init__(self, ifile, means = 'seln_means.npz', n_samples_per = 4, chunk_size = 5, models = "hard,hard-near,neutral,soft,soft-near"): # must be in order, see combine_h5s_v2
         self.ifile = ifile
@@ -28,6 +196,7 @@ class TreeSeqGeneratorV2(object):
         
         self.n_per = n_samples_per
         self.batch_size = chunk_size * self.n_per
+        
         
         self.on_epoch_end()
         

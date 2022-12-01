@@ -45,10 +45,55 @@ from torch_geometric.nn import inits
 import math
 
 from torch_sparse import SparseTensor, set_diag
+from gcn_layers import Res1dBlock, MLP
 
 class RNNSegmenter(torch.nn.Module):
     def __init__(self, window_size = 128):
         return
+    
+    
+class TransformerClassifier(nn.Module):
+    def __init__(self, in_dim = 128, n_heads = 8, 
+                         n_transformer_layers = 3, n_convs = 4, L = 351, 
+                         info_dim = 12, global_dim = 37):
+        super(TransformerClassifier, self).__init__()
+        
+        self.info_embedding = nn.Sequential(nn.Linear(info_dim, 16), nn.LayerNorm((16, ))) 
+        encoder_layer = nn.TransformerEncoderLayer(d_model = in_dim + 16, nhead = n_heads, 
+                                                   dim_feedforward = 1024, batch_first = True)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers = n_transformer_layers)
+           
+        self.convs = nn.ModuleList()
+        for ix in range(n_convs):
+            self.convs.append(Res1dBlock(in_dim + 16, in_dim + 16, 2, pooling = 'max'))
+            
+            L = L // 2
+            
+        self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
+            
+        self.down_conv = nn.Sequential(nn.Conv1d(in_dim + 16, in_dim, 1, 1), nn.InstanceNorm1d(in_dim), nn.ReLU())
+        self.mlp = nn.Sequential(MLP(in_dim * L + 32, 2048, 4096, dropout = 0.05), nn.ReLU())
+        self.final = nn.Linear(2048, 5)
+        
+    def forward(self, x, x1, x2):
+        bs, l, c = x1.shape
+        
+        x1 = self.info_embedding(x1.flatten(0, 1)).reshape(bs, l, -1)
+        x = torch.cat([x, x1], dim = -1)
+        
+        x = self.transformer(x).transpose(1, 2)
+        
+        for ix in range(len(self.convs)):
+            x = self.convs[ix](x)
+            
+        x = self.down_conv(x).flatten(1, 2)
+        x2 = self.global_embedding(x2)
+        
+        x = torch.cat([x, x2], dim = -1)
+        x = self.final(self.mlp(x))
+
+        return x        
+        
     
 #updated LexStyleNet with model from paper
 class LexStyleNet(nn.Module):
@@ -90,3 +135,12 @@ class LexStyleNet(nn.Module):
         
         return self.out(x)
 
+if __name__ == '__main__':
+    model = TransformerClassifier()
+    
+    x = torch.zeros((16, 351, 128))
+    x1 = torch.zeros((16, 351, 12))
+    x2 = torch.zeros((16, 37))
+
+    y = model(x, x1, x2)
+    print(y.shape)
