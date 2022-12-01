@@ -40,7 +40,8 @@ def parse_args():
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
     parser.add_argument("--L", default = "448")
-    
+    parser.add_argument("--p", default = "95")
+    parser.add_argument("--compute_info", action = "store_true", help = "display messages")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -77,83 +78,88 @@ def main():
     for c in classes:
         count[c] = 0
 
-    means = []
-    means1 = []
-    x2s = []
-    Ls = []
-
-    # first compute means
-    for ifile in ifiles:
-        ifile = h5py.File(ifile, 'r')
+    if args.compute_info:
+        means = []
+        means1 = []
+        x2s = []
+        Ls = []
+    
+        # first compute means
+        for ifile in ifiles:
+            ifile = h5py.File(ifile, 'r')
+            
+            keys = list(ifile.keys())
+            for key in keys:
+                skeys = list(ifile[key].keys())
+                
+                count[key] += len(skeys)
+                
+                for skey in skeys:
+                    x = np.array(ifile[key][skey]['x'])
+                    x1 = np.array(ifile[key][skey]['x1'])
+                    x2 = np.array(ifile[key][skey]['x2'])
+    
+                    Ls.append(x.shape[0])
+                    
+                    means.append(np.mean(x, axis = 0))
+                    means1.append(np.mean(x1, axis = 0))
+                    x2s.append(x2)
+                    
+        x_mean = np.mean(np.array(means), axis = 0).reshape(1, -1)
+        x1_mean = np.mean(np.array(means1), axis = 0).reshape(1, -1)
         
-        keys = list(ifile.keys())
-        for key in keys:
-            skeys = list(ifile[key].keys())
-            
-            count[key] += len(skeys)
-            
-            for skey in skeys:
-                x = np.array(ifile[key][skey]['x'])
-                x1 = np.array(ifile[key][skey]['x1'])
-                x2 = np.array(ifile[key][skey]['x2'])
-
-                Ls.append(x.shape[0])
-                
-                means.append(np.mean(x, axis = 0))
-                means1.append(np.mean(x1, axis = 0))
-                x2s.append(x2)
-                
-    x_mean = np.mean(np.array(means), axis = 0).reshape(1, -1)
-    x1_mean = np.mean(np.array(means1), axis = 0).reshape(1, -1)
-    
-    x2_mean = np.mean(np.array(x2s), axis = 0)
-    x2_std = np.std(np.array(x2s), axis = 0)
-    
-    max_L = np.max(Ls)
-    min_L = np.min(Ls)
-    med_L = np.median(Ls)
-    
-    l = int(args.L)
-    
-    print('have min, max, med for seq length: {}, {}, {}'.format(min_L, max_L, med_L))
-    print('have counts: {}'.format(count))
-    
-    print('percentiles for seg length; 75, 85, 90, 95:  ')
-    print(np.percentile(Ls, 75), np.percentile(Ls, 85), np.percentile(Ls, 90), np.percentile(Ls, 95))
-    
-    print('shapes (x, x1, x2): {}, {}, {}'.format(x_mean.shape, x1_mean.shape, x2_mean.shape))
-    
-    # variances
-    x_var = []
-    x1_var = []
-    
-    for ifile in ifiles:
-        ifile = h5py.File(ifile, 'r')
+        x2_mean = np.mean(np.array(x2s), axis = 0)
+        x2_std = np.std(np.array(x2s), axis = 0)
         
-        keys = list(ifile.keys())
-        for key in keys:
-            skeys = list(ifile[key].keys())
+        max_L = np.max(Ls)
+        min_L = np.min(Ls)
+        med_L = np.median(Ls)
+        
+        print('have min, max, med for seq length: {}, {}, {}'.format(min_L, max_L, med_L))
+        print('have counts: {}'.format(count))
+        
+        print('percentiles for seg length; 75, 85, 90, 95:  ')
+        print(np.percentile(Ls, 75), np.percentile(Ls, 85), np.percentile(Ls, 90), np.percentile(Ls, 95))
+        
+        print('shapes (x, x1, x2): {}, {}, {}'.format(x_mean.shape, x1_mean.shape, x2_mean.shape))
+        
+        l = int(np.percentile(Ls, int(args.p)))
+        
+        # variances
+        x_var = []
+        x1_var = []
+        
+        for ifile in ifiles:
+            ifile = h5py.File(ifile, 'r')
             
-            for skey in skeys:
-                x = np.array(ifile[key][skey]['x'])
-                x1 = np.array(ifile[key][skey]['x1'])
+            keys = list(ifile.keys())
+            for key in keys:
+                skeys = list(ifile[key].keys())
                 
-                x_var.append(np.mean((x - x_mean)**2, axis = 0))
-                x1_var.append(np.mean((x1 - x1_mean)**2, axis = 0))
-                
-    x_std = np.sqrt(np.mean(np.array(x_var), axis = 0).reshape(1, -1))
-    x1_std = np.sqrt(np.mean(np.array(x1_var), axis = 0).reshape(1, -1))
-
-    counts = np.array([count[c] for c in classes], np.int32)
+                for skey in skeys:
+                    x = np.array(ifile[key][skey]['x'])
+                    x1 = np.array(ifile[key][skey]['x1'])
+                    
+                    x_var.append(np.mean((x - x_mean)**2, axis = 0))
+                    x1_var.append(np.mean((x1 - x1_mean)**2, axis = 0))
+                    
+        x_std = np.sqrt(np.mean(np.array(x_var), axis = 0).reshape(1, -1))
+        x1_std = np.sqrt(np.mean(np.array(x1_var), axis = 0).reshape(1, -1))
     
-    npz = args.ofile.replace('.hdf5', '.npz')
-    # info needed for training
-    np.savez(npz, x_mean = x_mean, x1_mean = x1_mean, x2_mean = x2_mean, 
-                         x_std = x_std, x1_std = x1_std, x2_std = x2_std, 
-                         counts = counts)
+        counts = np.array([count[c] for c in classes], np.int32)
+        
+        npz = args.ofile.replace('.hdf5', '.npz')
+        # info needed for training
+        np.savez(npz, x_mean = x_mean, x1_mean = x1_mean, x2_mean = x2_mean, 
+                             x_std = x_std, x1_std = x1_std, x2_std = x2_std, 
+                             counts = counts)
+        
+        print('saved info...')
     
-    print('saved info...')
-    sys.exit()
+    logging.info('writing training data...')
+    chunk_size = int(args.chunk_size)
+    
+    counter = 0
     
     X = []
     X1 = []
@@ -182,8 +188,80 @@ def main():
             if x is None:
                 continue
         
-    
+            x1 = pad_sequence(x1, l)
+        
+            X.append(x)
+            X1.append(x1)
+            X2.append(x2)
+            Y.append(classes.index(key))
+            
+            if len(X) >= int(args.chunk_size):
+                ofile.create_dataset('{}/x'.format(counter), data = np.array(X[-chunk_size:]))
+                ofile.create_dataset('{}/x1'.format(counter), data = np.array(X1[-chunk_size:]))
+                ofile.create_dataset('{}/x2'.format(counter), data = np.array(X2[-chunk_size:]))
+                ofile.create_dataset('{}/y'.format(counter), data = np.array(Y[-chunk_size:]))
 
+                del X[-chunk_size:]
+                del X1[-chunk_size:]
+                del X2[-chunk_size:]
+                del Y[-chunk_size:]
+                
+                counter += 1
+                ofile.flush()
+                
+    ofile.close()
+    
+    logging.info('writing validation set...')
+    
+    X = []
+    X1 = []
+    X2 = []
+    Y = []
+    for ifile in ifiles_val:
+        ifile = h5py.File(ifile, 'r')
+        
+        _ = []
+        
+        keys = list(ifile.keys())
+        for key in keys:
+            skeys = list(ifile[key].keys())
+    
+            _.extend([(key, u) for u in skeys])
+            
+        random.shuffle(_)
+        
+        for key, skey in _:
+            x = np.array(ifile[key][skey]['x'])
+            x1 = np.array(ifile[key][skey]['x1'])
+            x2 = np.array(ifile[key][skey]['x2'])
+            
+            x = pad_sequence(x, l)
+            
+            if x is None:
+                continue
+        
+            x1 = pad_sequence(x1, l)
+        
+            X.append(x)
+            X1.append(x1)
+            X2.append(x2)
+            Y.append(classes.index(key))
+            
+            if len(X) >= int(args.chunk_size):
+                ofile_val.create_dataset('{}/x'.format(counter), data = np.array(X[-chunk_size:]))
+                ofile_val.create_dataset('{}/x1'.format(counter), data = np.array(X1[-chunk_size:]))
+                ofile_val.create_dataset('{}/x2'.format(counter), data = np.array(X2[-chunk_size:]))
+                ofile_val.create_dataset('{}/y'.format(counter), data = np.array(Y[-chunk_size:]))
+
+                del X[-chunk_size:]
+                del X1[-chunk_size:]
+                del X2[-chunk_size:]
+                del Y[-chunk_size:]
+                
+                counter += 1
+                ofile_val.flush()
+    
+    ofile_val.close()
     # ${code_blocks}
 
 if __name__ == '__main__':
