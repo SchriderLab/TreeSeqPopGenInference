@@ -213,6 +213,8 @@ def main():
     
     logging.info('writing validation set...')
     
+    counter = 0
+    
     X = []
     X1 = []
     X2 = []
