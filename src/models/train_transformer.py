@@ -99,6 +99,8 @@ def main():
         for j in range(len(generator)):
             x, x1, x2, y = generator[j]
             
+            print(y)
+            
             #print(batch.edge_index.shape, batch.x.shape, batch.edge_index.max())
             x = x.to(device)
             y = y.to(device)
