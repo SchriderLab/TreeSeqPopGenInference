@@ -71,7 +71,7 @@ class TransformerClassifier(nn.Module):
             
         self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
             
-        self.down_conv = nn.Sequential(nn.Conv1d((in_dim + 16) * 2, in_dim, 1, 1), nn.InstanceNorm1d(in_dim), nn.ReLU())
+        self.down_conv = nn.Sequential(nn.Conv1d(in_dim + 16, in_dim, 1, 1), nn.InstanceNorm1d(in_dim), nn.ReLU())
         self.mlp = nn.Sequential(MLP(in_dim * L + 32, 2048, 2048, dropout = 0.05), nn.ReLU())
         self.final = nn.Sequential(nn.Linear(2048, 5), nn.LogSoftmax())
         
@@ -81,14 +81,12 @@ class TransformerClassifier(nn.Module):
         x1 = self.info_embedding(x1.flatten(0, 1)).reshape(bs, l, -1)
         x = torch.cat([x, x1], dim = -1)
         
-        x0 = self.transformer(x).transpose(1, 2)
+        x = self.transformer(x).transpose(1, 2)
         
-        x = self.convs[0](x0)
-        
-        for ix in range(1, len(self.convs)):
+        for ix in range(len(self.convs)):
             x = self.convs[ix](x)
             
-        x = self.down_conv(torch.cat([x, x0], dim = 1)).flatten(1, 2)
+        x = self.down_conv(x).flatten(1, 2)
         x2 = self.global_embedding(x2)
         
         x = torch.cat([x, x2], dim = -1)
