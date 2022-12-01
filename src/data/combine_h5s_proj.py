@@ -7,11 +7,27 @@ import glob
 import h5py
 import numpy as np
 
-
+import random
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
 
+def pad_sequence(x, L = 448):
+    if x.shape[0] < L:
+        _ = L - x.shape[0]
+        if _ % 2 == 0:
+            p0 = _ // 2
+            p1 = p0
+        else:
+            p0 = _ // 2
+            p1 = p0 + 1
+            
+        x = np.pad(x, ((p0, p1), (0, 0)), mode = 'constant')
+    elif x.shape[0] > L:
+        return None
+    
+    return x
+    
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
@@ -20,6 +36,9 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
+    
+    parser.add_argument("--L", default = "448")
+    
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -85,15 +104,20 @@ def main():
     x_mean = np.mean(np.array(means), axis = 0).reshape(1, -1)
     x1_mean = np.mean(np.array(means1), axis = 0).reshape(1, -1)
     
-    x2_mean = np.mean(np.array(x2s))
-    x2_std = np.std(np.array(x2s))
+    x2_mean = np.mean(np.array(x2s), axis = 0)
+    x2_std = np.std(np.array(x2s), axis = 0)
     
     max_L = np.max(Ls)
     min_L = np.min(Ls)
     med_L = np.median(Ls)
     
+    l = int(args.L)
+    
     print('have min, max, med for seq length: {}, {}, {}'.format(min_L, max_L, med_L))
     print('have counts: {}'.format(count))
+    
+    print('percentiles for seg length; 75, 85, 90, 95:  ')
+    print(np.percentile(Ls, 75), np.percentile(Ls, 85), np.percentile(Ls, 90), np.percentile(Ls, 95))
     
     print('shapes (x, x1, x2): {}, {}, {}'.format(x_mean.shape, x1_mean.shape, x2_mean.shape))
     
@@ -118,7 +142,41 @@ def main():
     x_std = np.sqrt(np.mean(np.array(x_var), axis = 0).reshape(1, -1))
     x1_std = np.sqrt(np.mean(np.array(x1_var), axis = 0).reshape(1, -1))
 
+    counts = np.array([count[c] for c in classes], np.int32)
     
+    npz = args.ofile.replace('.hdf5', '.npz')
+    # info needed for training
+    np.savez(npz, x_mean = x_mean, x1_mean = x1_mean, x2_mean = x2_mean, 
+                         x_std = x_std, x1_std = x1_std, x2_std = x2_std, 
+                         counts = counts)
+    
+    X = []
+    X1 = []
+    X2 = []
+    Y = []
+    for ifile in ifiles_train:
+        ifile = h5py.File(ifile, 'r')
+        
+        _ = []
+        
+        keys = list(ifile.keys())
+        for key in keys:
+            skeys = list(ifile[key].keys())
+    
+            _.extend([(key, u) for u in skeys])
+            
+        random.shuffle(_)
+        
+        for key, skey in _:
+            x = np.array(ifile[key][skey]['x'])
+            x1 = np.array(ifile[key][skey]['x1'])
+            x2 = np.array(ifile[key][skey]['x2'])
+            
+            x = pad_sequence(x, l)
+            
+            if x is None:
+                continue
+        
     
 
     # ${code_blocks}
