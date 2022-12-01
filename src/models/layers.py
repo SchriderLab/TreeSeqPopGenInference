@@ -75,7 +75,7 @@ class TransformerClassifier(nn.Module):
         self.mlp = nn.Sequential(MLP(in_dim * L + 32, 1024, 2048, dropout = 0.05))
         
         self.final = nn.Sequential(nn.Linear(1024, 512), nn.LayerNorm((512,)), nn.ReLU(), 
-                                   nn.Linear(2048, 5), nn.LogSoftmax())
+                                   nn.Linear(512, 5), nn.LogSoftmax())
         
     def forward(self, x, x1, x2):
         bs, l, c = x1.shape
