@@ -96,7 +96,6 @@ def main():
     for epoch in range(int(args.n_epochs)):
         model.train()
         
-        n_steps = int(args.n_steps)
         for j in range(len(generator)):
             x, x1, x2, y = generator[j]
             
@@ -126,7 +125,7 @@ def main():
             # change back to 100
             if (j + 1) % 25 == 0:
                 logging.info("root: Epoch: {}/{}, Step: {}/{}, Loss: {}, Acc: {}".format(epoch+1,
-                                                                       args.n_epochs, j + 1, n_steps,
+                                                                       args.n_epochs, j + 1, len(generator),
                                                                         np.mean(losses), np.mean(accuracies)))
 
         generator.on_epoch_end()
