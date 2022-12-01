@@ -26,7 +26,7 @@ from torch_geometric.utils import to_dense_batch
 from torch_scatter import scatter_max, scatter, scatter_mean, scatter_std
 
 from sparsenn.models.gcn.layers import DynamicGraphResBlock, GraphCyclicGRUBlock, GraphInceptionBlock
-from torch_geometric.nn import global_mean_pool, MessageNorm
+from torch_geometric.nn import global_mean_pool, MessageNorm, ASAPooling
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree, softmax, remove_self_loops
 
@@ -737,11 +737,11 @@ class GATv2Conv(MessagePassing):
 # a basic MLP module
 class MLP(nn.Module):
     def __init__(self, input_dim, output_dim, dim = 256, n_blk = 3, norm = nn.BatchNorm1d,
-                 activation = nn.ReLU):
+                 activation = nn.ReLU, dropout = 0.0):
         super(MLP, self).__init__()
-        layers = [nn.Linear(input_dim, dim), norm(dim), activation(inplace=True)]
+        layers = [nn.Linear(input_dim, dim), norm(dim), activation(inplace=True), nn.Dropout(dropout)]
         for _ in range(n_blk - 2):
-            layers += [nn.Linear(dim, dim), norm(dim), activation(inplace=True)]
+            layers += [nn.Linear(dim, dim), norm(dim), activation(inplace=True), nn.Dropout(dropout)]
         layers += [nn.Linear(dim, output_dim)]
         self.model = nn.Sequential(*layers)
 
@@ -845,6 +845,167 @@ class GATConvClassifier(nn.Module):
         x = torch.cat([xc, x2], dim = 1)
         
         return self.out(x)
+    
+from torch import optim
+from torch.nn import functional as F
+
+    
+class GATBlock(nn.Module):
+    def __init__(self, in_dim, out_dim, n_convs = 3):
+        super(GATBlock, self).__init__()
+    
+        self.gcns = nn.ModuleList()
+        self.norms = nn.ModuleList()
+        
+        self.gcns.append(GATv2Conv(in_dim, out_dim))
+        self.norms.append(nn.LayerNorm((out_dim, )))
+        
+        for ix in range(n_convs - 1):
+            self.gcns.append(GATv2Conv(out_dim, out_dim))
+            self.norms.append(nn.LayerNorm((out_dim, )))
+            
+        self.pool = ASAPooling(out_dim, 0.5)
+        
+    def forward(self, x, edge_index, batch):
+        x = self.norms[0](self.gcns[0](x, edge_index))
+        
+        for ix in range(1, len(self.gcns)):
+            x = self.norms[ix](self.gcns[ix](x, edge_index))
+        
+        x, edge_index, _, batch, _ = self.pool(x, edge_index, batch = batch)
+        
+        return x, edge_index, batch
+
+class GATEncoder(nn.Module):
+    def __init__(self, in_dim = 4, gcn_dim = 32, mlp_dim = 2048, 
+                         n_blocks = 4, N = 207):
+        super(GATEncoder, self).__init__()
+        self.gcn_blocks = nn.ModuleList()
+    
+        self.embedding = nn.Linear(in_dim, gcn_dim, bias = True)
+    
+        for ix in range(n_blocks):
+            self.gcn_blocks.append(GATBlock(gcn_dim, gcn_dim * 2))
+            
+            gcn_dim *= 2
+            N = N // 2
+            
+        gcn_dim = gcn_dim // 2
+        N *= 2
+        
+        self.out = MLP(gcn_dim * N, mlp_dim, mlp_dim)
+        self.act = nn.ReLU()
+        
+    def forward(self, x, edge_index, batch):
+        x = self.embedding(x)
+        
+        
+        for ix in range(len(self.gcn_blocks)):
+            x, edge_index, batch = self.gcn_blocks[ix](x, edge_index, batch)
+            x = self.act(x)            
+            
+        x = to_dense_batch(x, batch)[0]
+        
+        x = x.flatten(1, 2)
+        
+        return self.out(x)
+        
+class MLPDecoder(nn.Module):
+    def __init__(self, latent_dim = 256, out_dim = 18145):
+        super(MLPDecoder, self).__init__()
+        
+        self.mlp = nn.Sequential(nn.Linear(latent_dim, 4096), nn.LayerNorm(4096), nn.Dropout(0.2), nn.LeakyReLU(), 
+                                 nn.Linear(4096, 4096), nn.LayerNorm(4096), nn.Dropout(0.2), nn.LeakyReLU(),
+                                 nn.Linear(4096, out_dim))
+        
+    def forward(self, x):
+        return self.mlp(x)
+    
+class InnerProductDecoder(nn.Module):
+    def __init__(self, latent_dim = 256):
+        return
+    
+class InnerProductAE(nn.Module):
+    def __init__(self, in_dim = 4, n_gcn_iter = 16, gcn_dim = 128, n_heads = 1):
+        super(InnerProductAE, self).__init__()
+        
+        self.embedding = MLP(in_dim, gcn_dim, gcn_dim)
+        self.norms = nn.ModuleList()
+        self.gcns = nn.ModuleList()
+        
+        for ix in range(n_gcn_iter):    
+            self.norms.append(nn.LayerNorm((gcn_dim, )))
+            self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, name = 'gcn_layer_{}'.format(ix), share_weights = True))
+            
+        self.act = nn.LeakyReLU()
+        self.eye = nn.Parameter(1 - torch.unsqueeze(torch.eye(191),0), requires_grad = False)
+        
+        self.transform = MLP(gcn_dim + in_dim, gcn_dim)
+        self.sig = nn.Sigmoid()
+            
+    def forward(self, x, edge_index, batch):
+        x0 = self.embedding(x)
+        
+        for ix in range(len(self.gcns) - 1):
+            x0 = self.act(self.norms[ix](x0 + self.gcns[ix](x0, edge_index)))
+            
+        x0 = self.norms[-1](self.gcns[-1](x0, edge_index))
+        x = torch.cat([x, x0], dim = 1)
+        
+        x = self.transform(x)
+        x = to_dense_batch(x, batch)[0]
+        
+        x = torch.bmm(x, torch.transpose(x, 1, 2))
+        
+        return x * self.eye
+    
+class GATVAE(nn.Module):
+    def __init__(self, latent_dim = 256, in_dim = 1024):
+        super(GATVAE, self).__init__()
+        
+        self.encoder = GATEncoder(mlp_dim = in_dim)
+        self.decoder = MLPDecoder(latent_dim = latent_dim)
+       
+        self.mu = nn.Linear(in_dim, latent_dim)
+        self.var = nn.Linear(in_dim, latent_dim)
+        
+        self.l1 = nn.SmoothL1Loss()
+        self.l2 = nn.MSELoss()
+        
+        self.sig = nn.Sigmoid()
+        
+    # vanilla l2 loss
+    # Reconstruction + KL divergence losses summed over all elements and batch
+    def loss_l2(self, recon_x, x, mu, logvar):
+        rec_loss = self.l2(recon_x, x)
+    
+        kl_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+        
+        return rec_loss, kl_loss
+    
+    # vanilla l1 loss
+    def loss_l1(self, recon_x, x, mu, logvar):
+        rec_loss = self.l1(recon_x, x)
+    
+        kl_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+        
+        return rec_loss, kl_loss
+    
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+        return eps.mul(std).add_(mu)
+
+    def forward(self, x, edge_index, batch):
+        x = self.encoder(x, edge_index, batch)
+        
+        mu = self.mu(x)
+        logvar = self.var(x) + 1e-6
+        
+        z = self.reparameterize(mu, logvar)
+        x = self.decoder(mu)
+        
+        return x
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, batch_size, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
@@ -1141,3 +1302,20 @@ class Res1dBlock(nn.Module):
             return self.pool(x)
         else:
             return x
+        
+from data_loaders import AutoGenerator
+import h5py        
+
+if __name__ == '__main__':
+    gen = AutoGenerator(h5py.File('seln_trees_auto.hdf5', 'r'))
+    
+    batch, y = gen[0]
+
+    model = GATVAE()
+    y_pred, mu, logvar = model(batch.x, batch.edge_index, batch.batch)
+    
+    rec_loss, kl_loss = model.loss_l1(y_pred, y, mu, logvar)
+    print(rec_loss.item(), kl_loss.item())
+
+
+
