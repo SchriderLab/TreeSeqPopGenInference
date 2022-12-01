@@ -27,6 +27,8 @@ def pad_sequence(x, L = 448):
         return None
     
     return x
+
+import sys
     
 def parse_args():
     # Argument Parser
@@ -149,6 +151,9 @@ def main():
     np.savez(npz, x_mean = x_mean, x1_mean = x1_mean, x2_mean = x2_mean, 
                          x_std = x_std, x1_std = x1_std, x2_std = x2_std, 
                          counts = counts)
+    
+    print('saved info...')
+    sys.exit()
     
     X = []
     X1 = []
