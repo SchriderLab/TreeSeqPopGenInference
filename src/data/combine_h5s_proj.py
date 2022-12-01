@@ -41,7 +41,7 @@ def parse_args():
     
     parser.add_argument("--chunk_size", default = "4")
     
-    parser.add_argument("--L", default = "448")
+    parser.add_argument("--L", default = "351")
     parser.add_argument("--p", default = "95")
     parser.add_argument("--compute_info", action = "store_true", help = "display messages")
 
@@ -162,6 +162,8 @@ def main():
     chunk_size = int(args.chunk_size)
     
     counter = 0
+    
+    l = int(args.L)
     
     X = []
     X1 = []
