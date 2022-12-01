@@ -54,7 +54,7 @@ class RNNSegmenter(torch.nn.Module):
     
 class TransformerClassifier(nn.Module):
     def __init__(self, in_dim = 128, n_heads = 8, 
-                         n_transformer_layers = 4, n_convs = 3, L = 351, 
+                         n_transformer_layers = 4, n_convs = 4, L = 351, 
                          info_dim = 12, global_dim = 37):
         super(TransformerClassifier, self).__init__()
         
@@ -71,8 +71,10 @@ class TransformerClassifier(nn.Module):
             
         self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
             
-        self.down_conv = nn.Sequential(nn.Conv1d(in_dim + 16, in_dim, 1, 1), nn.InstanceNorm1d(in_dim), nn.ReLU())
+        self.down_conv = Res1dBlock(in_dim + 16, in_dim, 2)
         self.mlp = nn.Sequential(MLP(in_dim * L + 32, 2048, 2048, dropout = 0.05), nn.ReLU())
+        
+        
         self.final = nn.Sequential(nn.Linear(2048, 5), nn.LogSoftmax())
         
     def forward(self, x, x1, x2):
@@ -90,9 +92,11 @@ class TransformerClassifier(nn.Module):
         x2 = self.global_embedding(x2)
         
         x = torch.cat([x, x2], dim = -1)
-        x = self.final(self.mlp(x))
+        f = self.mlp(x)
+        
+        x = self.final(f)
 
-        return x        
+        return x, f        
         
     
 #updated LexStyleNet with model from paper
