@@ -94,8 +94,8 @@ def main():
     
     n_per = int(args.n_per)
     
-    generator = ProjGenerator(h5py.File(args.ifile), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
-    validation_generator = ProjGenerator(h5py.File(args.ifile_val), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
+    generator = ProjGenerator(h5py.File(args.ifile, 'r'), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
+    validation_generator = ProjGenerator(h5py.File(args.ifile_val, 'r'), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
     
     if args.model == 'conv':
         model = TransformerClassifier()
