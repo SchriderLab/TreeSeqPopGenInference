@@ -111,7 +111,10 @@ def main():
     criterion = torch.nn.NLLLoss(weight = weights)
     ortho_criterion = OrthogonalProjectionLoss()
     
-    
+    if args.lr_decay != "None":
+        lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, float(args.lr_decay))
+    else:
+        lr_scheduler = None
 
     # for writing the training 
     result = dict()
@@ -227,6 +230,9 @@ def main():
     
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
-       
+        
+        if lr_scheduler is not None:
+            logging.info('lr for next epoch: {}'.format(lr_scheduler.get_last_lr()))
+            lr_scheduler.step()
 if __name__ == '__main__':
     main()
