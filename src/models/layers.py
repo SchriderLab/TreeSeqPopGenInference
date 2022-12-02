@@ -123,8 +123,8 @@ class TransformerRNNClassifier(nn.Module):
         x1 = self.info_embedding(x1.flatten(0, 1)).reshape(bs, l, -1)
         x = torch.cat([x, x1], dim = -1)
         
-        x = self.transformer(x).transpose(1, 2)
-        _, x = self.gru(x)
+        x = self.transformer(x)
+        _, x = self.gru(x).squeeze()
     
         x2 = self.global_embedding(x2)
         
