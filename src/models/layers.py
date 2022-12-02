@@ -72,7 +72,7 @@ class TransformerClassifier(nn.Module):
         self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
             
         self.down_conv = Res1dBlock(in_dim + 16, in_dim, 2)
-        self.mlp = nn.Sequential(MLP(in_dim * L + 32, 1024, 2048, dropout = 0.05))
+        self.mlp = nn.Sequential(MLP(in_dim * L + 32, 1024, 2048, dropout = 0.05, norm = nn.LayerNorm))
         
         self.final = nn.Sequential(nn.Linear(1024, 512), nn.LayerNorm((512,)), nn.ReLU(), 
                                    nn.Linear(512, 5), nn.LogSoftmax())
@@ -97,7 +97,43 @@ class TransformerClassifier(nn.Module):
         x = self.final(f)
 
         return x, f        
+
+class TransformerRNNClassifier(nn.Module):
+    def __init__(self, in_dim = 128, n_heads = 8, 
+                         n_transformer_layers = 4, n_convs = 4, L = 351, 
+                         info_dim = 12, global_dim = 37):
+        super(TransformerRNNClassifier, self).__init__()
         
+        self.info_embedding = nn.Sequential(nn.Linear(info_dim, 16), nn.LayerNorm((16, ))) 
+        encoder_layer = nn.TransformerEncoderLayer(d_model = in_dim + 16, nhead = n_heads, 
+                                                   dim_feedforward = 1024, batch_first = True)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers = n_transformer_layers)
+        self.gru = nn.GRU(in_dim + 16, 1024, batch_first = True)
+            
+        self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
+            
+        self.mlp = nn.Sequential(MLP(1024 + 32, 1024, 1024, dropout = 0.05, norm = nn.LayerNorm))
+        
+        self.final = nn.Sequential(nn.Linear(1024, 512), nn.LayerNorm((512,)), nn.ReLU(), 
+                                   nn.Linear(512, 5), nn.LogSoftmax())
+        
+    def forward(self, x, x1, x2):
+        bs, l, c = x1.shape
+        
+        x1 = self.info_embedding(x1.flatten(0, 1)).reshape(bs, l, -1)
+        x = torch.cat([x, x1], dim = -1)
+        
+        x = self.transformer(x).transpose(1, 2)
+        _, x = self.gru(x)
+    
+        x2 = self.global_embedding(x2)
+        
+        x = torch.cat([x, x2], dim = -1)
+        f = self.mlp(x)
+        
+        x = self.final(f)
+
+        return x, f        
     
 #updated LexStyleNet with model from paper
 class LexStyleNet(nn.Module):

@@ -9,7 +9,7 @@ import configparser
 from data_loaders import ProjGenerator
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
-from layers import TransformerClassifier
+from layers import TransformerClassifier, TransformerRNNClassifier
 
 from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel, BCEWithLogitsLoss
 from collections import deque
@@ -67,6 +67,8 @@ def parse_args():
     parser.add_argument("--lambda_ortho", default = "0.1")
     parser.add_argument("--n_per", default = "16")
     
+    parser.add_argument("--model", default = "conv")
+    
     args = parser.parse_args()
 
     if args.verbose:
@@ -95,7 +97,11 @@ def main():
     generator = ProjGenerator(h5py.File(args.ifile), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
     validation_generator = ProjGenerator(h5py.File(args.ifile_val), args.ifile.replace('.hdf5', '.npz'), n_per = n_per)
     
-    model = TransformerClassifier()
+    if args.model == 'conv':
+        model = TransformerClassifier()
+    else:
+        model = TransformerRNNClassifier()
+        
     model = model.to(device)
     print(model)
     count_parameters(model)
