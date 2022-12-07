@@ -96,7 +96,7 @@ def main():
     n_jobs = int(args.n_jobs)
     binary = os.path.join(os.getcwd(), 'discoal/discoal')
     
-    slurm_cmd = 'sbatch -t 1-00:00:00 --mem=8G -o {0} --wrap "{1}"'
+    slurm_cmd = 'sbatch -t 08:00:00 --mem=8G -o {0} --wrap "{1}"'
 
     odir = os.path.join(args.odir, 'neutral')
     os.system('mkdir -p {}'.format(odir))
@@ -109,7 +109,7 @@ def main():
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
-        #os.system(cmd)
+        os.system(cmd)
 
     # locations drawn uniformly
     x = np.random.uniform(0.03, 0.97, n_jobs)        
@@ -126,6 +126,7 @@ def main():
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
+        os.system(cmd)
         
     # locations drawn uniformly
     x = np.random.uniform(0.03, 0.97, n_jobs)        
@@ -142,7 +143,7 @@ def main():
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
-    
+        os.system(cmd)
 
     # ${code_blocks}
 
