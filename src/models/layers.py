@@ -58,8 +58,6 @@ class TransformerClassifier(nn.Module):
                          info_dim = 12, global_dim = 37):
         super(TransformerClassifier, self).__init__()
         
-        self.embedding = MLP(in_dim, in_dim, in_dim, norm = nn.LayerNorm)
-        
         self.info_embedding = nn.Sequential(nn.Linear(info_dim, 16), nn.LayerNorm((16, ))) 
         encoder_layer = nn.TransformerEncoderLayer(d_model = in_dim + 16, nhead = n_heads, 
                                                    dim_feedforward = 1024, batch_first = True)
@@ -72,21 +70,15 @@ class TransformerClassifier(nn.Module):
             L = L // 2
             
         self.global_embedding = nn.Sequential(nn.Linear(global_dim, 32), nn.LayerNorm((32,)))
-            
-        self.down_conv = Res1dBlock(in_dim + 16, in_dim, 2)
         self.mlp = nn.Sequential(MLP(in_dim * L + 32, 1024, 2048, dropout = 0.05, norm = nn.LayerNorm))
         
-        self.final = nn.Sequential(nn.Linear(1024, 512), nn.LayerNorm((512,)), nn.ReLU(), 
-                                   nn.Linear(512, 5), nn.LogSoftmax())
+        self.final = nn.Sequential(nn.Linear(1024, 5, bias = False), nn.LogSoftmax())
         
     def forward(self, x, x1, x2):
         bs, l, c = x1.shape
         
         x1 = self.info_embedding(x1.flatten(0, 1)).reshape(bs, l, -1)
         bs, l, c = x.shape
-        
-        x = x.flatten(0, 1)
-        x = self.embedding(x).reshape(bs, l, c)
         
         x = torch.cat([x, x1], dim = -1)
         
