@@ -205,7 +205,7 @@ def main():
                 ix = [ii.index(u) for u in ii_ if u in ii]
                 
                 D = mat._data
-                D = D[np.ix_(ix, ix)]
+                D = np.log(D[np.ix_(ix, ix)])
                 
                 plt.imshow(D)
                 plt.colorbar()
