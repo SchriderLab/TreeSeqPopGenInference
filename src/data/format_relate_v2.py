@@ -200,12 +200,12 @@ def main():
                     
                 mat = root.tip_tip_distances()
                 ii = list(map(int, mat._ids))
-                #ii_ = list(map(int, [u.name for u in list(root.levelorder())]))
+                ii_ = list(map(int, [u.name for u in list(root.levelorder())]))
                 
-                #ix = [ii.index(u) for u in ii_]
+                ix = [ii.index(u) for u in ii_ if u in ii]
                 
                 D = mat._data
-                #D = D[np.ix_(ix, ix)]
+                D = D[np.ix_(ix, ix)]
                 
                 plt.imshow(D)
                 plt.colorbar()
