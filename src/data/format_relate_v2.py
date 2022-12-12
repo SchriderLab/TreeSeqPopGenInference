@@ -200,10 +200,20 @@ def main():
                     
                 mat = root.tip_tip_distances()
                 ii = list(map(int, mat._ids))
+                ii_ = list(map(int, [u.name for u in list(root.levelorder())]))
+                
+                ix = [ii.index(u) for u in ii_]
                 
                 D = mat._data
-                print(D.shape)
+                D = D[np.ix_(ix, ix)]
+                
+                plt.imshow(D)
+                plt.colorbar()
+                
+                plt.savefig('test.png', dpi = 100)
+                plt.close()
                 sys.exit()
+                
 
 if __name__ == '__main__':
     main()
