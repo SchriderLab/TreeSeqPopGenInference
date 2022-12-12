@@ -204,9 +204,11 @@ def main():
                 ii = list(map(int, mat._ids))
                 ii_ = list(map(int, [u.name for u in list(root.levelorder())]))
                 
-                ix = [ii.index(u) for u in ii_ if u in ii]
+                ii = [ii.index(u) for u in ii_ if u in ii]
                 
                 D = mat._data
+                D = D[np.ix_(ii, ii)]
+                
                 i, j = np.where(D > 0.)
                 D[i, j] = np.log(D[i, j])
                 
