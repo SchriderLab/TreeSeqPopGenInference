@@ -198,7 +198,7 @@ def main():
                         root = node
                         break
                     
-                mat = root.tip_to_tip_distances()
+                mat = root.tip_tip_distances()
                 ii = list(map(int, mat._ids))
                 
                 D = mat._data
