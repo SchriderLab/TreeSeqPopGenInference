@@ -204,3 +204,6 @@ def main():
                 D = mat._data
                 print(D.shape)
                 sys.exit()
+
+if __name__ == '__main__':
+    main()
