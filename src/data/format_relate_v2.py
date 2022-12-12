@@ -123,7 +123,9 @@ def main():
             lines = anc_file.readlines()[2:]
             
             l = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1].shape[1]
-                        
+                   
+            Ds = []
+            
             t0 = time.time()
             for ij in range(len(lines)):
                 line = lines[ij]
@@ -205,15 +207,21 @@ def main():
                 ix = [ii.index(u) for u in ii_ if u in ii]
                 
                 D = mat._data
-                D = np.log(D[np.ix_(ix, ix)])
+                i, j = np.where(D > 0.)
+                D[i, j] = np.log(D[i, j])
                 
-                plt.imshow(D)
-                plt.colorbar()
+                Ds.append(D)
                 
-                plt.savefig('test.png', dpi = 100)
-                plt.close()
-                sys.exit()
-                
+            if len(Ds) > 0:
+                if ix < N:
+                    ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
+                    ofile.flush()
+                else:
+                    ofile_val.create_dataset('{1}/{0}/D'.format(ix - N, tag), data = np.array(Ds), compression = 'lzf')
+                    ofile_val.flush()
+    
+    ofile.close()
+    ofile_val.close()
 
 if __name__ == '__main__':
     main()
