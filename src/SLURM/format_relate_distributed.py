@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument("--pop_sizes", default = "208,0")
     
     parser.add_argument("--topological_order", action = "store_true")
-    parser.add_argument("--n_sample", default = "96")
+    parser.add_argument("--n_sample", default = "None")
     
     parser.add_argument("--only_print", action = "store_true")
 
@@ -41,7 +41,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {3} --wrap "python3 src/data/format_relate.py --idir {0} --ms_dir {1} --ofile {2} --pop_sizes {4} --n_sample {5} --topological_order"'
+    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {3} --wrap "python3 src/data/format_relate_v2.py --idir {0} --ms_dir {1} --ofile {2} --pop_sizes {4} --n_sample {5} --topological_order"'
     idirs = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u])
     
     if not args.topological_order:
