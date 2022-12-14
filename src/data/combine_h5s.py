@@ -75,8 +75,6 @@ def main():
                 for skey in skeys:
                     if not val:
                         ofile.create_dataset('{1}/{0}/{2}'.format(counts[case][0], case, skey), data = ifile[case][key][skey], compression = 'lzf')
-                        
-                    
                     else:
                         ofile_val.create_dataset('{1}/{0}/{2}'.format(counts[case][1], case, skey), data = ifile[case][key][skey], compression = 'lzf')
                     
@@ -87,9 +85,7 @@ def main():
 
                 ofile.flush()
                 ofile_val.flush()
-        
-        if all([counts[case][0] >= int(args.n_train) for case in counts.keys()]):
-            break
+
                 
     for case in sorted(list(counts.keys())):
         logging.info('have {0}, {1} training / validation replicates for case {2}...'.format(counts[case][0], counts[case][1], case))
