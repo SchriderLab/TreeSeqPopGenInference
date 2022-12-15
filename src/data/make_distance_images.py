@@ -68,13 +68,10 @@ def main():
         os.system('mkdir -p {}'.format(odir))
         
         for key in keys:
-            D = np.array(ifile[key]['D'])[c_ix_].reshape(4, -1)[:,ii]
-            
-            i, j = np.where(D > 0)
-            D[i, j] = np.log(D[i, j])
+            D = np.array(ifile[key]['D'])
             
             for k in range(D.shape[0]):
-                d = squareform(D[k])
+                d = D[k]
                 
                 d = ((d - np.min(d)) / (np.max(d) - np.min(d)) * 255.).astype(np.uint8)
                 
