@@ -46,29 +46,21 @@ def parse_args():
 def main():
     args = parse_args()
     
-    classes = args.classes.split(',')
-    
-    try:
-        c_ix = [classes.index(args.cl)]
-    except:
-        c_ix = list(range(len(classes)))
-            
     ifile = h5py.File(args.ifile, 'r')
-    keys = list(ifile.keys())
+    classes = list(ifile.keys())
     
-    i, j = np.triu_indices(191)
-    ii = list(np.where(i != j)[0])
-    
-    for c_ix_ in c_ix:
+    for c in classes:
+        keys = list(ifile[c].keys())
+       
         counter = 0
         
-        c_name = classes[c_ix_]
+        c_name = c
         
         odir = os.path.join(args.odir, c_name)
         os.system('mkdir -p {}'.format(odir))
         
         for key in keys:
-            D = np.array(ifile[key]['D'])
+            D = np.array(ifile[c][key]['D'])
             
             for k in range(D.shape[0]):
                 d = D[k]
