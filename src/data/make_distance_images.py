@@ -47,8 +47,10 @@ def main():
     args = parse_args()
     
     ifile = h5py.File(args.ifile, 'r')
+    logging.info('reading keys...')
     classes = list(ifile.keys())
     
+    logging.info('writing images...')
     for c in classes:
         keys = list(ifile[c].keys())
        
