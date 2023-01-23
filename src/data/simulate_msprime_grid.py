@@ -127,7 +127,7 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--n_grid_points", default = "8")
-    parser.add_argument("--sample_sizes", default = "32,32")
+    parser.add_argument("--sample_sizes", default = "64,64")
     parser.add_argument("--n_replicates", default = "2500")
     
     parser.add_argument("--N", default = "5000")
@@ -191,64 +191,21 @@ def main():
         t = list(s.aslist())[0]
         
         f = StringIO(t.as_newick())  
-        t_ = read(f, format="newick", into=TreeNode)
+        root = read(f, format="newick", into=TreeNode)
         
-        n_sample = s1 + s2
+        mat = root.tip_tip_distances()
+        ii = list(mat._ids)
+        ii_ = [u.name for u in list(root.levelorder())]
         
-        ix = n_sample
-        order = []
-                
-        for node in t_.levelorder():
-            if node.name is None:
-                node.name = ix
-                ix += 1
-                
-            if type(node.name) == str:
-                node.name = int(node.name.replace('n', ''))
-
-            order.append(node.name)
-            
-        A_ = np.zeros((2*n_sample - 1, 2*n_sample - 1))
-        edges = []
+        ii = [ii.index(u) for u in ii_ if u in ii]
         
-        level_order_names = [u.name for u in t_.levelorder()]
-        for node in t_.levelorder():
-            for u in node.children:
-                A_[node.name, u.name] = u.length
-                A_[u.name, node.name] = u.length
-                edges.append((level_order_names.index(node.name), level_order_names.index(u.name), u.length))
-                
+        D = mat._data
+        D = D[np.ix_(ii, ii)]
         
-                
-        Gu = nx.Graph()
-        for k in range(len(edges)):
-            Gu.add_edge(edges[k][0], edges[k][1], weight = edges[k][2], hop = 0.5)
-            
-        paths = nx.shortest_path(Gu)
-        indices = list(itertools.combinations(range(len(level_order_names)), 2))
+        i, j = np.where(D > 0.)
+        D[i, j] = np.log(D[i, j])
+        Ds.append(D)
         
-        D_branch = []
-        for i,j in indices:
-            path = paths[i][j]
-            
-            _ = [Gu.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
-
-            D_branch.append(sum(_))
-            
-        Ds.append(np.array(D_branch))
-            
-        pop1 = list(range(s1))
-        pop2 = list(range(s1, s1 + s2))
-        
-        pop1 = [u for u in order if u in pop1]
-        pop2 = [u for u in order if u in pop2]
-
-        
-        order = list(range(2 * n_sample - 1))
-        order[:s1 + s2] = (pop1 + pop2)
-        
-        A_ = A_[np.ix_(order, order)]
-
         ages = tables.nodes.time
         pops = tables.nodes.population
         individuals = list(range(len(pops)))
@@ -287,9 +244,8 @@ def main():
             
         events = sorted(migs + coals, key = lambda u: u[1])
         E.append(events)
-        A.append(A_)
         
-    np.savez_compressed(args.ofile, E = np.array(E, dtype = object), A = np.array(A), loc = np.array([n, a1, a2, m]), D = np.array(Ds))
+    np.savez_compressed(args.ofile, E = np.array(E, dtype = object), loc = np.array([n, a1, a2, m]), D = np.array(Ds))
         
     """
     pop_sizes = [s1, s2]
