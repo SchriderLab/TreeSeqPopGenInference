@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument("--direction", default = "ab", help = "directionality of migration. only applicable for the drosophila case; --model dros")
     parser.add_argument("--slurm", action = "store_true")
     
-    parser.add_argument("--window_size", default = "1000", help = "size in base pairs of the region to simulate")
+    parser.add_argument("--window_size", default = "5000", help = "size in base pairs of the region to simulate")
     
     parser.add_argument("--mt_range", default = "None")
     parser.add_argument("--t_range", default = "None")
@@ -114,34 +114,21 @@ def main():
     df_mean = np.mean(df, axis = 0).reshape(1, -1)
     
     # size of the populations
-    SIZE_A = 32
-    SIZE_B = 32
+    SIZE_A = 64
+    SIZE_B = 64
     
-    P, ll, Nref = parameters_df(df, 0, 1., 0., 0., n)
-    print(P[0,-4])
-    #sys.exit()
-    
-    for p in params:
+    P, ll, Nref = parameters_df(df_mean, 0, 1., 0., 0., n)
+    for p in params[:5]:
         migTime, migProb, rho, T = p
         
         odir = os.path.join(args.odir, 'iter{0:06d}'.format(counter))
         counter += 1
         
         os.system('mkdir -p {}'.format(odir))
-        
-        if args.mt_range != "None":
-            mt_range = tuple(list(map(float, args.mt_range.split(','))))
-            
-            # replace mean migTime and the rest with a uniformly random distribution around it
-            migTime = np.random.uniform(mt_range[0], mt_range[1], (P.shape[0], ))
-        else:
-            migTime = np.random.uniform(0., 0.1, (P.shape[0], ))
-        
         migProb = 1 - migProb
         
         #t_range = tuple(list(map(float, args.t_range.split(','))))
         T_ = copy.copy(P[:,-4])
-        
         
         # rescale alpha1 and alpha2
         P[:,4] *= T_
