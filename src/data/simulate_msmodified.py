@@ -118,7 +118,7 @@ def main():
     SIZE_B = 64
     
     P, ll, Nref = parameters_df(df_mean, 0, 1., 0., 0., n)
-    for p in params[:5]:
+    for p in params:
         migTime, migProb, rho, T = p
         
         odir = os.path.join(args.odir, 'iter{0:06d}'.format(counter))
