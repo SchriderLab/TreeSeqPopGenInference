@@ -21,6 +21,7 @@ from skbio import read
 from skbio.tree import TreeNode
 import matplotlib.pyplot as plt
 import networkx as nx
+from scipy.spatial.distance import squareform
 
 import sys
 
@@ -130,10 +131,12 @@ def parse_args():
     parser.add_argument("--sample_sizes", default = "64,64")
     parser.add_argument("--n_replicates", default = "2500")
     
-    parser.add_argument("--N", default = "5000")
+    parser.add_argument("--N", default = "10000")
     parser.add_argument("--alpha0", default = "0.001")
     parser.add_argument("--alpha1", default = "0.002")
     parser.add_argument("--m", default = "0.5")
+    
+    parser.add_argument("--pop_labels", action = "store_true")
 
     parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
@@ -170,7 +173,6 @@ def main():
     m = float(args.m)
     
     E = []
-    A = []
     Ds = []
      
     for j in range(int(args.n_replicates)):
@@ -183,7 +185,8 @@ def main():
         demography.add_population_parameters_change(0., population = "A", growth_rate = a1)
         demography.add_population_parameters_change(0., population = "B", growth_rate = a2)
         
-        s = msprime.sim_ancestry(samples = [msprime.SampleSet(s1, population = "A", ploidy = 1), msprime.SampleSet(s2, population = "B", ploidy = 1)], recombination_rate = 0., sequence_length = 1000, demography = demography, record_migrations = True)
+        s = msprime.sim_ancestry(samples = [msprime.SampleSet(s1, population = "A", ploidy = 1), msprime.SampleSet(s2, population = "B", ploidy = 1)], recombination_rate = 0., 
+                                 sequence_length = 1000, demography = demography, record_migrations = True)
         
         tables = s.dump_tables()
         tables.sort()
@@ -192,19 +195,83 @@ def main():
         
         f = StringIO(t.as_newick())  
         root = read(f, format="newick", into=TreeNode)
+        root.assign_ids()
         
-        mat = root.tip_tip_distances()
-        ii = list(mat._ids)
-        ii_ = [u.name for u in list(root.levelorder())]
+        children = root.children
+        t = max(tables.nodes.time)
+        fm = lambda x: int(x.replace('n', '')) - 1
         
-        ii = [ii.index(u) for u in ii_ if u in ii]
+        root.age = t
         
-        D = mat._data
-        D = D[np.ix_(ii, ii)]
+        while len(children) > 0:
+            _ = []
+            for c in children:
+                c.age = c.parent.age - c.length
+                if c.is_tip():
+                    if fm(c.name) in range(s1):
+                        c.pop = 0
+                    else:
+                        c.pop = 1
+                        
+                else:
+                    c.pop = -1
+                    
+                _.extend(c.children)
+                
+            children = copy.copy(_)
+            
+        ages = np.zeros(len(tables.nodes.time))
+        for node in root.traverse():
+            ages[node.id] = node.age
+
+        # include pop_labels
+        ii_topological = [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
+                            + [u.id for u in root.levelorder() if u.pop == 1]
         
-        i, j = np.where(D > 0.)
-        D[i, j] = np.log(D[i, j])
-        Ds.append(D)
+
+        # indexed by assinged id
+        D = np.zeros((2 * (s1 + s2) - 1, 2 * (s1 + s2) - 1))
+        
+        children = root.children
+        c1, c2 = root.children
+        
+        todo = [root]
+        while len(todo) != 0:
+            root = todo[-1]
+            del todo[-1]
+            
+            t_coal = ages[root.id]
+            d_root = t_coal - ages
+            
+
+            if root.has_children():
+                c1, c2 = root.children
+                i1 = c1.id
+                i2 = c2.id
+                
+                if c1.has_children():
+                    todo.append(c1)
+                if c2.has_children():
+                    todo.append(c2)
+                
+                ii1 = [u.id for u in list(c1.traverse())]
+                ii2 = [u.id for u in list(c2.traverse())]
+
+                # n x m distance matrix for the descendants
+                # of left and right child
+                d1 = np.tile(d_root[ii1].reshape(-1, 1), (1, len(ii2))) 
+                d2 = np.tile(d_root[ii2].reshape(1, -1), (len(ii1), 1))
+    
+                d = d1 + d2
+                
+                D[root.id,ii1 + ii2] = d_root[ii1 + ii2]
+                D[ii1 + ii2,root.id] = d_root[ii1 + ii2]
+                
+                D[np.ix_(ii1, ii2)] = d
+                D[np.ix_(ii2, ii1)] = d.T
+        
+        D = D[np.ix_(ii_topological, ii_topological)]  
+        Ds.append(squareform(D))
         
         ages = tables.nodes.time
         pops = tables.nodes.population
@@ -214,7 +281,7 @@ def main():
         
         start = list(np.where(ages > 0)[0])[0]
         coals = []
-        
+
         t = 0.
         # get the coalescence events
         for ij in range(start, len(individuals)):
@@ -223,8 +290,9 @@ def main():
             pop = pops[ij]
             
             e = edges[np.where(edges[:,0] == i)[0]]
-            c1 = e[0,1]
-            c2 = e[1,1]
+            c1 = e[0,1] - 1
+            c2 = e[1,1] - 1
+            
             
             coals.append((0, pop, t1))
             
@@ -244,9 +312,18 @@ def main():
             
         events = sorted(migs + coals, key = lambda u: u[1])
         E.append(events)
+    
+    D = np.array(Ds)
+
+    Dmean = np.mean(D)
+    Dstd = np.std(D)
         
-    np.savez_compressed(args.ofile, E = np.array(E, dtype = object), loc = np.array([n, a1, a2, m]), D = np.array(Ds))
+    np.savez_compressed(args.ofile, E = np.array(E, dtype = object), loc = np.array([n, a1, a2, m]), 
+                        D = D, stats = np.array([Dmean, Dstd]))
+    
+    
         
+     
     """
     pop_sizes = [s1, s2]
     
