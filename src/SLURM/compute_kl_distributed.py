@@ -37,7 +37,7 @@ def main():
     args = parse_args()
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
-    cmd = 'sbatch -t 2-00:00:00 --mem=16G --wrap "python3 src/models/compute_kl_matrix.py --idir {} --ix {} --ofile {} --sample_sizes {}"'
+    cmd = 'sbatch -t 2-00:00:00 --mem=16G --wrap "python3 src/models/compute_kl_matrix.py --idir {} --i {} --ofile {} --sample_sizes {}"'
 
     for ix in range(len(ifiles)):
         cmd_ = cmd.format(args.idir, ix, os.path.join(args.odir, '{0:04d}.npz'.format(ix)), args.sample_sizes)
