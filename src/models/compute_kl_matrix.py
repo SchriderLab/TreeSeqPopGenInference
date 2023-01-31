@@ -115,7 +115,6 @@ def parse_args():
     
     parser.add_argument("--K", default = "10")
     
-
     parser.add_argument("--ofile", default = "test.npz")
     args = parser.parse_args()
 
@@ -172,7 +171,7 @@ def compute_P(events, n, a1, a2, m, pop_sizes):
             
             pops[1] -= 1
         
-            
+
         t = copy.copy(t_)
     
     return logP
@@ -193,19 +192,7 @@ def main():
     ori_params = (n, a1, a2, m)
     
     p = []
-    Ap = []
-    
-    maTs = []
-    miTs = []
-    for events in trees['E']:
-        pop_sizes = copy.copy([s1, s2])
-        events = sorted(events, key = lambda u: u[-1])
-        
-        T = [u[-1] for u in events]
-        
-        maTs.append(np.max(T))
-        miTs.append(np.min(T))
-    
+
     logging.info('getting probabilities for p...')
     for events in trees['E']:
         pop_sizes = copy.copy([s1, s2])
@@ -224,19 +211,6 @@ def main():
         trees_ = np.load(ifiles[ij], allow_pickle = True)
         
         n, a1, a2, m = tuple(trees_['loc'])
-        
-        maTs = []
-        miTs = []
-        for events in trees_['E']:
-            pop_sizes = copy.copy([s1, s2])
-            events = sorted(events, key = lambda u: u[-1])
-            
-            T = [np.log(u[-1] * 2) for u in events]
-            
-            maTs.append(np.max(T))
-            miTs.append(np.min(T))
-        
-
         
         q = []
         for events in trees['E']:
