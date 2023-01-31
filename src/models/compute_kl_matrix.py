@@ -206,18 +206,12 @@ def main():
         maTs.append(np.max(T))
         miTs.append(np.min(T))
     
-    kde_ma = gaussian_kde(maTs)
-    kde_mi = gaussian_kde(miTs)
-    
-    mu_ma = np.mean(maTs)
-    std_ma = np.std(maTs)
-    
     logging.info('getting probabilities for p...')
     for events in trees['E']:
         pop_sizes = copy.copy([s1, s2])
         events = list(sorted(events, key = lambda u: u[-1]))
         
-        p_ = compute_P(events, n, a1, a2, m, pop_sizes, kde_ma, kde_mi)
+        p_ = compute_P(events, n, a1, a2, m, pop_sizes)
 
         p.append(p_)
     
@@ -242,15 +236,14 @@ def main():
             maTs.append(np.max(T))
             miTs.append(np.min(T))
         
-        kde_ma = gaussian_kde(maTs)
-        kde_mi = gaussian_kde(miTs)
+
         
         q = []
         for events in trees['E']:
             pop_sizes = copy.copy([s1, s2])
             events = sorted(events, key = lambda u: u[-1])
             
-            p_ = compute_P(events, n, a1, a2, m, pop_sizes, kde_ma)
+            p_ = compute_P(events, n, a1, a2, m, pop_sizes)
 
             q.append(p_)
         
