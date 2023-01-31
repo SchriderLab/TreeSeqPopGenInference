@@ -14,6 +14,7 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
+    parser.add_argument("--sample_sizes", default = "64,64")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -36,11 +37,10 @@ def main():
     args = parse_args()
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
-    
-    cmd = 'sbatch -t 2-00:00:00 --mem=16G --wrap "python3 src/models/compute_kl_matrix.py --idir {} --ix {} --ofile {}"'
+    cmd = 'sbatch -t 2-00:00:00 --mem=16G --wrap "python3 src/models/compute_kl_matrix.py --idir {} --ix {} --ofile {} --sample_sizes {}"'
 
     for ix in range(len(ifiles)):
-        cmd_ = cmd.format(args.idir, ix, os.path.join(args.odir, '{0:04d}.npz'.format(ix)))
+        cmd_ = cmd.format(args.idir, ix, os.path.join(args.odir, '{0:04d}.npz'.format(ix)), args.sample_sizes)
         
         print(cmd_)
         os.system(cmd_)
