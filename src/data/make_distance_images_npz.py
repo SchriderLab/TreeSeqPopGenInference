@@ -47,22 +47,14 @@ def main():
         
         odir = os.path.join(args.odir, ifile.split('/')[-1].split('.')[0])
         
-        os.system('mkdir -p {}'.format(odir))
-        
         x = np.load(ifile)
         D = x['D']
         
         for ix in range(len(D)):
             d = squareform(D[ix])
+            d = (d / np.max(d) * 255.).astype(np.uint8)
             
-            i, j = np.where(d > 0)
-            d[i, j] = np.log(d[i, j])
-            
-            d = ((d - np.min(d)) / (np.max(d) - np.min(d)) * 255.).astype(np.uint8)
-            
-            d = np.array([d, d, d], dtype = np.uint8).transpose(1, 2, 0)
-            
-            cv2.imwrite(os.path.join(odir, '{0:05d}.png'.format(ix)), d)
+            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), d)
             
         
             
