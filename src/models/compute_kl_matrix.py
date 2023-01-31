@@ -131,67 +131,51 @@ def parse_args():
 
 from scipy.stats import norm, gaussian_kde
 
-def compute_P(events, n, a1, a2, m, pop_sizes, kde_ma, kde_mi, n_reps = 50):
-    ret = []
-    for k in range(n_reps):
-        T_ma = kde_ma.resample(1)[0,0]
-        T_mi = kde_mi.resample(1)[0,0]
-        
-        pops = copy.copy(pop_sizes)
+def compute_P(events, n, a1, a2, m, pop_sizes):
+    pops = copy.copy(pop_sizes)
+
+    logP = 0.
+    t = 0.
     
-        logP = 0.
-        t = 0.
+    # go to distance and normalize
+    Tl = [u[-1] for u in events]
+    
+    for ix in range(len(events)):
+        e = events[ix]
+        t_ = Tl[ix]
         
-        # go to distance and normalize
-        Tl = [u[-1] for u in events]
-        Tl = np.log(Tl * 2)
-        Tl = (Tl - np.min(Tl)) / (np.max(Tl) - np.min(Tl))
-        
-        Tl *= (T_ma - T_mi)
-        Tl += T_mi
-        Tl = np.exp(Tl) / 2.
-        
-        for ix in range(len(events)):
-            e = events[ix]
-            t_ = Tl[ix]
+        if e[0] == 1:
+            p_ = prob_a001_mig(a1, a2, m, t, t_, n, pops[0], pops[1])
+            logP += np.log2(p_)
+            if logP in [np.inf, -np.inf, np.nan]:
+                logP = np.nan
+                break
+
+            pops[0] -= 1
+            pops[1] += 1
+        elif e[0] == 0 and e[1] == 0:
+            _ = prob_a001_coal(0, a1, a2, m, t, t_, n, pops[0], pops[1])
+            logP += np.log2(_)
             
-            if e[0] == 1:
-                p_ = prob_a001_mig(a1, a2, m, t, t_, n, pops[0], pops[1])
-                logP += np.log2(p_)
-                if logP in [np.inf, -np.inf, np.nan]:
-                    logP = np.nan
-                    break
-    
-                pops[0] -= 1
-                pops[1] += 1
-            elif e[0] == 0 and e[1] == 0:
-                _ = prob_a001_coal(0, a1, a2, m, t, t_, n, pops[0], pops[1])
-                logP += np.log2(_)
-                
-                if logP in [np.inf, -np.inf, np.nan]:
-                    logP = np.nan
-                    break
-      
-                pops[0] -= 1
-            elif e[0] == 0 and e[1] == 1:
-                _ = prob_a001_coal(1, a1, a2, m, t, t_, n, pops[0], pops[1])
-                logP += np.log2(_)
-                
-                if logP in [np.inf, -np.inf, np.nan]:
-                    logP = np.nan
-                    break
-                
-                pops[1] -= 1
+            if logP in [np.inf, -np.inf, np.nan]:
+                logP = np.nan
+                break
+  
+            pops[0] -= 1
+        elif e[0] == 0 and e[1] == 1:
+            _ = prob_a001_coal(1, a1, a2, m, t, t_, n, pops[0], pops[1])
+            logP += np.log2(_)
             
-                
-            t = copy.copy(t_)
-    
-    
+            if logP in [np.inf, -np.inf, np.nan]:
+                logP = np.nan
+                break
+            
+            pops[1] -= 1
         
-        if not np.isnan(logP):
-            ret.append(logP)
-        
-    return np.nanmean(ret)
+            
+        t = copy.copy(t_)
+    
+    return logP
 
 def main():
     args = parse_args()
@@ -217,7 +201,7 @@ def main():
         pop_sizes = copy.copy([s1, s2])
         events = sorted(events, key = lambda u: u[-1])
         
-        T = [np.log(u[-1] * 2) for u in events]
+        T = [u[-1] for u in events]
         
         maTs.append(np.max(T))
         miTs.append(np.min(T))
@@ -228,7 +212,6 @@ def main():
     mu_ma = np.mean(maTs)
     std_ma = np.std(maTs)
     
-
     logging.info('getting probabilities for p...')
     for events in trees['E']:
         pop_sizes = copy.copy([s1, s2])
@@ -267,7 +250,7 @@ def main():
             pop_sizes = copy.copy([s1, s2])
             events = sorted(events, key = lambda u: u[-1])
             
-            p_ = compute_P(events, n, a1, a2, m, pop_sizes, kde_ma, kde_mi)
+            p_ = compute_P(events, n, a1, a2, m, pop_sizes, kde_ma)
 
             q.append(p_)
         
