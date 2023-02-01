@@ -260,8 +260,6 @@ def main():
         alpha = np.array([a1, a2])
         
         for events in trees['E']:
-            events = trees['events']
-            
             q.append(compute_P(events, N, alpha, M))
             
         q = np.array(q)
