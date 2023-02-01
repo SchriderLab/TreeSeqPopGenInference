@@ -236,9 +236,6 @@ def main():
     
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     ix = int(args.i)
-    
-    sample_sizes = tuple(map(int, args.sample_sizes.split(',')))
-    s1, s2 = sample_sizes
 
     ret = np.zeros(len(ifiles))
     trees = np.load(ifiles[ix], allow_pickle = True)
