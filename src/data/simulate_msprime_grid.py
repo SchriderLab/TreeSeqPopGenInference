@@ -25,102 +25,9 @@ from scipy.spatial.distance import squareform
 
 import sys
 
-def nC2(n):
-    return n * (n - 1) / 2
+sys.path.append('src/models')
 
-def f_a001_coal(alpha, N, t): 
-    # alpha > 0. = growth rate
-    # t = time in generations
-    # N = effective population size at t = 0.
-    # dt = time since last event
-    # n = sample size (unused here)
-    if N < 1:
-        N = 1
-
-    ret = 1 / (N * np.exp(-alpha * t)) * np.exp((1 - np.exp(alpha * t)) / (N * alpha))
-    
-    return ret
-    
-def F_a001_coal(alpha, N, t):
-    if N < 1:
-        N = 1
-        
-    ret = 1 - np.exp((1 - np.exp(alpha * t)) / (alpha * N))
-    return ret
-
-def f_a001_mig(a0, a1, m, N1, N2, t):
-    # a0 > 0. = growth rate for pop0
-    # a1 > 0. = growth rate for pop1
-    # a0 != a1.
-    # m migration fraction
-    # t = time in generations
-    # dt = time since last event
-    # n = sample size (unused here)
-    if N1 < 1:
-        N1 = 1
-    if N2 < 1:
-        N2 = 1
-    
-    ret = m * np.exp(-a1 * t + a0 * t) * (N2 / N1) * np.exp(-1 * m * (N2 / N1) * (np.exp(t * (a0 - a1)) - 1) / (a0 - a1))
-    return ret
-
-def F_a001_mig(a0, a1, m, N1, N2, t):
-    if N1 < 1:
-        N1 = 1
-    if N2 < 1:
-        N2 = 1
-    
-    ret = 1 - np.exp(m * (N2 / N1) * (np.exp(t * (a0 - a1)) - 1) / (a1 - a0))
-    
-    return ret
-
-def prob_a001_coal(i, a0, a1, m, t0, t1, N, n1, n2):
-    t = t1 - t0
-    
-    if i == 0:
-        if n2 > 1:
-            return F_a001_coal(a0, N * np.exp(-a0 * t0), t) * f_a001_coal(a0, N * np.exp(-a0 * t0), t) * (1 - F_a001_coal(a0, N * np.exp(-a0 * t0), t)) ** (nC2(n1) - 1) * (1 - F_a001_coal(a1, N * np.exp(-a1 * t0), t)) ** (nC2(n2)) * (1 - F_a001_mig(a0, a1, m,  N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t)) ** n1
-        else:
-            return F_a001_coal(a0, N * np.exp(-a0 * t0), t) * f_a001_coal(a0, N * np.exp(-a0 * t0), t) * (1 - F_a001_coal(a0, N * np.exp(-a0 * t0), t)) ** (nC2(n1) - 1) * (1 - F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t)) ** n1
-    else:
-        if n1 > 1:
-            return F_a001_coal(a1, N * np.exp(-a0 * t0), t) * f_a001_coal(a1, N * np.exp(-a1 * t0), t) * (1 - F_a001_coal(a1, N * np.exp(-a1 * t0), t)) ** (nC2(n2) - 1) * (1 - F_a001_coal(a0, N * np.exp(-a0 * t0), t)) ** (nC2(n1)) * (1 - F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t)) ** n1
-        elif n1 == 1:
-            return F_a001_coal(a1, N * np.exp(-a0 * t0), t) * f_a001_coal(a1, N * np.exp(-a1 * t0), t) * (1 - F_a001_coal(a1, N * np.exp(-a1 * t0), t)) ** (nC2(n2) - 1) * (1 - F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0), N * np.exp(-a1 * t0), t)) ** n1
-        else:
-            if n2 > 2:
-                return F_a001_coal(a0, N * np.exp(-a0 * t0), t) * f_a001_coal(a1, N * np.exp(-a1 * t0), t) * (1 - F_a001_coal(a1, N * np.exp(-a1 * t0), t)) ** (nC2(n2) - 1)
-            else:
-                return f_a001_coal(a1, N * np.exp(-a1 * t0), t)
-        
-def prob_a001_mig(a0, a1, m, t0, t1, N, n1, n2):
-    t = t1 - t0
-    
-    if n2 >= 2 and n1 >= 2:
-        return F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t) * f_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t) * (1 - F_a001_coal(a1, N * np.exp(-a1 * t0), t)) ** (nC2(n2)) * (1 - F_a001_coal(a0, N * np.exp(-a0 * t0), t)) ** (nC2(n1)) * (1 - F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t)) ** (n1 - 1)
-    elif n2 >= 2 and n1 == 1:
-        return F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t) * f_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t) * (1 - F_a001_coal(a1, N * np.exp(-a1 * t0), t)) ** (nC2(n2))
-    elif n2 == 1 and n1 == 1:
-        return f_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t)
-    elif n2 == 1 and n1 >= 2:
-        return F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t) * f_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t) * (1 - F_a001_coal(a0, N * np.exp(-a0 * t0), t)) ** (nC2(n1)) * (1 - F_a001_mig(a0, a1, m, N * np.exp(-a0 * t0),  N * np.exp(-a1 * t0), t)) ** (n1 - 1)
-
-def prob_a001_first(a0, a1, m, N, t, dt, n0, n1):
-    # a0 > 0. = growth rate for pop0
-    # a1 > 0. = growth rate for pop1
-    # a0 != a1.
-    # N = effective population size at t = 0.
-    # m migration fraction
-    # t = time in generations
-    # dt = time since last event
-    # n1 = sample size pop 0 (unused here)
-    # n2 = sample size pop 1 (unused here)
-    
-    p_coal = integrate.quad(lambda v: prob_a001_coal(a1, N, t, v, n1) * (1 - integrate.quad(lambda u: prob_a001_mig(a0, a1, m, t, u, n0), 0, v)[0]), 0, dt)[0]
-    
-    p_mig = 1 - p_coal
-    
-    return p_coal, p_mig
+from compute_kl_matrix_vectorized import compute_P
 
 def parse_args():
     # Argument Parser
@@ -174,6 +81,7 @@ def main():
     
     E = []
     Ds = []
+    P = []
      
     for j in range(int(args.n_replicates)):
         demography = msprime.Demography()
@@ -282,7 +190,7 @@ def main():
         start = list(np.where(ages > 0)[0])[0]
         coals = []
 
-        t = 0.
+        t = 0.        
         # get the coalescence events
         for ij in range(start, len(individuals)):
             i = individuals[ij]
@@ -293,33 +201,61 @@ def main():
             c1 = e[0,1] - 1
             c2 = e[1,1] - 1
             
-            
-            coals.append((0, pop, t1))
+            coals.append((0, pop, 0, t1))
             
             t = copy.copy(t1)
-
+            
         migs = []
         # get the migration events
         
         time = tables.migrations.time
         node = tables.migrations.node
+        src = tables.migrations.source
+        dest = tables.migrations.dest
         
         for ij in range(len(time)):
             t = time[ij]
             i = node[ij]
             
-            migs.append((1, i, t))
+            migs.append((1, src[ij], dest[ij], t))
             
-        events = sorted(migs + coals, key = lambda u: u[1])
+        events = sorted(migs + coals, key = lambda u: u[-1])
+        
+        # append the population sizes in the event list for easier prob calculation later
+        pops = [s1, s2]
+        for ix, e in enumerate(events):
+            events[ix] = events[ix] + tuple(pops)
+            
+            if e[0] == 1:
+                pops[0] -= 1
+                pops[1] += 1
+            elif e[1] == 0:
+                pops[0] -= 1
+            else:
+                pops[1] -= 1
+            
+            
+        
+        events = np.array(events)
+        M = np.array([[0., m], [0., 0.]])
+        N = np.array([n, n])
+        alpha = np.array([a1, a2])
+        
+        p = compute_P(events, N, alpha, M)
+        P.append(p)
+
         E.append(events)
     
+    # distance matrices
     D = np.array(Ds)
+    # log-likelihood
+    P = np.array(P)
 
     Dmean = np.mean(D)
     Dstd = np.std(D)
         
     np.savez_compressed(args.ofile, E = np.array(E, dtype = object), loc = np.array([n, a1, a2, m]), 
-                        D = D, stats = np.array([Dmean, Dstd]))
+                        D = D, stats = np.array([Dmean, Dstd]), P = P)
     
     
         
