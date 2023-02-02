@@ -151,8 +151,6 @@ def compute_P(events, N, alpha, m):
     ii_coal = np.where(events[:,0] == 0)
     ii_pop = events[ii_coal,1].astype(np.int32)
     
-    P_coal[ii_coal,ii_pop] = 1 - P_coal[ii_coal, ii_pop]
-
     s = events[:,4:]    
     s = nC2(s)
     
@@ -195,12 +193,11 @@ def compute_P(events, N, alpha, m):
     # from-to indices of migration
     ij_mig = events[ii_mig,1:3].astype(np.int32)[0]
 
-    P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] = 1 - P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]]
     i, j, k = np.where(P_mig > 0.)
     
     P_mig[i, j, k] = np.log2(P_mig[i, j, k]) * s[i,j]
 
-    P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] = P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] / s[ii_mig,ij_mig[:,0]]
+    P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] = np.log2(1 - 2 ** (P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] / s[ii_mig,ij_mig[:,0]]))
     P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] += np.log2(1 - 2 ** P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]]) * (s[ii_mig,ij_mig[:,0]] - 1)
     i, j, k = np.where(m_mat > 0.)
     
