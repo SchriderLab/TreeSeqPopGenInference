@@ -193,10 +193,11 @@ def compute_P(events, N, alpha, m):
     ii_mig = np.where(events[:,0] == 1)
     # from-to indices of migration
     ij_mig = events[ii_mig,1:3].astype(np.int32)[0]
-    print(ij_mig)
-    sys.exit()
+    
 
     i, j, k = np.where(P_mig > 0.)
+    print(P_mig)
+    sys.exit()
     
     P_mig[i, j, k] = np.log2(P_mig[i, j, k]) * s[i,j]
 
