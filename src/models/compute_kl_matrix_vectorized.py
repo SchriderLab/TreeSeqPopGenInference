@@ -62,7 +62,7 @@ def F_mig(alpha, m, N_div, t):
     
     ret[:,i,j] = 1 - np.exp(-m[:,i,j] * t[:,0])
     if len(np.where(np.isnan(ret))[0]) > 0:
-        print(N_div[-1], alpha[0])
+        print(N_div[-1], alpha[0], t[0][0])
         sys.exit()
         
     ret[:,range(ret.shape[1]),range(ret.shape[1])] = 1.
