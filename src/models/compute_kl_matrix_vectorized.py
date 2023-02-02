@@ -57,7 +57,7 @@ def F_mig(alpha, m, N_div, t):
     ret = np.ones(alpha.shape)
     i, j = np.where(alpha[0] != 0)
     
-    _ = m[:,i,j] * (N_div[:,i,j]) * (np.exp(t[:,0] * alpha[:,i,j]) - 1) / (-1 * alpha[:,i,j])
+    _ = m[:,i,j] * (N_div[:,i,j]) * (np.exp(t[:,0] * alpha[:,i,j] * -1) - 1) / (alpha[:,i,j])
     ret[:, i, j] = 1 - np.exp(_)
     
     i, j = np.where(alpha[0] == 0 & ~np.eye(alpha[0].shape[0],dtype=bool))
