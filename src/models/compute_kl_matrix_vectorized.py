@@ -245,9 +245,17 @@ def main():
     trees = np.load(ifiles[ix], allow_pickle = True)
     
     n, a1, a2, m = tuple(trees['loc'])
+    ori_params = (n, a1, a2, m)
     
-    # we've pre-computed these now
-    p = trees['P']
+    p = []
+
+    logging.info('getting probabilities for p...')
+    M = np.array([[0., m], [0.,0.]])
+    N = np.array([n, n])
+    alpha = np.array([a1, a2])
+    
+    for events in trees['E']:
+        p.append(compute_P(events, N, alpha, M))
 
     logging.info('mean ll: {}'.format(np.mean(p)))
 
