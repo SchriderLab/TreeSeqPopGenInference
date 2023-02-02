@@ -57,12 +57,13 @@ def F_mig(alpha, m, N_div, t):
     ret = np.ones(alpha.shape)
     i, j = np.where(alpha[0] != 0)
     
+    _ = m[:,i,j] * (N_div[:,i,j] ** -1) * (np.exp(t[:,0] * alpha[:,i,j]) - 1) / (-1 * alpha[:,i,j])
     ret[:, i, j] = 1 - np.exp(m[:,i,j] * (N_div[:,i,j] ** -1) * (np.exp(t[:,0] * alpha[:,i,j]) - 1) / (-1 * alpha[:,i,j]))
     i, j = np.where(alpha[0] == 0)
     
     ret[:,i,j] = 1 - np.exp(-m[:,i,j] * t[:,0])
     if len(np.where(np.isnan(ret))[0]) > 0:
-        print(N_div[-1], alpha[0], t[:,0,0], m[:,i,j] * (N_div[:,i,j] ** -1) * (np.exp(t[:,0] * alpha[:,i,j]) - 1) / (-1 * alpha[:,i,j]))
+        print(N_div[-1], alpha[0], _)
         sys.exit()
         
     ret[:,range(ret.shape[1]),range(ret.shape[1])] = 1.
@@ -181,9 +182,6 @@ def compute_P(events, N, alpha, m):
     # 1, N_1 / N_0, N_2 / N_0 @ t = t_0, t_1, ...
     # ...
     N_mat = N_mat / N_mat.transpose(0, 2, 1)
-    
-    # prevent divide by zero
-    alpha_mat[:, list(range(n_pops)), list(range(n_pops))] = 1.
     
     # |e|, n, n migration rate repeated over event times
     m_mat = np.tile(np.expand_dims(m, 2), (1, 1, n_events)).transpose(2, 0, 1)
