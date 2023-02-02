@@ -61,6 +61,11 @@ def F_mig(alpha, m, N_div, t):
     i, j = np.where(alpha[0] == 0)
     
     ret[:,i,j] = 1 - np.exp(-m[:,i,j] * t[:,0])
+    if len(np.where(np.isnan(ret))[0]) > 0:
+        print(N_div[-1])
+        sys.exit()
+        
+    ret[:,range(ret.shape[1]),range(ret.shape[1])] = 1.
     
     return ret
 
@@ -184,7 +189,6 @@ def compute_P(events, N, alpha, m):
     m_mat = np.tile(np.expand_dims(m, 2), (1, 1, n_events)).transpose(2, 0, 1)
     t_mat = t.reshape(1, 1, -1).transpose(2, 0, 1)
 
-    
     # (|e|,n,n) matrix of probability of migration happening at each event
     P_mig = 1 - F_mig(alpha_mat, m_mat, N_mat, t_mat)
     s = events[:,4:]
