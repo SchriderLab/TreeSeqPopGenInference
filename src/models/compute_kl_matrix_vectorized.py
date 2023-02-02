@@ -194,10 +194,7 @@ def compute_P(events, N, alpha, m):
     # from-to indices of migration
     ij_mig = events[ii_mig,1:3].astype(np.int32)[0]
     
-    i, j, k = np.where(P_mig > 0.)
-    print(P_mig[ii_mig])
-    sys.exit()
-    
+    i, j, k = np.where(P_mig > 0.)    
     P_mig[i, j, k] = np.log2(P_mig[i, j, k]) * s[i,j]
 
     P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] = np.log2(1 - 2 ** (P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] / s[ii_mig,ij_mig[:,0]]))
@@ -205,7 +202,7 @@ def compute_P(events, N, alpha, m):
     i, j, k = np.where(m_mat > 0.)
     
     # sum accross possibilties
-    p = np.sum(np.sum(P_coal, axis = 1)) + np.sum(P_mig[i,j,k])
+    p = np.sum(np.sum(P_coal, axis = 1)) + np.sum(P_mig)
     
     return p
 
