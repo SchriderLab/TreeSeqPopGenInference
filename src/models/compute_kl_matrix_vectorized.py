@@ -54,7 +54,13 @@ def F_a001_mig(a0, a1, m, N1, N2, t):
     return ret
 
 def F_mig(alpha, m, N_div, t):
-    ret = 1 - np.exp(m * (N_div ** -1) * (np.exp(t * alpha) - 1) / (-1 * alpha))
+    ret = np.zeros(alpha.shape)
+    i, j, k = np.where(alpha != 0)
+    
+    ret[i, j, k] = 1 - np.exp(m[i, j, k] * (N_div[i, j, k] ** -1) * (np.exp(t * alpha[i, j, k]) - 1) / (-1 * alpha[i, j, k]))
+    i, j, k = np.where(alpha == 0)
+    
+    ret[i, j, k] = 1 - np.exp(-m[i, j, k] * t)
     
     return ret
 
@@ -152,7 +158,7 @@ def compute_P(events, N, alpha, m):
     P_coal = np.log2(P_coal) * s
     
     P_coal[ii_coal,ii_pop] = P_coal[ii_coal, ii_pop] / s[ii_coal, ii_pop]
-    P_coal[ii_coal,ii_pop] += np.log2(1 - 2 ** (P_coal[ii_coal,ii_pop])) * (s[ii_coal, ii_pop] - 1)
+    P_coal[ii_coal,ii_pop] += np.log2(1 - 2 ** np.exp(P_coal[ii_coal,ii_pop])) * (s[ii_coal, ii_pop] - 1)
 
     #p = np.sum(np.log2(_) * s, axis = 1)
     
