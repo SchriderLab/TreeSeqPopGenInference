@@ -57,10 +57,10 @@ def F_mig(alpha, m, N_div, t):
     ret = np.zeros(alpha.shape)
     i, j, k = np.where(alpha != 0)
     
-    ret[i, j, k] = 1 - np.exp(m[i, j, k] * (N_div[i, j, k] ** -1) * (np.exp(t * alpha[i, j, k]) - 1) / (-1 * alpha[i, j, k]))
+    ret[i, j, k] = 1 - np.exp(m[i, j, k] * (N_div[i, j, k] ** -1) * (np.exp(t[:,:,k] * alpha[i, j, k]) - 1) / (-1 * alpha[i, j, k]))
     i, j, k = np.where(alpha == 0)
     
-    ret[i, j, k] = 1 - np.exp(-m[i, j, k] * t)
+    ret[i, j, k] = 1 - np.exp(-m[i, j, k] * t[:,:,k])
     
     return ret
 
