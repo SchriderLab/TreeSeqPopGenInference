@@ -138,49 +138,50 @@ def compute_P(events, N, alpha, m):
     n_events = len(T)
     
     t0 = np.array([0.] + list(T))
-    t = np.diff(t0)
+    t = np.diff(t0).astype(np.float64)
     
-    N_t = np.tile(N, (n_events, 1))
-    mu = np.exp(np.tile(t0[:-1].reshape(-1, 1), (1, n_pops)) * alpha.reshape(1, -1) * -1)
+    N_t = np.tile(N, (n_events, 1)).astype(np.float64)
+    mu = np.exp(np.tile(t0[:-1].reshape(-1, 1), (1, n_pops)) * alpha.reshape(1, -1) * -1).astype(np.float64)
     
     # effective size of populations at each time t0 (|e|, n)
     N_t = N_t * mu
     t_mat = np.tile(t.reshape(-1, 1), (1, n_pops)) # |e|, n time matrix 
-    alpha_mat = np.tile(alpha.reshape(1, -1), (n_events, 1)) # |e|, n matrix of alpha coefficients
+    alpha_mat = np.tile(alpha.reshape(1, -1), (n_events, 1)).astype(np.float64) # |e|, n matrix of alpha coefficients
     
     ### Coalesence ###
     ### --------------- ###
     ## non-coal pops
     P_coal = 1 - F_a001_coal(alpha_mat, N_t, t_mat)
-
+    P_coal_ = 1 - P_coal
+    
     ii_coal = np.where(events[:,0] == 0)
     ii_pop = events[ii_coal,1].astype(np.int32)
-    
-    s = events[:,4:]    
+    s = events[:,4:].astype(np.int32)
     s = nC2(s)
+    s[ii_coal, ii_pop] -= 1
     
-    P_coal = np.log2(P_coal) * s
+    P_coal = np.power(P_coal, s)
+    P_coal[ii_coal, ii_pop] *= P_coal_[ii_coal, ii_pop]
     
-    P_coal[ii_coal,ii_pop] = np.log2(1 - 2 ** (P_coal[ii_coal, ii_pop] / s[ii_coal, ii_pop]))
-    P_coal[ii_coal,ii_pop] += np.log2(1 - 2 ** P_coal[ii_coal,ii_pop]) * (s[ii_coal, ii_pop] - 1)
+
 
     #p = np.sum(np.log2(_) * s, axis = 1)
     
     ### Migration ###
     # alpha_0, alpha_1, ...
     # alpha_0, alpha_1, ...
-    alpha_mat = np.tile(alpha.reshape(1, -1), (n_pops, 1))
-    alpha_mat = np.tile(np.expand_dims(alpha_mat - alpha_mat.T, 2), (1, 1, n_events)).transpose(2, 0, 1)
+    alpha_mat = np.tile(alpha.reshape(1, -1), (n_pops, 1)).astype(np.float64)
+    alpha_mat = np.tile(np.expand_dims(alpha_mat - alpha_mat.T, 2), (1, 1, n_events)).transpose(2, 0, 1).astype(np.float64)
     
     # 0, alpha_1 - alpha_0, alpha_2 - alpha_0
     # repeated for |e| on the first axis
     
     # ----
     # |e|, n repeated n times on the last axis    
-    N_mat = np.tile(np.expand_dims(N_t, 2), (1, 1, n_pops))
+    N_mat = np.tile(np.expand_dims(N_t, 2), (1, 1, n_pops)).astype(np.float32)
     # 1, N_1 / N_0, N_2 / N_0 @ t = t_0, t_1, ...
     # ...
-    N_mat = N_mat / N_mat.transpose(0, 2, 1)
+    N_mat = N_mat / N_mat.transpose(0, 2, 1).astype(np.float32)
     
     # |e|, n, n migration rate repeated over event times
     m_mat = np.tile(np.expand_dims(m, 2), (1, 1, n_events)).transpose(2, 0, 1)
@@ -188,21 +189,28 @@ def compute_P(events, N, alpha, m):
 
     # (|e|,n,n) matrix of probability of migration happening at each event
     P_mig = 1 - F_mig(alpha_mat, m_mat, N_mat, t_mat)
-    s = events[:,4:]
+    P_mig_ = 1 - P_mig
     
+    s = events[:,4:]
     ii_mig = np.where(events[:,0] == 1)
     # from-to indices of migration
     ij_mig = events[ii_mig,1:3].astype(np.int32)[0]
+    s[ii_mig,ij_mig[:,0]] -= 1
     
-    i, j, k = np.where(P_mig > 0.)    
-    P_mig[i, j, k] = np.log2(P_mig[i, j, k]) * s[i,j]
-
-    P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] = np.log2(1 - 2 ** (P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] / s[ii_mig,ij_mig[:,0]]))
-    P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] += np.log2(1 - 2 ** P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]]) * (s[ii_mig,ij_mig[:,0]] - 1)
     i, j, k = np.where(m_mat > 0.)
     
+    P_mig[i, j, k] = np.power(P_mig[i, j, k], s[i,j])
+    
+    P_mig[ii_mig,ij_mig[:,0],ij_mig[:,1]] *= P_mig_[ii_mig,ij_mig[:,0],ij_mig[:,1]]
+    
+    i, j, k = np.where(m_mat > 0.)
+    P_mig = P_mig[i, j, k].reshape(-1, 1)
+    P = np.concatenate([P_coal, P_mig], axis = 1)
+    P = np.product(P, axis = 1)
+    P = np.log2(P)
+    
     # sum accross possibilties
-    p = np.sum(np.sum(P_coal, axis = 1)) + np.sum(P_mig)
+    p = np.sum(P)
     
     return p
 
