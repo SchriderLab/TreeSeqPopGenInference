@@ -64,6 +64,7 @@ def F_mig(alpha, m, N_div, t):
     
     return ret
 
+
 def prob_a001_coal(i, a0, a1, m, t0, t1, N, n1, n2):
     t = t1 - t0
     
@@ -139,8 +140,8 @@ def compute_P(events, N, alpha, m):
     
     # effective size of populations at each time t0 (|e|, n)
     N_t = N_t * mu
-    t_mat = np.tile(t.reshape(-1, 1), (1, n_pops))
-    alpha_mat = np.tile(alpha.reshape(1, -1), (n_events, 1))
+    t_mat = np.tile(t.reshape(-1, 1), (1, n_pops)) # |e|, n time matrix 
+    alpha_mat = np.tile(alpha.reshape(1, -1), (n_events, 1)) # |e|, n matrix of alpha coefficients
     
     ### Coalesence ###
     ### --------------- ###
@@ -157,7 +158,7 @@ def compute_P(events, N, alpha, m):
     
     P_coal = np.log2(P_coal) * s
     
-    P_coal[ii_coal,ii_pop] = P_coal[ii_coal, ii_pop] / s[ii_coal, ii_pop]
+    P_coal[ii_coal,ii_pop] = np.log2(1 - 2 ** (P_coal[ii_coal, ii_pop] / s[ii_coal, ii_pop]))
     P_coal[ii_coal,ii_pop] += np.log2(1 - 2 ** P_coal[ii_coal,ii_pop]) * (s[ii_coal, ii_pop] - 1)
 
     #p = np.sum(np.log2(_) * s, axis = 1)
