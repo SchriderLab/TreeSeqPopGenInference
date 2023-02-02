@@ -164,7 +164,6 @@ def compute_P(events, N, alpha, m):
     P_coal[ii_coal, ii_pop] *= P_coal_[ii_coal, ii_pop]
     
 
-
     #p = np.sum(np.log2(_) * s, axis = 1)
     
     ### Migration ###
@@ -273,7 +272,7 @@ def main():
         trees_ = np.load(ifiles[ij], allow_pickle = True)
         
         n, a1, a2, m = tuple(trees_['loc'])
-        
+        print(ori_params, (n, a1, a2, m))
         q = []
         M = np.array([[0., m], [0.,0.]])
         N = np.array([n, n])
