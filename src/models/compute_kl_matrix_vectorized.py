@@ -224,6 +224,7 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--i", default = "0")
+    parser.add_argument("--ofile", default = "None")
     
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
