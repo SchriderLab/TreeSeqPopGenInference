@@ -54,13 +54,13 @@ def F_a001_mig(a0, a1, m, N1, N2, t):
     return ret
 
 def F_mig(alpha, m, N_div, t):
-    ret = np.zeros(alpha.shape)
-    i, j, k = np.where(alpha != 0)
+    ret = np.ones(alpha.shape)
+    i, j = np.where(alpha[0] != 0)
     
-    ret[i, j, k] = 1 - np.exp(m[i, j, k] * (N_div[i, j, k] ** -1) * (np.exp(t[k,:,:] * alpha[i, j, k]) - 1) / (-1 * alpha[i, j, k]))
-    i, j, k = np.where(alpha == 0)
+    ret[:, i, j] = 1 - np.exp(m[:,i,j] * (N_div[:,i,j] ** -1) * (np.exp(t[:,0] * alpha[:,i,j]) - 1) / (-1 * alpha[:,i,j]))
+    i, j = np.where(alpha[0] == 0)
     
-    ret[i, j, k] = 1 - np.exp(-m[i, j, k] * t[k,:,:])
+    ret[:,i,j] = 1 - np.exp(-m[:,i,j] * t[:,0])
     
     return ret
 
