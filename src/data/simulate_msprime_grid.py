@@ -25,17 +25,13 @@ from scipy.spatial.distance import squareform
 
 import sys
 
-sys.path.append('src/models')
-
-from compute_kl_matrix_vectorized import compute_P
-
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--n_grid_points", default = "8")
-    parser.add_argument("--sample_sizes", default = "64,64")
+    parser.add_argument("--sample_sizes", default = "32,32")
     parser.add_argument("--n_replicates", default = "2500")
     
     parser.add_argument("--N", default = "10000")
@@ -63,16 +59,6 @@ def main():
     
     sample_sizes = tuple(map(int, args.sample_sizes.split(',')))
     s1, s2 = sample_sizes
-    
-    """
-    mu = 1e-4
-    N = np.linspace(10000, 20000, int(args.n_grid_points))
-    alpha0 = np.linspace(0.01, 0.1, int(args.n_grid_points)) * 10e-2
-    alpha1 = np.linspace(0.02, 0.09, int(args.n_grid_points)) * 10e-2
-    m12 = np.linspace(0.05, 0.2, int(args.n_grid_points))
-    
-    todo = list(itertools.product(N, alpha0, alpha1, m12))
-    """
     
     n = float(args.N)
     a1 = float(args.alpha0)
@@ -213,6 +199,8 @@ def main():
         src = tables.migrations.source
         dest = tables.migrations.dest
         
+    
+        
         for ij in range(len(time)):
             t = time[ij]
             i = node[ij]
@@ -220,7 +208,7 @@ def main():
             migs.append((1, src[ij], dest[ij], t))
             
         events = sorted(migs + coals, key = lambda u: u[-1])
-        
+
         # append the population sizes in the event list for easier prob calculation later
         pops = [s1, s2]
         for ix, e in enumerate(events):
@@ -234,16 +222,6 @@ def main():
             else:
                 pops[1] -= 1
             
-            
-        
-        events = np.array(events)
-        M = np.array([[0., m], [0., 0.]])
-        N = np.array([n, n])
-        alpha = np.array([a1, a2])
-        
-        p = compute_P(events, N, alpha, M)
-        P.append(p)
-
         E.append(events)
     
     # distance matrices
