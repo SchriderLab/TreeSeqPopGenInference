@@ -226,8 +226,9 @@ def main():
     alpha = np.array([a1, a2])
     model = DemographyLL(CoalExponentialRateFunction(alpha, None, N), MigExponentialRateFunction(alpha, None, N, M))
     
-    for events in trees['E']:
-        p.append(model(*setup_ll_inputs(events, N, alpha, M)).item())
+    with torch.no_grad():
+        for events in trees['E']:
+            p.append(model(*setup_ll_inputs(events, N, alpha, M)).item())
 
     logging.info('mean ll: {}'.format(np.mean(p)))
 
@@ -245,8 +246,9 @@ def main():
         
         model = DemographyLL(CoalExponentialRateFunction(alpha, None, N), MigExponentialRateFunction(alpha, None, N, M))
         
-        for events in trees['E']:
-            q.append(model(*setup_ll_inputs(events, N, alpha, M)).item())
+        with torch.no_grad():
+            for events in trees['E']:
+                q.append(model(*setup_ll_inputs(events, N, alpha, M)).item())
             
         q = np.array(q)
         logging.info('mean ll: {}'.format(np.mean(q)))
