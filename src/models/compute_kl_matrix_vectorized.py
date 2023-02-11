@@ -144,6 +144,8 @@ class DemographyLL(nn.Module):
         return torch.log2(p_coal).sum() + torch.log2(p_mig).sum()
     
 def setup_ll_inputs(E, N, alpha, m):
+    E = np.array(E)
+    
     # time of the events
     t = np.array([u[3] for u in E])
     # time of the prior event or zero at the first one
