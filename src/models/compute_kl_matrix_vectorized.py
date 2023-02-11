@@ -107,7 +107,6 @@ class MigExponentialRateFunction(nn.Module):
         else:
             N = (self.N * torch.exp(self.alpha * t0))[:,:,0]
 
-            
             y = s[:,self.i] * self.m * N * (torch.exp(self.alpha * t) - 1) / (self.alpha)
                 
         return y
@@ -144,6 +143,7 @@ class DemographyLL(nn.Module):
         p_coal = torch.log2(p_coal)
         p_mig = torch.log2(p_mig)
         if torch.any(torch.isinf(p_coal)):
+            print(s, k_coal, k_mig)
             print(p_coal)
         if torch.any(torch.isinf(p_coal)):
             print(p_mig) 
