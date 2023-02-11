@@ -207,20 +207,34 @@ def main():
             
             migs.append((1, src[ij], dest[ij], t))
             
-        events = sorted(migs + coals, key = lambda u: u[-1])
+        events = sorted(migs + coals, key = lambda u: u[3])
+
+        count_vector = np.zeros(3)
 
         # append the population sizes in the event list for easier prob calculation later
         pops = [s1, s2]
-        for ix, e in enumerate(events):
+        for ix, e in enumerate(events):# the counts of the Poisson process at each time of event
             events[ix] = events[ix] + tuple(pops)
             
             if e[0] == 1:
+                count_vector[2] += 1
+                
                 pops[0] -= 1
                 pops[1] += 1
             elif e[1] == 0:
+                count_vector[0] += 1
+                
                 pops[0] -= 1
             else:
                 pops[1] -= 1
+                count_vector[1] += 1
+                
+            # the observed counts of the Poisson processes at
+            # each time of observation
+            events[ix] = events[ix] + tuple(count_vector)
+        
+        
+        events = np.array(events)
             
         E.append(events)
     
