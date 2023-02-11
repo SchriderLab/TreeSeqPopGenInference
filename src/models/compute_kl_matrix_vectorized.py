@@ -141,6 +141,7 @@ class DemographyLL(nn.Module):
         p_mig = torch.where(p_mig == 0, torch.tensor(1., dtype = p_coal.dtype), p_mig)
         p_coal = torch.where(p_coal == 0, torch.tensor(1., dtype = p_coal.dtype), p_coal)
         
+        print(p_coal, p_mig)
         return torch.log2(p_coal).sum() + torch.log2(p_mig).sum()
     
 def setup_ll_inputs(E, N, alpha, m):
