@@ -15,6 +15,7 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--n_grid_points", default = "3")
+    parser.add_argument("--n_replicates", default = "4096")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -36,12 +37,12 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch -t 02:00:00 --mem=8G --wrap "python3 src/data/simulate_msprime_grid.py --N {0} --alpha0 {1} --alpha1 {2} --m {3} --ofile {4}"'
+    cmd = 'sbatch -t 02:00:00 --mem=8G --wrap "python3 src/data/simulate_msprime_grid.py --N {0} --alpha0 {1} --alpha1 {2} --m {3} --ofile {4} --n_replicates {5}"'
     
     mu = 1e-4
-    N = np.linspace(10000, 20000, int(args.n_grid_points))
-    alpha0 = np.linspace(0.01, 0.0125, int(args.n_grid_points)) * 10e-2
-    alpha1 = np.linspace(0.02, 0.025, int(args.n_grid_points)) * 10e-2
+    N = np.linspace(500, 1000, int(args.n_grid_points))
+    alpha0 = np.linspace(0.01, 0.0125, int(args.n_grid_points))
+    alpha1 = np.linspace(0.02, 0.025, int(args.n_grid_points))
     m12 = np.linspace(0.05, 0.3, int(args.n_grid_points))
     
     todo = list(itertools.product(N, alpha0, alpha1, m12))
@@ -51,7 +52,7 @@ def main():
 
         ofile = os.path.join(args.odir, '{0:06d}.npz'.format(ix))
         
-        cmd_ = cmd.format(n, a1, a2, m, ofile)
+        cmd_ = cmd.format(n, a1, a2, m, ofile, args.n_replicates)
         
         print(cmd_)
         os.system(cmd_)
