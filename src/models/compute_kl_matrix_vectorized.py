@@ -262,7 +262,7 @@ def main():
         logging.info('got kl divergence of {}...'.format(kl_))
         ret[ij] = kl_
         
-    np.savez(args.ofile, row = ret)
+    np.savez(args.ofile, row = ret, loc = np.array(list(ori_params)))
 
     # ${code_blocks}
 
