@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     
-    parser.add_argument("--max_log", default = "6.4580402832733474")
+    parser.add_argument("--max_log", default = "6.252627993915886")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -55,14 +55,11 @@ def main():
         x = np.load(ifile)
         D = x['D']
         
-        
         for ix in range(len(D)):
-            d = squareform(np.log(D[ix]) / max_log)
-            d = np.clip(d, -1, 1)
+            d = np.log(D[ix]) / max_log
+            d = np.clip(d, -1, np.inf)
             
-            d = (d * 127.5 + 127.5).astype(np.uint8)
-                        
-            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), d)
+            np.savez('{1}_{0:05d}.npz'.format(ix, odir), d = d)
             
             
 
