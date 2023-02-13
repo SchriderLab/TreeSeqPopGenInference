@@ -4,7 +4,7 @@ import zipfile
 import PIL.Image
 import json
 import torch
-import dnnlib
+#import dnnlib
 
 try:
     import pyspng
