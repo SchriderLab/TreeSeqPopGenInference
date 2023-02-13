@@ -111,7 +111,7 @@ class InverseHaarTransform(nn.Module):
 
     def forward(self, input):
         ll, lh, hl, hh = input.chunk(4, 1)
-        print(self.ll.shape, ll.shape)
+
         ll = upfirdn2d(ll, self.ll, up=2, pad=(1, 0, 1, 0))
         lh = upfirdn2d(lh, self.lh, up=2, pad=(1, 0, 1, 0))
         hl = upfirdn2d(hl, self.hl, up=2, pad=(1, 0, 1, 0))
