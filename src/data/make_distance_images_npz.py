@@ -8,6 +8,8 @@ import numpy as np
 import cv2
 
 from scipy.spatial.distance import squareform
+import matplotlib.pyplot as plt
+from scipy.special import expit
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -19,6 +21,8 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
+    
+    parser.add_argument("--max_log", default = "6.4580402832733474")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -41,6 +45,7 @@ def main():
     args = parse_args()
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
+    max_log = float(args.max_log)
     
     for ifile in ifiles:
         logging.info('writing images for {}...'.format(ifile))
@@ -50,13 +55,14 @@ def main():
         x = np.load(ifile)
         D = x['D']
         
-        for ix in range(len(D)):
-            d = squareform(D[ix])
-            d = (d / np.max(d) * 255.).astype(np.uint8)
-            
-            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), d)
-            
         
+        for ix in range(len(D)):
+            d = squareform(np.log(D[ix]) / max_log)
+            d = np.clip(d, -1, 1)
+            
+            d = (d * 127.5 + 127.5).astype(np.uint8)
+                        
+            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), d)
             
             
 
