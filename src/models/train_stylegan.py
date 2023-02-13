@@ -224,7 +224,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             break
 
         real_img = next(loader)
-        print(type(real_img[0]))
+        print(type(real_img[0]), real_img[0].shape)
         
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
@@ -368,7 +368,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         sample,
                         f"sample/{str(i).zfill(6)}.png",
                         nrow=int(args.n_sample ** 0.5),
-                        normalize=True,
+                        normalize=False,
                         range=(-1, 1),
                     )
 
