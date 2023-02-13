@@ -61,11 +61,11 @@ def main():
         loc = x['loc']
         l.append(loc[-1])
         
-        Dmax = np.max(np.log(D))
-        Dmin = np.min(np.log(D))
+        Dmax = np.max(np.log(D), axis = -1)
+        Dmin = np.min(np.log(D), axis = -1)
 
-        maxs.append(Dmax)
-        mins.append(Dmin)
+        maxs.append(np.max(Dmax))
+        mins.append(np.min(Dmin))
         
         mean.append(np.mean(Dmax))
         var.append(np.std(Dmax))
@@ -78,6 +78,8 @@ def main():
     print(np.mean(maxs))
     print(np.std(maxs))
     print(np.mean(mins))
+    print(np.median(mins))
+    print(np.percentile(mins, 90))
     print(np.std(mins))
     print(np.min(mins))
 
