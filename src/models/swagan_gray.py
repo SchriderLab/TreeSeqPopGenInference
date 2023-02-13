@@ -90,8 +90,6 @@ class HaarTransform(nn.Module):
         self.register_buffer("hh", hh)
 
     def forward(self, input):
-        print(input.shape)
-        
         ll = upfirdn2d(input, self.ll, down=2)
         lh = upfirdn2d(input, self.lh, down=2)
         hl = upfirdn2d(input, self.hl, down=2)
@@ -261,7 +259,6 @@ class Generator(nn.Module):
         out = self.conv1(out, latent[:, 0])
 
         skip = self.to_rgb1(out, latent[:, 1])
-        print(skip.shape)
 
         i = 1
         for conv1, conv2, to_rgb in zip(
