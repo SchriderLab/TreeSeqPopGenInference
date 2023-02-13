@@ -64,7 +64,7 @@ class UpFirDn2dBackward(Function):
     def backward(ctx, gradgrad_input):
         kernel, = ctx.saved_tensors
 
-        gradgrad_input = gradgrad_input.reshape(-1, ctx.in_size[2], ctx.in_size[3], 1)
+        gradgrad_input = gradgrad_input.reshape(-1, ctx.in_size[2], ctx.in_size[3], 1).contiguous()
 
         gradgrad_out = upfirdn2d_op.upfirdn2d(
             gradgrad_input,
