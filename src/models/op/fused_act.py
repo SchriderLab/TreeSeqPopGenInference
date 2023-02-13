@@ -8,6 +8,7 @@ from torch.utils.cpp_extension import load
 
 
 module_path = os.path.dirname(__file__)
+print(module_path)
 fused = load(
     "fused",
     sources=[
