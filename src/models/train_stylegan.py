@@ -19,7 +19,7 @@ except ImportError:
     wandb = None
 
 
-from dataset import MultiResolutionDataset
+from dataset import ImageFolderDataset
 from distributed import (
     get_rank,
     synchronize,
@@ -76,6 +76,62 @@ def d_r1_loss(real_pred, real_img):
     grad_penalty = grad_real.pow(2).reshape(grad_real.shape[0], -1).sum(1).mean()
 
     return grad_penalty
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+import numpy as np
+
+class ManifoldNoise(object):
+    def __init__(self, ifile, batch_size = 8):
+        x = np.load(ifile)
+        self.mu = x['mu']
+        self.sigma = x['sigma']
+    
+        self.n = self.mu.shape[0]
+        self.k = self.mu.shape[1]
+        self.batch_size = batch_size
+    
+    def get_batch(self):
+        # standard normal
+        z = np.random.normal(0, 1, (self.batch_size, self.k))
+        # sample the manifold uniformly
+        ii = np.random.choice(range(self.n), self.batch_size)
+        
+        # transform to sigma, mu
+        z *= self.sigma[ii]
+        z += self.mu[ii]
+        
+        return torch.FloatTensor(z)
+        
+
+class OrthogonalProjectionLoss(nn.Module):
+    def __init__(self, gamma=0.5):
+        super(OrthogonalProjectionLoss, self).__init__()
+        self.gamma = gamma
+
+    def forward(self, features, labels=None):
+        device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
+
+        #  features are normalized
+        features = F.normalize(features, p=2, dim=1)
+
+        labels = labels[:, None]  # extend dim
+
+        mask = torch.eq(labels, labels.t()).bool().to(device)
+        eye = torch.eye(mask.shape[0], mask.shape[1]).bool().to(device)
+
+        mask_pos = mask.masked_fill(eye, 0).float()
+        mask_neg = (~mask).float()
+        dot_prod = torch.matmul(features, features.t())
+
+        pos_pairs_mean = (mask_pos * dot_prod).sum() / (mask_pos.sum() + 1e-6)
+        neg_pairs_mean = (mask_neg * dot_prod).sum() / (mask_neg.sum() + 1e-6)
+
+        loss = (1.0 - pos_pairs_mean) + self.gamma * neg_pairs_mean
+
+        return loss
 
 
 def g_nonsaturating_loss(fake_pred):
@@ -141,6 +197,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     mean_path_length_avg = 0
     loss_dict = {}
 
+    noise_generator = ManifoldNoise(args.manifold, args.batch)
+
     if args.distributed:
         g_module = generator.module
         d_module = discriminator.module
@@ -156,24 +214,23 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     if args.augment and args.augment_p == 0:
         ada_augment = AdaptiveAugment(args.ada_target, args.ada_length, 8, device)
 
-    sample_z = torch.randn(args.n_sample, args.latent, device=device)
+    sample_z = noise_generator.get_batch(args.n_sample).to(device)
 
     for idx in pbar:
         i = idx + args.start_iter
 
         if i > args.iter:
             print("Done!")
-
             break
 
         real_img = next(loader)
-        real_img = real_img.to(device)
+        real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
 
-        noise = mixing_noise(args.batch, args.latent, args.mixing, device)
-        fake_img, _ = generator(noise)
+        noise = noise_generator.get_batch(args.batch).to(device)
+        fake_img = generator(noise)
 
         if args.augment:
             real_img_aug, _ = augment(real_img, ada_aug_p)
@@ -222,11 +279,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        noise = mixing_noise(args.batch, args.latent, args.mixing, device)
-        fake_img, _ = generator(noise)
-
-        if args.augment:
-            fake_img, _ = augment(fake_img, ada_aug_p)
+        noise = noise_generator.get_batch(args.batch).to(device)
+        fake_img = generator(noise)
 
         fake_pred = discriminator(fake_img)
         g_loss = g_nonsaturating_loss(fake_pred)
@@ -249,6 +303,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             )
 
             generator.zero_grad()
+            
+            
             weighted_path_loss = args.path_regularize * args.g_reg_every * path_loss
 
             if args.path_batch_shrink:
@@ -305,7 +361,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             if i % 1000 == 0:
                 with torch.no_grad():
                     g_ema.eval()
-                    sample, _ = g_ema([sample_z])
+                    sample = g_ema(sample_z)
                     utils.save_image(
                         sample,
                         f"sample/{str(i).zfill(6)}.png",
@@ -345,11 +401,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--n_sample",
         type=int,
-        default=16,
+        default=64,
         help="number of the samples generated during training",
     )
     parser.add_argument(
-        "--size", type=int, default=256, help="image sizes for the model"
+        "--size", type=int, default=128, help="image sizes for the model"
     )
     parser.add_argument(
         "--r1", type=float, default=10, help="weight of the r1 regularization"
@@ -409,6 +465,7 @@ if __name__ == "__main__":
         default=0,
         help="probability of applying augmentation. 0 = use adaptive augmentation",
     )
+    parser.add_argument("--manifold", default = "manifold.npz")
     parser.add_argument(
         "--ada_target",
         type=float,
@@ -430,7 +487,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--latent",
         type=int,
-        default=128,
+        default=32,
         help="dimensionality of the latent space",
     )
     parser.add_argument(
@@ -460,7 +517,7 @@ if __name__ == "__main__":
         from model import Generator, Discriminator
 
     elif args.arch == 'swagan':
-        from swagan import Generator, Discriminator
+        from swagan_gray import Generator, Discriminator
 
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
@@ -522,17 +579,7 @@ if __name__ == "__main__":
             broadcast_buffers=False,
         )
 
-    transform = transforms.Compose(
-        [
-            #transforms.RandomHorizontalFlip(),
-            #transforms.RandomVerticalFlip(),
-            #transforms.RandomAdjustSharpness(2.),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True),
-        ]
-    )
-
-    dataset = MultiResolutionDataset(args.path, transform, args.size)
+    dataset = ImageFolderDataset(args.path)
     loader = data.DataLoader(
         dataset,
         batch_size=args.batch,
