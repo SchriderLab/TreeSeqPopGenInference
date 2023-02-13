@@ -59,7 +59,7 @@ def main():
         
         D = x['D']
         loc = x['loc']
-        l.append(loc[-1])
+        l.append(loc[0])
         
         Dmax = np.max(np.log(D), axis = -1)
         Dmin = np.min(np.log(D), axis = -1)
