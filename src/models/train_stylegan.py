@@ -93,11 +93,11 @@ class ManifoldNoise(object):
         self.k = self.mu.shape[1]
         self.batch_size = batch_size
     
-    def get_batch(self):
+    def get_batch(self, n):
         # standard normal
-        z = np.random.normal(0, 1, (self.batch_size, self.k))
+        z = np.random.normal(0, 1, (n, self.k))
         # sample the manifold uniformly
-        ii = np.random.choice(range(self.n), self.batch_size)
+        ii = np.random.choice(range(self.n), n)
         
         # transform to sigma, mu
         z *= self.sigma[ii]
