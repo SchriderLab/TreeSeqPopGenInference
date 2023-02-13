@@ -223,9 +223,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             print("Done!")
             break
 
-        real_img = next(loader)
-        print(type(real_img[0]), real_img[0].shape, len(real_img))
-        
+        real_img = next(loader)[0]
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
