@@ -53,7 +53,7 @@ def main():
         x = np.load(ifile)
         
         D = x['D']
-        D = np.max(D, axis = 1)
+        D = np.max(np.log(D), axis = 1)
 
         mean.append(np.mean(D))
         var.append(np.std(D))
