@@ -49,19 +49,22 @@ def main():
     
     mean = []
     var = []
+    
+    maxs = []
+    mins = []
+    
     for ifile in ifiles:
         x = np.load(ifile)
         
         D = x['D']
-        D = np.max(np.log(D), axis = 1)
+        Dmax = np.max(np.log(D))
+        Dmin = np.min(np.log(D))
 
-        mean.append(np.mean(D))
-        var.append(np.std(D))
-        
-    plt.scatter(mean, var)
-    plt.savefig('mean_std_maxD.png', dpi = 100)
-    
-    plt.close()
+        maxs.append(Dmax)
+        mins.append(Dmin)
+
+    print(np.max(maxs))
+    print(np.min(mins))
 
     # ${code_blocks}
 
