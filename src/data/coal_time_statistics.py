@@ -56,7 +56,7 @@ def main():
     maxs = []
     mins = []
     
-    bins = np.linspace(0., 7., 100)
+    bins = np.linspace(0., 800., 1000)
     h = np.zeros(len(bins) - 1)
     
     count = 0
@@ -69,7 +69,7 @@ def main():
         D = x['D']
         loc = x['loc']
         
-        h += np.histogram(np.log(D[:1000,-64 * 63 // 2:]).flatten(), bins, density = True)[0]
+        h += np.histogram(D[:1000,-64 * 63 // 2:].flatten(), bins, density = True)[0]
         count += 1
         
     h /= count
@@ -79,7 +79,7 @@ def main():
     x = bins[:-1] + np.diff(bins) / 2.
     f = interp1d(bins[:-1] + np.diff(bins) / 2., h)
     
-    pickle.dump(f, open('cdf.pkl', 'wb'))
+    pickle.dump(f, open('cdf_no_log.pkl', 'wb'))
         
     """
     Dmax = np.max(np.log(D), axis = -1)
