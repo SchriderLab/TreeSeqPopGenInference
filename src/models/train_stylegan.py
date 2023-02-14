@@ -243,7 +243,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     if args.augment and args.augment_p == 0:
         ada_augment = AdaptiveAugment(args.ada_target, args.ada_length, 8, device)
 
-    sample_z, _ = noise_generator.get_batch(args.n_sample).to(device)
+    sample_z, _ = noise_generator.get_batch(args.n_sample)
+    sample_z = sample_z.to(device)
 
     for idx in pbar:
         i = idx + args.start_iter
@@ -253,12 +254,16 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             break
 
         real_img, c_real = next(loader)
+        c_real = c_real.to(device)
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
 
-        noise, c_fake = noise_generator.get_batch(args.batch).to(device)
+        noise, c_fake = noise_generator.get_batch(args.batch)
+        noise = noise.to(device)
+        c_fake = c_fake.to(device)
+        
         fake_img = generator(noise)
 
         if args.augment:
@@ -308,7 +313,10 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        noise, c_fake = noise_generator.get_batch(args.batch).to(device)
+        noise, c_fake = noise_generator.get_batch(args.batch)
+        noise = noise.to(device)
+        c_fake = c_fake.to(device)
+        
         fake_img = generator(noise)
 
         fake_pred = discriminator(fake_img, c_fake)
