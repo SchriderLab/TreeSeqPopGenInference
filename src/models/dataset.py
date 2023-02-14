@@ -155,6 +155,7 @@ class Dataset(torch.utils.data.Dataset):
 
 from scipy.spatial.distance import squareform
 #----------------------------------------------------------------------------
+import glob
 
 class NPZFolderDataset(Dataset):
     def __init__(self, path, mean_max_log = 6.4580402832733474,
@@ -164,9 +165,8 @@ class NPZFolderDataset(Dataset):
         self._path = path
         
         self._type = 'dir'
-        self._all_fnames = {os.path.relpath(os.path.join(root, fname), start=self._path) for root, _dirs, files in os.walk(self._path) for fname in files}
 
-        self._image_fnames = sorted(fname for fname in self._all_fnames)
+        self._image_fnames = sorted(glob.glob(os.path.join(path, '*.npz')))
 
         name = os.path.splitext(os.path.basename(self._path))[0]
         self.mean_max_log = mean_max_log
