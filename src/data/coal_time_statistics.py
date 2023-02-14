@@ -77,7 +77,7 @@ def main():
     h /= np.max(h)
     
     x = bins[:-1] + np.diff(bins) / 2.
-    f = interp1d(bins[:-1] + np.diff(bins) / 2., h)
+    f = interp1d(bins[:-1], h)
     
     pickle.dump(f, open('cdf_no_log.pkl', 'wb'))
         
