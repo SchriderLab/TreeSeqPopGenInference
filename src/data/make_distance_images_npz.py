@@ -22,7 +22,8 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     
-    parser.add_argument("--max_log", default = "6.252627993915886")
+    parser.add_argument("--mean_max_log", default = "6.252627993915886")
+    parser.add_argument("--min_clip", default = "-2.0")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -45,7 +46,7 @@ def main():
     args = parse_args()
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
-    max_log = float(args.max_log)
+    max_log = float(args.mean_max_log)
     
     for ifile in ifiles:
         logging.info('writing images for {}...'.format(ifile))
@@ -54,12 +55,12 @@ def main():
         
         x = np.load(ifile)
         D = x['D']
+        loc = x['loc']
         
         for ix in range(len(D)):
             d = np.log(D[ix]) / max_log
-            d = np.clip(d, -1, np.inf)
             
-            np.savez('{1}_{0:05d}.npz'.format(ix, odir), d = d)
+            np.savez('{1}_{0:05d}.npz'.format(ix, odir), d = d, loc = loc)
             
             
 
