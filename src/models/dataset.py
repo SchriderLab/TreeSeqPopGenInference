@@ -176,7 +176,7 @@ class NPZFolderDataset(Dataset):
 
         name = os.path.splitext(os.path.basename(self._path))[0]
         self._mean_max_log = mean_max_log
-        raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0).shape)
+        raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0)[0].shape)
         
         self._c_mean = np.array(mean)
         self._c_std = np.array(std)
