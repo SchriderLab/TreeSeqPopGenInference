@@ -160,10 +160,13 @@ from scipy.spatial.distance import squareform
 #----------------------------------------------------------------------------
 import glob
 
+mean_max_log = 6.4580402832733474
+mean = np.array((750, 0.01125, 0.0225, 0.175))
+                 
+std = np.array((144.33756729740642, 0.0007216878364870322, 0.0014433756729740645, 0.07216878364870322))
+
 class NPZFolderDataset(Dataset):
-    def __init__(self, path, mean_max_log = 6.4580402832733474,
-                     mean = (750, 0.01125, 0.0225, 0.175), 
-                     std = (144.33756729740642, 0.0007216878364870322, 0.0014433756729740645, 0.07216878364870322), 
+    def __init__(self, path, 
                      n_sample = 4096):
         self._path = path
         
@@ -188,9 +191,9 @@ class NPZFolderDataset(Dataset):
         fname = self._image_fnames[raw_idx]
         x = np.load(fname)
         
-        l = (x['loc'] - self.get_details(raw_idx).c_mean) / self.get_details(raw_idx).c_std
+        l = (x['loc'] - mean) / std
         
-        d = squareform(np.log(x['d']) / self.get_details(raw_idx).mean_max_log)
+        d = squareform(np.log(x['d']) / mean_max_log)
         d = np.expand_dims(d, 0)
         
         return d, l
