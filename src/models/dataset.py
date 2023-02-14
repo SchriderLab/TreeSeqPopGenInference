@@ -109,6 +109,9 @@ class Dataset(torch.utils.data.Dataset):
         d.raw_idx = int(self._raw_idx[idx])
         d.xflip = (int(self._xflip[idx]) != 0)
         d.raw_label = self._get_raw_labels()[d.raw_idx].copy()
+        d.c_mean = self._c_mean
+        d.c_std = self._c_std
+        d.mean_max_log = self._mean_max_log
         return d
 
     @property
@@ -185,9 +188,9 @@ class NPZFolderDataset(Dataset):
         fname = self._image_fnames[raw_idx]
         x = np.load(fname)
         
-        l = (x['loc'] - self._c_mean) / self._c_std
+        l = (x['loc'] - self.get_details(raw_idx).c_mean) / self.get_details(raw_idx).c_std
         
-        d = squareform(np.log(x['d']) / self._mean_max_log)
+        d = squareform(np.log(x['d']) / self.get_details(raw_idx).mean_max_log)
         d = np.expand_dims(d, 0)
         
         return d, l
