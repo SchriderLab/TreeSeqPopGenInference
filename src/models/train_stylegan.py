@@ -336,8 +336,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             noise = noise.to(device)
             
             fake_img, latents = generator(noise, return_latents=True)
-            latents.requires_grad = True
-
+            
             path_loss, mean_path_length, path_lengths = g_path_regularize(
                 fake_img, latents, mean_path_length
             )
