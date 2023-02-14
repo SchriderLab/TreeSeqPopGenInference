@@ -160,11 +160,13 @@ from scipy.spatial.distance import squareform
 #----------------------------------------------------------------------------
 import glob
 import cv2
+import pickle
 
 mean_max_log = 6.4580402832733474
 mean = np.array((750, 0.01125, 0.0225, 0.175))
                  
 std = np.array((144.33756729740642, 0.0007216878364870322, 0.0014433756729740645, 0.07216878364870322))
+cdf = pickle.load(open('cdf_no_log.pkl', 'rb'))
 
 class NPZFolderDataset(Dataset):
     def __init__(self, path, 
@@ -193,8 +195,15 @@ class NPZFolderDataset(Dataset):
         x = np.load(fname)
         
         l = (x['loc'] - mean) / std
+        d = x['D']
         
-        d = squareform(x['d'])
+        i, j = np.where(d > (800 / 999))
+        d[i, j] = cdf(np.exp(d[i,j] * mean_max_log))
+
+        i, j = np.where(d < (800 / 999))
+        d[i, j] = 0.
+
+        d = squareform(d)
         d = cv2.resize(d, (128, 128))
         
         d = np.expand_dims(d, 0)
