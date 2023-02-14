@@ -63,6 +63,10 @@ def main():
         loc = x['loc']
         
         for ix in range(len(D)):
+            d = D[ix]
+            d[d < cdf.x[0]] = cdf.x[0]
+            d[d > cdf.x[-1]] = cdf.x[-1]
+            
             d = cdf(D[ix])
             
             cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 255).astype(np.uint8))
