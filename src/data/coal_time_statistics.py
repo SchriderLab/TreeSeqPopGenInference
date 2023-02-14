@@ -53,6 +53,9 @@ def main():
     maxs = []
     mins = []
     
+    bins = np.linspace(-17., 7., 100)
+    h = np.zeros(len(bins) - 1)
+    
     l = []
     for ifile in ifiles:
         x = np.load(ifile)
@@ -60,6 +63,8 @@ def main():
         D = x['D']
         loc = x['loc']
         l.append(loc[0])
+        
+        h += np.histogram(D.flatten(), bins)[0]
         
         Dmax = np.max(np.log(D), axis = -1)
         Dmin = np.min(np.log(D), axis = -1)
@@ -69,6 +74,10 @@ def main():
         
         mean.append(np.mean(D))
         var.append(np.std(D))
+        
+    plt.bar(bins[:-1] + np.diff(bins) / 2., h)
+    plt.savefig('log_hist.png', dpi = 100)
+    plt.close()
         
     plt.scatter(mean, var, c = l, cmap = 'viridis')
     plt.savefig('mean_std_a001.png', dpi = 100)
