@@ -166,7 +166,7 @@ class NPZFolderDataset(Dataset):
         self._type = 'dir'
         self._all_fnames = {os.path.relpath(os.path.join(root, fname), start=self._path) for root, _dirs, files in os.walk(self._path) for fname in files}
 
-        self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in ['npz'])
+        self._image_fnames = sorted(fname for fname in self._all_fnames)
 
         name = os.path.splitext(os.path.basename(self._path))[0]
         self.mean_max_log = mean_max_log
