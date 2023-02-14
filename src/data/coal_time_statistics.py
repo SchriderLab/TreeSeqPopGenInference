@@ -69,7 +69,7 @@ def main():
         D = x['D']
         loc = x['loc']
         
-        h += np.histogram(np.log(D[:,-64 * 63 // 2:]).flatten(), bins, density = True)[0]
+        h += np.histogram(np.log(D[:1000,-64 * 63 // 2:]).flatten(), bins, density = True)[0]
         count += 1
         
     h /= count
