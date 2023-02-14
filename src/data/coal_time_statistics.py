@@ -53,7 +53,7 @@ def main():
     maxs = []
     mins = []
     
-    bins = np.linspace(-17., 7., 100)
+    bins = np.linspace(-7, 7., 100)
     h = np.zeros(len(bins) - 1)
     
     l = []
@@ -64,7 +64,7 @@ def main():
         loc = x['loc']
         l.append(loc[0])
         
-        h += np.histogram(np.log(D).flatten(), bins)[0]
+        h += np.histogram(np.log(D[:,-64 * 63 / 2:]).flatten(), bins, density = True)[0]
         
         Dmax = np.max(np.log(D), axis = -1)
         Dmin = np.min(np.log(D), axis = -1)
