@@ -332,15 +332,14 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
 
         if g_regularize:
             path_batch_size = max(1, args.batch // args.path_batch_shrink)
-            noise, _ = noise_generator.get_batch(path_batch_size)
-            noise = noise.to(device)
-            noise.require_grad = True
+            z, _ = noise_generator.get_batch(path_batch_size)
+            z = noise.to(device)
+            z.requires_grad = True
             
-            fake_img, latents = generator(noise, return_latents=True)
-            latents.requires_grad = True
+            fake_img, latents = generator(z, return_latents=True)
             
             path_loss, mean_path_length, path_lengths = g_path_regularize(
-                fake_img, latents, mean_path_length
+                fake_img, z, mean_path_length
             )
 
             generator.zero_grad()
