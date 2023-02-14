@@ -67,8 +67,8 @@ def main():
         maxs.append(np.max(Dmax))
         mins.append(np.min(Dmin))
         
-        mean.append(np.mean(Dmax))
-        var.append(np.std(Dmax))
+        mean.append(np.mean(D))
+        var.append(np.std(D))
         
     plt.scatter(mean, var, c = l, cmap = 'viridis')
     plt.savefig('mean_std_a001.png', dpi = 100)
