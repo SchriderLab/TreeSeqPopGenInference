@@ -169,11 +169,11 @@ class NPZFolderDataset(Dataset):
         self._image_fnames = sorted(glob.glob(os.path.join(path, '*.npz')))
 
         name = os.path.splitext(os.path.basename(self._path))[0]
-        self.mean_max_log = mean_max_log
+        self._mean_max_log = mean_max_log
         raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0).shape)
         
-        self.c_mean = np.array(mean)
-        self.c_std = np.array(std)
+        self._c_mean = np.array(mean)
+        self._c_std = np.array(std)
         
         super().__init__(name=name, raw_shape=raw_shape, use_labels = True)
 
@@ -185,9 +185,9 @@ class NPZFolderDataset(Dataset):
         fname = self._image_fnames[raw_idx]
         x = np.load(fname)
         
-        l = (x['loc'] - self.c_mean) / self.c_std
+        l = (x['loc'] - self._c_mean) / self._c_std
         
-        d = squareform(np.log(x['d']) / self.mean_max_log)
+        d = squareform(np.log(x['d']) / self._mean_max_log)
         d = np.expand_dims(d, 0)
         
         return d, l
