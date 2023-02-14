@@ -193,7 +193,7 @@ class NPZFolderDataset(Dataset):
         
         l = (x['loc'] - mean) / std
         
-        d = squareform(np.log(x['d']) / mean_max_log)
+        d = squareform(x['d'])
         d = np.expand_dims(d, 0)
         
         return d, l
