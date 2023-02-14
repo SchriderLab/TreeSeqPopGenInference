@@ -92,14 +92,9 @@ class Dataset(torch.utils.data.Dataset):
         return self._raw_idx.size
 
     def __getitem__(self, idx):
-        image = self._load_raw_image(self._raw_idx[idx])
-        assert isinstance(image, np.ndarray)
-        assert list(image.shape) == self.image_shape
-        assert image.dtype == np.uint8
-        if self._xflip[idx]:
-            assert image.ndim == 3 # CHW
-            image = image[:, :, ::-1]
-        return image.copy(), self.get_label(idx)
+        image, label = self._load_raw_image(self._raw_idx[idx])
+
+        return image.copy(), label
 
     def get_label(self, idx):
         label = self._get_raw_labels()[self._raw_idx[idx]]
@@ -158,7 +153,49 @@ class Dataset(torch.utils.data.Dataset):
     def has_onehot_labels(self):
         return self._get_raw_labels().dtype == np.int64
 
+from scipy.spatial.distance import squareform
 #----------------------------------------------------------------------------
+
+class NPZFolderDataset(Dataset):
+    def __init__(self, path, mean_max_log = 6.4580402832733474,
+                     mean = (750, 0.01125, 0.0225, 0.175), 
+                     std = (144.33756729740642, 0.0007216878364870322, 0.0014433756729740645, 0.07216878364870322), 
+                     n_sample = 4096):
+        self._path = path
+        
+        self._type = 'dir'
+        self._all_fnames = {os.path.relpath(os.path.join(root, fname), start=self._path) for root, _dirs, files in os.walk(self._path) for fname in files}
+
+        self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in ['npz'])
+
+        name = os.path.splitext(os.path.basename(self._path))[0]
+        self.mean_max_log = mean_max_log
+        raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0).shape)
+        
+        self.c_mean = np.array(mean)
+        self.c_std = np.array(std)
+        
+        super().__init__(name=name, raw_shape=raw_shape, use_labels = True)
+
+    @staticmethod
+    def _file_ext(fname):
+        return os.path.splitext(fname)[1].lower()
+
+    def _load_raw_image(self, raw_idx):
+        fname = self._image_fnames[raw_idx]
+        x = np.load(fname)
+        
+        l = (x['loc'] - self.c_mean) / self.c_std
+        
+        d = squareform(np.log(x['d']) / self.mean_max_log)
+        d = np.expand_dims(d, 0)
+        
+        return d, l
+    
+
+        
+        
+        
 
 class ImageFolderDataset(Dataset):
     def __init__(self,

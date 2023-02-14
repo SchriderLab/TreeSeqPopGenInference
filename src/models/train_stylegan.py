@@ -19,7 +19,7 @@ except ImportError:
     wandb = None
 
 
-from dataset import ImageFolderDataset
+from dataset import ImageFolderDataset, NPZFolderDataset
 from distributed import (
     get_rank,
     synchronize,
@@ -83,11 +83,27 @@ import torch.nn.functional as F
 
 import numpy as np
 
+import itertools
+
+
+
 class ManifoldNoise(object):
     def __init__(self, ifile, batch_size = 8):
         x = np.load(ifile)
         self.mu = x['mu']
         self.sigma = x['sigma']
+        
+        n_grid_points = 4
+
+        N = np.linspace(500, 1000, int(n_grid_points))
+        alpha0 = np.linspace(0.01, 0.0125, int(n_grid_points))
+        alpha1 = np.linspace(0.02, 0.025, n_grid_points)
+        m12 = np.linspace(0.05, 0.3, int(n_grid_points))
+
+        self.p = np.array(list(itertools.product(N, alpha0, alpha1, m12)))
+
+        self.p_mean = np.array((750, 0.01125, 0.0225, 0.175)).reshape(1, -1)
+        self.p_std = np.array((144.33756729740642, 0.0007216878364870322, 0.0014433756729740645, 0.07216878364870322)).reshape(1, -1)
     
         self.n = self.mu.shape[0]
         self.k = self.mu.shape[1]
@@ -103,8 +119,21 @@ class ManifoldNoise(object):
         z *= self.sigma[ii]
         z += self.mu[ii]
         
-        return torch.FloatTensor(z)
+        c = (self.p[ii] - self.p_mean) / self.p_std
         
+        return torch.FloatTensor(z), torch.FloatTensor(c)
+    
+    def get_batch_index(self, n, i):
+        # standard normal
+        z = np.random.normal(0, 1, (n, self.k))
+        s = self.sigma[i].reshape(1, -1)
+        mu = self.mu[i].reshape(1, -1)
+        
+        # transform to sigma, mu
+        z *= s
+        z += mu
+        
+        return torch.FloatTensor(z)
 
 class OrthogonalProjectionLoss(nn.Module):
     def __init__(self, gamma=0.5):
@@ -223,13 +252,13 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             print("Done!")
             break
 
-        real_img = next(loader)[0]
+        real_img, c_real = next(loader)
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
 
-        noise = noise_generator.get_batch(args.batch).to(device)
+        noise, c_fake = noise_generator.get_batch(args.batch).to(device)
         fake_img = generator(noise)
 
         if args.augment:
@@ -239,8 +268,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         else:
             real_img_aug = real_img
 
-        fake_pred = discriminator(fake_img)
-        real_pred = discriminator(real_img_aug)
+        fake_pred = discriminator(fake_img, c_fake)
+        real_pred = discriminator(real_img_aug, c_real)
         d_loss = d_logistic_loss(real_pred, fake_pred)
 
         loss_dict["d"] = d_loss
@@ -266,7 +295,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             else:
                 real_img_aug = real_img
 
-            real_pred = discriminator(real_img_aug)
+            real_pred = discriminator(real_img_aug, c_real)
             r1_loss = d_r1_loss(real_pred, real_img)
 
             discriminator.zero_grad()
@@ -279,10 +308,10 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        noise = noise_generator.get_batch(args.batch).to(device)
+        noise, c_fake = noise_generator.get_batch(args.batch).to(device)
         fake_img = generator(noise)
 
-        fake_pred = discriminator(fake_img)
+        fake_pred = discriminator(fake_img, c_fake)
         g_loss = g_nonsaturating_loss(fake_pred)
 
         loss_dict["g"] = g_loss
@@ -364,7 +393,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                     sample = g_ema(sample_z)
                     utils.save_image(
                         sample,
-                        f"sample/{str(i).zfill(6)}.png",
+                        os.path.join(args.odir, f"sample/{str(i).zfill(6)}.png"),
                         nrow=int(args.n_sample ** 0.5),
                         normalize=False,
                         range=(-1, 1),
@@ -381,7 +410,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         "args": args,
                         "ada_aug_p": ada_aug_p,
                     },
-                    f"checkpoint/{str(i).zfill(6)}.pt",
+                    os.path.join(args.odir, f"checkpoint/{str(i).zfill(6)}.pt"),
                 )
 
 
@@ -413,7 +442,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--path_regularize",
         type=float,
-        default=2,
+        default = 2,
         help="weight of the path length regularization",
     )
     parser.add_argument(
@@ -447,7 +476,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--channel_multiplier",
         type=int,
-        default=1,
+        default=2,
         help="channel multiplier factor for the model. config-f = 2, else = 1",
     )
     parser.add_argument(
@@ -493,12 +522,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--n_mlp",
         type=int,
-        default=6,
+        default=8,
         help="dimensionality of the latent space",
     )
+    parser.add_argument("--odir", default = "None")
     
-
     args = parser.parse_args()
+    if args.odir != "None":
+        if not os.path.exists(args.odir):
+            os.system('mkdir -p {}'.format(args.odir))
+            
+    os.system('mkdir -p {}'.format(os.path.join(args.odir, 'sample')))
+    os.system('mkdir -p {}'.format(os.path.join(args.odir, 'checkpoint')))
 
     n_gpu = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.distributed = n_gpu > 1
@@ -517,13 +552,14 @@ if __name__ == "__main__":
         from model import Generator, Discriminator
 
     elif args.arch == 'swagan':
-        from swagan_gray import Generator, Discriminator
+        from swagan_gray import Generator
+        from networks_stylegan2 import Discriminator
 
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
     ).to(device)
     discriminator = Discriminator(
-        args.size, channel_multiplier=args.channel_multiplier
+        args.size, 1
     ).to(device)
     g_ema = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
@@ -579,7 +615,7 @@ if __name__ == "__main__":
             broadcast_buffers=False,
         )
 
-    dataset = ImageFolderDataset(args.path)
+    dataset = NPZFolderDataset(args.path)
     loader = data.DataLoader(
         dataset,
         batch_size=args.batch,
