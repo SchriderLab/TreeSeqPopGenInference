@@ -405,7 +405,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         sample,
                         os.path.join(args.odir, f"sample/{str(i).zfill(6)}.png"),
                         nrow=int(args.n_sample ** 0.5),
-                        normalize=False,
+                        normalize=True,
                         range=(-1, 1),
                     )
 
