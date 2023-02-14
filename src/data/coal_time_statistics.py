@@ -73,6 +73,8 @@ def main():
         count += 1
         
     h /= count
+    h = np.cumsum(h)
+    h /= np.max(h)
     
     x = bins[:-1] + np.diff(bins) / 2.
     f = interp1d(bins[:-1] + np.diff(bins) / 2., h)
