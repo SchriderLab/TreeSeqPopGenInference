@@ -159,6 +159,7 @@ class Dataset(torch.utils.data.Dataset):
 from scipy.spatial.distance import squareform
 #----------------------------------------------------------------------------
 import glob
+import cv2
 
 mean_max_log = 6.4580402832733474
 mean = np.array((750, 0.01125, 0.0225, 0.175))
@@ -194,6 +195,8 @@ class NPZFolderDataset(Dataset):
         l = (x['loc'] - mean) / std
         
         d = squareform(x['d'])
+        d = cv2.resize(d, (128, 128))
+        
         d = np.expand_dims(d, 0)
         
         return d, l
