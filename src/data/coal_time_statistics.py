@@ -75,6 +75,7 @@ def main():
         mean.append(np.mean(D))
         var.append(np.std(D))
         
+    print(h)
     plt.bar(bins[:-1] + np.diff(bins) / 2., h)
     plt.savefig('log_hist.png', dpi = 100)
     plt.close()
