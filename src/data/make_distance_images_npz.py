@@ -48,6 +48,7 @@ def main():
     args = parse_args()
     
     cdf = pickle.load(open('cdf_no_log.pkl', 'rb'))
+    print(cdf.x.zero)
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     max_log = float(args.mean_max_log)
