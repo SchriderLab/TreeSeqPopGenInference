@@ -195,7 +195,7 @@ class NPZFolderDataset(Dataset):
         x = np.load(fname)
         
         l = (x['loc'] - mean) / std
-        d = x['D']
+        d = x['d']
         
         i, j = np.where(d > (800 / 999))
         d[i, j] = cdf(np.exp(d[i,j] * mean_max_log)) * 2 - 1
