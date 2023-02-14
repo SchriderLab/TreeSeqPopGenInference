@@ -42,10 +42,13 @@ def parse_args():
 
     return args
 
+from scipy.interpolate import interp1d
+import pickle
+
 def main():
     args = parse_args()
     
-    ifiles = glob.glob(os.path.join(args.idir, '*.npz'))
+    ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     
     mean = []
     var = []
@@ -53,27 +56,38 @@ def main():
     maxs = []
     mins = []
     
-    bins = np.linspace(-7, 7., 100)
+    bins = np.linspace(0., 7., 100)
     h = np.zeros(len(bins) - 1)
+    
+    count = 0
     
     l = []
     for ifile in ifiles:
+        print(ifile)
         x = np.load(ifile)
         
         D = x['D']
         loc = x['loc']
-        l.append(loc[0])
         
         h += np.histogram(np.log(D[:,-64 * 63 // 2:]).flatten(), bins, density = True)[0]
+        count += 1
         
-        Dmax = np.max(np.log(D), axis = -1)
-        Dmin = np.min(np.log(D), axis = -1)
+    h /= count
+    
+    x = bins[:-1] + np.diff(bins) / 2.
+    f = interp1d(bins[:-1] + np.diff(bins) / 2., h)
+    
+    pickle.dump(f, open('cdf.pkl', 'wb'))
+        
+    """
+    Dmax = np.max(np.log(D), axis = -1)
+    Dmin = np.min(np.log(D), axis = -1)
 
-        maxs.append(np.max(Dmax))
-        mins.append(np.min(Dmin))
-        
-        mean.append(np.mean(D))
-        var.append(np.std(D))
+    maxs.append(np.max(Dmax))
+    mins.append(np.min(Dmin))
+    
+    mean.append(np.mean(D))
+    var.append(np.std(D))
         
     print(h)
     plt.bar(bins[:-1] + np.diff(bins) / 2., h)
@@ -92,7 +106,7 @@ def main():
     print(np.percentile(mins, 90))
     print(np.std(mins))
     print(np.min(mins))
-
+    """
     # ${code_blocks}
 
 if __name__ == '__main__':
