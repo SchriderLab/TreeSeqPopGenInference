@@ -198,7 +198,7 @@ class NPZFolderDataset(Dataset):
         d = x['D']
         
         i, j = np.where(d > (800 / 999))
-        d[i, j] = cdf(np.exp(d[i,j] * mean_max_log))
+        d[i, j] = cdf(np.exp(d[i,j] * mean_max_log)) * 2 - 1
 
         i, j = np.where(d < (800 / 999))
         d[i, j] = 0.
