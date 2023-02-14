@@ -558,7 +558,7 @@ if __name__ == "__main__":
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
     ).to(device)
-    discriminator = Discriminator(
+    discriminator = Discriminator(4, 
         args.size, 1
     ).to(device)
     g_ema = Generator(
