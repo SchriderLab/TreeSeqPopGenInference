@@ -174,7 +174,7 @@ def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
         fake_img.shape[2] * fake_img.shape[3]
     )
     grad, = autograd.grad(
-        outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True
+        outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True, allow_unused = True
     )
     path_lengths = torch.sqrt(grad.pow(2).sum(2).mean(1))
 
@@ -337,6 +337,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             noise.require_grad = True
             
             fake_img, latents = generator(noise, return_latents=True)
+            latents.requires_grad = True
             
             path_loss, mean_path_length, path_lengths = g_path_regularize(
                 fake_img, latents, mean_path_length
