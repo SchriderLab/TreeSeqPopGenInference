@@ -197,11 +197,11 @@ class NPZFolderDataset(Dataset):
         l = (x['loc'] - mean) / std
         d = x['d']
         
-        i, j = np.where(d > (800 / 999))
-        d[i, j] = cdf(np.exp(d[i,j] * mean_max_log)) * 2 - 1
+        i = np.where(d > (800 / 999))
+        d[i] = cdf(np.exp(d[i] * mean_max_log)) * 2 - 1
 
-        i, j = np.where(d < (800 / 999))
-        d[i, j] = 0.
+        i = np.where(d < (800 / 999))
+        d[i] = 0.
 
         d = squareform(d)
         d = cv2.resize(d, (128, 128))
