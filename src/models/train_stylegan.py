@@ -253,16 +253,16 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             print("Done!")
             break
 
-        real_img, c_real = next(loader)
-        c_real = c_real.to(device)
+        real_img, _ = next(loader)
+        #c_real = c_real.to(device)
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
 
-        noise, c_fake = noise_generator.get_batch(args.batch)
+        noise, _ = noise_generator.get_batch(args.batch)
         noise = noise.to(device)
-        c_fake = c_fake.to(device)
+        #c_fake = c_fake.to(device)
         
         fake_img = generator(noise)
 
@@ -273,8 +273,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         else:
             real_img_aug = real_img
 
-        fake_pred = discriminator(fake_img, c_fake)
-        real_pred = discriminator(real_img_aug, c_real)
+        fake_pred = discriminator(fake_img)
+        real_pred = discriminator(real_img_aug)
         d_loss = d_logistic_loss(real_pred, fake_pred)
 
         loss_dict["d"] = d_loss
@@ -300,7 +300,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             else:
                 real_img_aug = real_img
 
-            real_pred = discriminator(real_img_aug, c_real)
+            real_pred = discriminator(real_img_aug)
             r1_loss = d_r1_loss(real_pred, real_img)
 
             discriminator.zero_grad()
@@ -313,13 +313,13 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        noise, c_fake = noise_generator.get_batch(args.batch)
+        noise, _ = noise_generator.get_batch(args.batch)
         noise = noise.to(device)
-        c_fake = c_fake.to(device)
+        #c_fake = c_fake.to(device)
         
         fake_img = generator(noise)
 
-        fake_pred = discriminator(fake_img, c_fake)
+        fake_pred = discriminator(fake_img)
         g_loss = g_nonsaturating_loss(fake_pred)
 
         loss_dict["g"] = g_loss
@@ -401,12 +401,19 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                 with torch.no_grad():
                     g_ema.eval()
                     sample = g_ema(sample_z)
+                    
                     utils.save_image(
                         sample,
                         os.path.join(args.odir, f"sample/{str(i).zfill(6)}.png"),
                         nrow=int(args.n_sample ** 0.5),
                         normalize=True,
+                        range = (-1., 1.)
                     )
+                    
+                    #sample = sample.detach().cpu().numpy() * args.mean_max_log
+                    #h = np.histogram(sample.flatten())
+                    
+                    
 
             if i % 10000 == 0:
                 torch.save(
@@ -534,6 +541,7 @@ if __name__ == "__main__":
         default=8,
         help="dimensionality of the latent space",
     )
+    parser.add_argument("--mean_max_log", default = "6.4580402832733474")
     parser.add_argument("--odir", default = "None")
     
     args = parser.parse_args()
@@ -561,14 +569,13 @@ if __name__ == "__main__":
         from model import Generator, Discriminator
 
     elif args.arch == 'swagan':
-        from swagan_gray import Generator
-        from networks_stylegan2 import Discriminator
-
+        from swagan_gray import Generator, Discriminator
+        
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
     ).to(device)
-    discriminator = Discriminator(4, 
-        args.size, 1
+    discriminator = Discriminator(
+        args.size, args.channel_multiplier
     ).to(device)
     g_ema = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
@@ -624,7 +631,7 @@ if __name__ == "__main__":
             broadcast_buffers=False,
         )
 
-    dataset = NPZFolderDataset(args.path)
+    dataset = ImageFolderDataset(args.path)
     loader = data.DataLoader(
         dataset,
         batch_size=args.batch,
