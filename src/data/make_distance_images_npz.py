@@ -42,8 +42,12 @@ def parse_args():
 
     return args
 
+import pickle
+
 def main():
     args = parse_args()
+    
+    cdf = pickle.load(open('cdf_no_log.pkl', 'rb'))
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     max_log = float(args.mean_max_log)
@@ -58,9 +62,11 @@ def main():
         loc = x['loc']
         
         for ix in range(len(D)):
-            d = np.log(D[ix]) / max_log
+            d = cdf(D[ix])
             
-            np.savez('{1}_{0:05d}.npz'.format(ix, odir), d = d, loc = loc)
+            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 255).astype(np.uint8))
+            
+            #np.savez('{1}_{0:05d}.npz'.format(ix, odir), d = d, loc = loc)
             
             
 
