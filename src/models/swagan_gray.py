@@ -252,8 +252,11 @@ class Generator(nn.Module):
         self.iwt = InverseHaarTransform(3)
         self.n_latent = self.log_size * 2 - 2
         
-    def forward(self, z, return_latents = False):
-        latent = self.style(z).repeat(self.n_latent, 1, 1).transpose(0, 1)
+    def forward(self, z, return_latents = False, input_is_latent = True):
+        if not input_is_latent:
+            latent = self.style(z).repeat(self.n_latent, 1, 1).transpose(0, 1)
+        else:
+            latent = z.repeat(self.n_latent, 1, 1).transpose(0, 1)
 
         out = self.input(latent)
         out = self.conv1(out, latent[:, 0])
