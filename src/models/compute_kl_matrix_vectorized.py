@@ -22,7 +22,7 @@ class CoalExponentialRateFunction(nn.Module):
     # alpha: (n, ) vector of exponential growth/decay rates where n = number of populations (alpha != 0.)
     # T: (n, ) vector of stopping times for growth or None
     # N: (n, ) vector of initial effective population sizes
-    def __init__(self, alpha, T, N):
+    def __init__(self, alpha, N, T = None):
         super().__init__()
         # (1, n)
         self.alpha = nn.Parameter(torch.unsqueeze(torch.FloatTensor(alpha), 0))
@@ -39,19 +39,9 @@ class CoalExponentialRateFunction(nn.Module):
         t0 = t0.unsqueeze(1)
         s_ = s * (s - 1) / 2.
         
-        if self.T is not None:
-            t1 = t * 1
-            
-            T = torch.tile(self.T, (t.shape[0], 1))
-            t1 = torch.where(t1 < T, t1, T)
-            
-            y = s * (torch.exp(self.alpha * t1) - 1) / (self.alpha * self.N)            
-            y += s * torch.where(t - T > 0, t - T, torch.tensor(0., dtype = t.dtype)) * (1. / (self.N * torch.exp(-self.alpha * T)))
-
-        else:
-            N = (2 * self.N * torch.exp(-self.alpha * t0))
-            
-            y = s_ * (torch.exp(self.alpha * t) - 1) / (self.alpha * N)
+        N = (2 * self.N * torch.exp(-self.alpha * t0))
+        
+        y = s_ * (torch.exp(self.alpha * t) - 1) / (self.alpha * N)
 
         return y
     
@@ -62,7 +52,7 @@ class CoalExponentialRateFunction(nn.Module):
         return (2. * torch.exp(-self.alpha * t) * self.N) ** -1
     
 class MigExponentialRateFunction(nn.Module):
-    def __init__(self, alpha, T, N, m):
+    def __init__(self, alpha, N, m, T = None):
         super().__init__()
         
         self.n_pops = alpha.shape[0]
@@ -89,26 +79,19 @@ class MigExponentialRateFunction(nn.Module):
             self.T = None
     
     # t is the vector (|e|,) of times in generations
+    # t0 is the vector (|e|,) of prior event times in generations
     # s is the matrix of population sizes (|e|, n)
     def forward(self, t, t0, s):
         t = t.unsqueeze(1)
         t0 = t.unsqueeze(1)
         
-        if self.T is not None:
-            t1 = t * 1
-            
-            T = torch.tile(self.T, (t.shape[0], 1))
-            t1 = torch.where(t1 < T, t1, T)
-
-            y = self.m * self.N * (torch.exp(self.alpha * t1) - 1) / self.alpha
-            
-            y += self.m * self.N * torch.exp(self.alpha * T) * torch.where(t - T > 0, t - T, torch.tensor(0., dtype = t.dtype))
+        alpha = torch.tile(self.alpha, (t.shape[0], 1))
         
-        else:
-            N = (self.N * torch.exp(self.alpha * t0))[:,:,0]
-
-            y = s[:,self.i] * self.m * N * (torch.exp(self.alpha * t) - 1) / (self.alpha)
+        N = (self.N * torch.exp(self.alpha * t0))[:,:,0]
                 
+        y = s[:,self.i] * self.m * N * (torch.exp(self.alpha * t) - 1)
+        y = torch.where(alpha == 0, s[:,self.i] * self.m * N * t, y / self.alpha)
+        
         return y
 
     def intensity(self, t, s):
