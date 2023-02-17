@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 from torch import nn
 import torch
 
+import json
+
 class CoalExponentialRateFunction(nn.Module):
     # alpha: (n, ) vector of exponential growth/decay rates where n = number of populations (alpha != 0.)
     # T: (n, ) vector of stopping times for growth or None
@@ -191,23 +193,22 @@ def main():
     args = parse_args()
     
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
+    ifiles_loc = sorted(glob.glob(os.path.join(args.idir, '*.json')))
     ix = int(args.i)
 
     ret = np.zeros(len(ifiles))
     trees = np.load(ifiles[ix], allow_pickle = True)
     
-    n, a1, a2, m = tuple(trees['loc'])
-    ori_params = (n, a1, a2, m)
+    ifile = json.load(open(ifiles_loc[ix]))
+    
+    N = np.array(ifile['N'])
+    M = np.array(ifile['M']).reshape(N.shape[0], N.shape[0])
+    alpha = np.array(ifile['alpha'])
     
     p = []
 
     logging.info('getting probabilities for p...')
-    M = np.array([[0., m], [0.,0.]])
-    N = np.array([n, n])
-    print(N)
-    
-    alpha = np.array([a1, a2])
-    model = DemographyLL(CoalExponentialRateFunction(alpha, None, N), MigExponentialRateFunction(alpha, None, N, M))
+    model = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
     
     with torch.no_grad():
         for events in trees['E']:
@@ -218,16 +219,16 @@ def main():
     ii = sorted(list(set(list(range(len(ifiles)))).difference([ix])))
     for ij in ii:
         logging.info('getting probabilities for q_i = {}...'.format(ij))
-        trees_ = np.load(ifiles[ij], allow_pickle = True)
+        #trees_ = np.load(ifiles[ij], allow_pickle = True)
         
-        n, a1, a2, m = tuple(trees_['loc'])
-        print(ori_params, (n, a1, a2, m))
+        ifile = json.load(open(ifiles_loc[ij]))
+        
+        N = np.array(ifile['N'])
+        M = np.array(ifile['M']).reshape(N.shape[0], N.shape[0])
+        alpha = np.array(ifile['alpha'])
+        
         q = []
-        M = np.array([[0., m], [0.,0.]])
-        N = np.array([n, n])
-        alpha = np.array([a1, a2])
-        
-        model = DemographyLL(CoalExponentialRateFunction(alpha, None, N), MigExponentialRateFunction(alpha, None, N, M))
+        model = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
         
         with torch.no_grad():
             for events in trees['E']:
@@ -245,7 +246,7 @@ def main():
         logging.info('got kl divergence of {}...'.format(kl_))
         ret[ij] = kl_
         
-    np.savez(args.ofile, row = ret, loc = np.array(list(ori_params)))
+    np.savez(args.ofile, row = ret)
 
     # ${code_blocks}
 
