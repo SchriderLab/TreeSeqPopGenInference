@@ -54,7 +54,7 @@ def main():
         
         for ix, (m1, m2) in enumerate(todo):
             ofile = os.path.join(args.odir, '{0:04d}.json'.format(ix))
-            d = {"N" : N, "alpha" : alpha, "s" : s, "M" : [0., m1, 0., m2]}
+            d = {"N" : N, "alpha" : alpha, "s" : s, "M" : [0., m1, m2, 0.]}
         
             # Serializing json
             json_object = json.dumps(d, indent=4)
