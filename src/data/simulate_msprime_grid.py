@@ -175,6 +175,8 @@ def main():
     sample_sizes = np.array(ifile['s'])
     alpha = np.array(ifile['alpha'])
     
+    print(N, M, sample_sizes, alpha)
+    
     simulator = NPopSimulator(sample_sizes, N, alpha, M)
     
     ll = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
