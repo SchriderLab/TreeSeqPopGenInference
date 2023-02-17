@@ -66,7 +66,7 @@ def main():
             ifiles.append(ofile)
     
     if len(ifiles) > 0:    
-        cmd = 'sbatch -t 02:00:00 --mem=8G --wrap "src/data/simulate_msprime_grid.py --ifile {0} --ofile {1} --n_replicates {2}"'
+        cmd = 'sbatch -t 02:00:00 --mem=8G --wrap "python3 src/data/simulate_msprime_grid.py --ifile {0} --ofile {1} --n_replicates {2}"'
 
         for ix in range(len(ifiles)):
             cmd_ = cmd.format(ifiles[ix], ifiles[ix].replace('.json', '.npz'), args.n_replicates)
