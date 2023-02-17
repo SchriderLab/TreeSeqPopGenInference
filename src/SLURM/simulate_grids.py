@@ -72,7 +72,7 @@ def main():
             cmd_ = cmd.format(ifiles[ix], ifiles[ix].replace('.json', '.npz'), args.n_replicates)
         
             print(cmd_)
-            #os.system(cmd_)
+            os.system(cmd_)
 
     # ${code_blocks}
 
