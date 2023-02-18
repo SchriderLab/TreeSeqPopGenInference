@@ -43,8 +43,8 @@ def main():
 
     ifiles = []
     if args.grid == "m01":
-        m01 = np.linspace(0.01, 0.5, 8)
-        m10 = np.linspace(0.01, 0.5, 8)
+        m01 = np.linspace(0.01, 0.15, 8)
+        m10 = np.linspace(0.01, 0.15, 8)
         
         N = [1000, 1000]
         alpha = [0.01, 0.01]
