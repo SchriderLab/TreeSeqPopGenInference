@@ -53,6 +53,7 @@ def main():
     maxs = []
     mins = []
     
+    print('reading for maxima and minima...')
     for ifile in ifiles:
         x = np.load(ifile)
         
@@ -67,6 +68,8 @@ def main():
     count = 0
     
     l = []
+    
+    print('computing histogram...')
     for ifile in ifiles:
         print(ifile)
         x = np.load(ifile)
@@ -81,12 +84,13 @@ def main():
     h = np.cumsum(h)
     h /= np.max(h)
     
-    x = np.concatenate(np.zeros(1), bins[:-1] + np.diff(bins) / 2.)
-    h = np.concatenate(np.zeros(1), h)
+    x = np.concatenate([np.zeros(1), bins[:-1] + np.diff(bins) / 2.])
+    h = np.concatenate([np.zeros(1), h])
     
     f = interp1d(x, h)
     
     pickle.dump(f, open(args.ofile, 'wb'))
+    print('done!')
     
     """
     Dmax = np.max(np.log(D), axis = -1)
