@@ -24,8 +24,9 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
+    parser.add_argument("--n_bins", default = "1000")
 
-    parser.add_argument("--odir", default = "None")
+    parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
 
     if args.verbose:
@@ -34,10 +35,6 @@ def parse_args():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if args.odir != "None":
-        if not os.path.exists(args.odir):
-            os.system('mkdir -p {}'.format(args.odir))
-            logging.debug('root: made output directory {0}'.format(args.odir))
     # ${odir_del_block}
 
     return args
@@ -56,7 +53,15 @@ def main():
     maxs = []
     mins = []
     
-    bins = np.linspace(0., 800., 1000)
+    for ifile in ifiles:
+        x = np.load(ifile)
+        
+        D = x['D']
+        
+        maxs.append(np.max(D))
+        mins.append(np.min(D))
+        
+    bins = np.linspace(np.min(mins), np.max(maxs), int(args.n_bins))
     h = np.zeros(len(bins) - 1)
     
     count = 0
@@ -69,18 +74,20 @@ def main():
         D = x['D']
         loc = x['loc']
         
-        h += np.histogram(D[:1000,-64 * 63 // 2:].flatten(), bins, density = True)[0]
+        h += np.histogram(D.flatten(), bins, density = True)[0]
         count += 1
         
     h /= count
     h = np.cumsum(h)
     h /= np.max(h)
     
-    x = bins[:-1] + np.diff(bins) / 2.
-    f = interp1d(bins[:-1], h)
+    x = np.concatenate(np.zeros(1), bins[:-1] + np.diff(bins) / 2.)
+    h = np.concatenate(np.zeros(1), h)
     
-    pickle.dump(f, open('cdf_no_log.pkl', 'wb'))
-        
+    f = interp1d(x, h)
+    
+    pickle.dump(f, open(args.ofile, 'wb'))
+    
     """
     Dmax = np.max(np.log(D), axis = -1)
     Dmin = np.min(np.log(D), axis = -1)
