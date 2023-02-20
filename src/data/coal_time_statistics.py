@@ -66,16 +66,13 @@ def main():
     h = np.zeros(len(bins) - 1)
     
     count = 0
-    
-    l = []
-    
+        
     print('computing histogram...')
     for ifile in ifiles:
         print(ifile)
         x = np.load(ifile)
         
         D = x['D']
-        loc = x['loc']
         
         h += np.histogram(D.flatten(), bins, density = True)[0]
         count += 1
