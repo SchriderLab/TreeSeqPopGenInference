@@ -52,6 +52,7 @@ def main():
     if args.grid == "m03":
         N = 12
         
+        print('computing mean images...')
         mean_images = []
         for ix, ifile in enumerate(ifiles):
             x = np.load(ifile)
@@ -69,16 +70,44 @@ def main():
                 
             mean_images.append(np.mean(np.array(_), axis = 0))
             
-        mean_images = torch.FloatTensor(np.expand_dims(np.array(mean_images), 1))
+        mean_images = np.array(mean_images)
+        mean_images_ = torch.FloatTensor(np.expand_dims(mean_images, 1))
         
-        ret = make_grid(mean_images, nrow = N).numpy()[0,:,:]
+        ret = make_grid(mean_images_, nrow = N).numpy()[0,:,:]
         
         plt.imshow(ret)
         plt.colorbar()
-        plt.savefig('m03_grid.png', dpi = 100)
+        plt.savefig('m03_grid_mean.png', dpi = 100)
         plt.close()
+        
+        print('computing var images...')
+        var_images = []
+        for ix, ifile in enumerate(ifiles):
+            x = np.load(ifile)
                 
-    
+            D = x['D']
+            D[D < cdf.x[0]] = cdf.x[0]
+            D[D > cdf.x[-1]] = cdf.x[-1]
+            D = cdf(D)
+            
+            _ = []
+            for d in D:
+                im = squareform(d)
+                
+                _.append((im - mean_images[ix])**2)
+                
+            var_images.append(np.mean(np.array(_), axis = 0))
+
+        var_images = np.array(var_images)
+        mean_images_ = torch.FloatTensor(np.expand_dims(var_images, 1))
+        
+        ret = make_grid(mean_images_, nrow = N).numpy()[0,:,:]
+        
+        plt.imshow(ret)
+        plt.colorbar()
+        plt.savefig('m03_grid_var.png', dpi = 100)
+        plt.close()
+            
 
     # ${code_blocks}
 
