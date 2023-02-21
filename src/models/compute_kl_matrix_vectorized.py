@@ -149,6 +149,7 @@ def setup_ll_inputs(E, N, alpha, m):
     counts = np.vstack((np.zeros((1, n_total)), copy.copy(E[:,-n_total:])))
     counts = np.diff(counts, axis = 0)
     
+    print(counts)
     print(counts.dtype, pop_sizes.dtype, t0.dtype)
     
     return torch.FloatTensor(t0), torch.FloatTensor(t), torch.FloatTensor(pop_sizes), torch.LongTensor(counts[:,:n_pops]), \
