@@ -21,6 +21,7 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
+    parser.add_argument("--cdf", default = "None")
     
     parser.add_argument("--mean_max_log", default = "6.252627993915886")
     parser.add_argument("--min_clip", default = "-2.0")
@@ -47,11 +48,9 @@ import pickle
 def main():
     args = parse_args()
     
-    cdf = pickle.load(open('cdf_no_log.pkl', 'rb'))
-    print(cdf.x[0])
+    cdf = pickle.load(open(args.cdf, 'rb'))
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
-    max_log = float(args.mean_max_log)
     
     for ifile in ifiles:
         logging.info('writing images for {}...'.format(ifile))
@@ -60,8 +59,7 @@ def main():
         
         x = np.load(ifile)
         D = x['D']
-        loc = x['loc']
-        
+
         for ix in range(len(D)):
             d = D[ix]
             d[d < cdf.x[0]] = cdf.x[0]
