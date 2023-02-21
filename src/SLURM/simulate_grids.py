@@ -42,7 +42,7 @@ def main():
     args = parse_args()
 
     ifiles = []
-    if args.grid == "m01":
+    if args.grid == "m03":
         m01 = np.linspace(0.01, 0.15, 12)
         m10 = np.linspace(0.01, 0.15, 12)
         
@@ -55,6 +55,26 @@ def main():
         for ix, (m1, m2) in enumerate(todo):
             ofile = os.path.join(args.odir, '{0:04d}.json'.format(ix))
             d = {"N" : N, "alpha" : alpha, "s" : s, "M" : [0., m1, m2, 0.]}
+        
+            # Serializing json
+            json_object = json.dumps(d, indent=4)
+            
+            # Writing to sample.json
+            with open(ofile, "w") as outfile:
+                outfile.write(json_object)
+    
+            ifiles.append(ofile)
+            
+    elif args.grid == "n01":
+        N = np.linspace(100., 1000, 128)
+    
+        alpha = [0.01]
+        s = [64]
+        M = [0.]
+        
+        for ix, n in enumerate(N):
+            ofile = os.path.join(args.odir, '{0:04d}.json'.format(ix))
+            d = {"N" : n, "alpha" : alpha, "s" : s, "M" : M}
         
             # Serializing json
             json_object = json.dumps(d, indent=4)
