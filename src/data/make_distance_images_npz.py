@@ -59,17 +59,16 @@ def main():
         
         x = np.load(ifile)
         D = x['D']
+        D[D < cdf.x[0]] = cdf.x[0]
+        D[D > cdf.x[-1]] = cdf.x[-1]
+
+        D = cdf(D)
 
         for ix in range(len(D)):
             d = D[ix]
-            d[d < cdf.x[0]] = cdf.x[0]
-            d[d > cdf.x[-1]] = cdf.x[-1]
-            
-            d = cdf(D[ix])
             
             cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 255).astype(np.uint8))
-            
-            #np.savez('{1}_{0:05d}.npz'.format(ix, odir), d = d, loc = loc)
+
             
             
 
