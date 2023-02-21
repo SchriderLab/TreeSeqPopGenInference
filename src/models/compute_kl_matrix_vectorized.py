@@ -112,28 +112,22 @@ class DemographyLL(nn.Module):
         
     def forward(self, t0, t, s, k_coal, k_mig):
         d1 = self.coal(t - t0, t0, s)
-        d2 = self.mig(t - t0, t0, s)
-        
         p_coal = torch.exp(-d1) * torch.pow(d1, k_coal)
-        p_mig = torch.exp(-d2) * torch.pow(d2, k_mig)
-        
-        #p_coal = torch.where(k_coal == 1, 1 - p_coal, p_coal)
-        #p_mig = torch.where(k_mig == 1, 1 - p_mig, p_mig)
-        
         p_coal = torch.where(s <= 1, torch.tensor(1., dtype = p_coal.dtype), p_coal)
-        p_mig = torch.where(s[:,self.mig.i] == 0, torch.tensor(1., dtype = p_coal.dtype), p_mig)
-        p_mig = torch.where(p_mig == 0, torch.tensor(1., dtype = p_coal.dtype), p_mig)
         p_coal = torch.where(p_coal == 0, torch.tensor(1., dtype = p_coal.dtype), p_coal)
         
-        p_coal = torch.log2(p_coal)
-        p_mig = torch.log2(p_mig)
-        if torch.any(torch.isinf(p_coal)):
-            print(s, k_coal, k_mig)
-            print(p_coal)
-        if torch.any(torch.isinf(p_coal)):
-            print(p_mig) 
+        p = torch.log2(p_coal).sum()
         
-        return p_coal.sum() + p_mig.sum()
+        if self.mig is not None:
+            d2 = self.mig(t - t0, t0, s)
+            p_mig = torch.exp(-d2) * torch.pow(d2, k_mig)
+            p_mig = torch.where(s[:,self.mig.i] == 0, torch.tensor(1., dtype = p_coal.dtype), p_mig)
+            p_mig = torch.where(p_mig == 0, torch.tensor(1., dtype = p_coal.dtype), p_mig)
+    
+            p += torch.log2(p_mig).sum()
+        
+        
+        return p 
     
 def setup_ll_inputs(E, N, alpha, m):
     E = np.array(E)

@@ -175,12 +175,12 @@ def main():
     sample_sizes = np.array(ifile['s'])
     alpha = np.array(ifile['alpha'])
     
-    print(N, M, sample_sizes, alpha)
-    
     simulator = NPopSimulator(sample_sizes, N, alpha, M)
-    
-    ll = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
-    
+    if alpha.shape[0] > 1:
+        ll = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
+    else:
+        ll = DemographyLL(CoalExponentialRateFunction(alpha, N), None)
+        
     E = []
     Ds = []
     P = []
@@ -272,6 +272,7 @@ def main():
         E.append(events)
         
         P.append(ll(*setup_ll_inputs(events, N, alpha, M)).item())
+        print('ll = {}'.format(P[-1]))
     
     # distance matrices
     D = np.array(Ds)
