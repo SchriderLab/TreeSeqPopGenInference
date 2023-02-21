@@ -148,10 +148,8 @@ def setup_ll_inputs(E, N, alpha, m):
     # the counts of the Poisson process at each time of event
     counts = np.vstack((np.zeros((1, n_total)), copy.copy(E[:,-n_total:])))
     counts = np.diff(counts, axis = 0)
-    
-    print(counts)
-    print(pop_sizes)
-    print(counts.dtype, pop_sizes.dtype, t0.dtype)
+    counts = counts.astype(np.float32)
+    pop_sizes = pop_sizes.astype(np.float32)
     
     return torch.FloatTensor(t0), torch.FloatTensor(t), torch.FloatTensor(pop_sizes), torch.LongTensor(counts[:,:n_pops]), \
              torch.LongTensor(counts[:,n_pops:])
