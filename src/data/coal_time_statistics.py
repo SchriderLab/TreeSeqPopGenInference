@@ -71,7 +71,7 @@ def main():
         N = np.linspace(100., 1000., 128)
         
         plt.scatter(means, stds, c = N)
-        plt.savefig(args.ofile.replace('.npz', '.png'), dpi = 100)
+        plt.savefig(args.ofile.replace('.pkl', '.png'), dpi = 100)
         plt.close()
         
         
