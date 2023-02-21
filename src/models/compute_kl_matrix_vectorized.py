@@ -202,7 +202,10 @@ def main():
     p = []
 
     logging.info('getting probabilities for p...')
-    model = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
+    if N.shape[0] > 1:
+        model = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
+    else:
+        model = DemographyLL(CoalExponentialRateFunction(alpha, N), None)
     
     with torch.no_grad():
         for events in trees['E']:
@@ -222,7 +225,10 @@ def main():
         alpha = np.array(ifile['alpha'])
         
         q = []
-        model = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
+        if N.shape[0] > 1:
+            model = DemographyLL(CoalExponentialRateFunction(alpha, N), MigExponentialRateFunction(alpha, N, M))
+        else:
+            model = DemographyLL(CoalExponentialRateFunction(alpha, N), None)
         
         with torch.no_grad():
             for events in trees['E']:
