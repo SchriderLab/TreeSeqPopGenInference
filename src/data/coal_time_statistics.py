@@ -26,6 +26,8 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--n_bins", default = "1000")
 
+    parser.add_argument("--grid", default = "n01")
+
     parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
 
@@ -47,8 +49,8 @@ def main():
     
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     
-    mean = []
-    var = []
+    means = []
+    stds = []
     
     maxs = []
     mins = []
@@ -61,6 +63,17 @@ def main():
         
         maxs.append(np.max(D))
         mins.append(np.min(D))
+        
+        means.append(np.mean(D))
+        stds.append(np.std(D))
+        
+    if args.grid == "n01":
+        N = np.linspace(100., 1000., 128)
+        
+        plt.scatter(means, stds, c = N)
+        plt.savefig(args.ofile.replace('.npz', '.png'), dpi = 100)
+        plt.close()
+        
         
     bins = np.linspace(np.min(mins), np.max(maxs), int(args.n_bins))
     h = np.zeros(len(bins) - 1)
@@ -81,7 +94,13 @@ def main():
     h = np.cumsum(h)
     h /= np.max(h)
     
-    x = np.concatenate([np.zeros(1), bins[:-1] + np.diff(bins) / 2.])
+    x = bins[:-1] + np.diff(bins) / 2.
+    ii = np.where(h > 0.)
+    
+    x = x[ii]
+    h = h[ii]
+    
+    x = np.concatenate([np.zeros(1), x])
     h = np.concatenate([np.zeros(1), h])
     
     f = interp1d(x, h)
