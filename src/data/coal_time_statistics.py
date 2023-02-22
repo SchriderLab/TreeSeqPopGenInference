@@ -70,8 +70,7 @@ def main():
         means.append(np.mean(D))
         stds.append(np.std(D))
 
-        entropies.append(np.mean(-1 * ll * (np.power(2, ll))))
-
+        entropies.append(np.mean(-1 * ll))
 
     if args.grid == "n01":
         N = np.linspace(100., 1000., 128)
