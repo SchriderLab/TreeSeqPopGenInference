@@ -55,25 +55,34 @@ def main():
     maxs = []
     mins = []
     
+    entropies = []
+    
     print('reading for maxima and minima...')
     for ifile in ifiles:
         x = np.load(ifile)
         
         D = x['D']
+        ll = x['P']
         
         maxs.append(np.max(D))
         mins.append(np.min(D))
         
         means.append(np.mean(D))
         stds.append(np.std(D))
-        
+
+        entropies.append(np.mean(-1 * ll * (np.power(2, ll))))
+
+
     if args.grid == "n01":
         N = np.linspace(100., 1000., 128)
         
         plt.scatter(means, stds, c = N)
-        plt.savefig(args.ofile.replace('.pkl', '.png'), dpi = 100)
+        plt.savefig(args.ofile.replace('.pkl', '_means_std.png'), dpi = 100)
         plt.close()
         
+        plt.plot(N, entropies)
+        plt.savefig(args.ofile.replace('.pkl', '_entropy.png'), dpi = 100)
+        plt.close()
         
     bins = np.linspace(np.min(mins), np.max(maxs), int(args.n_bins))
     h = np.zeros(len(bins) - 1)
