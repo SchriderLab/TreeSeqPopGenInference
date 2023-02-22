@@ -222,9 +222,11 @@ def main():
             ages[node.id] = node.age
 
         # include pop_labels
-        ii_topological = [root.id] + [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
+        if sample_sizes.shape[0] > 1:
+            ii_topological = [root.id] + [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
                             + [u.id for u in root.levelorder() if u.pop == 1]
-
+        else:
+            ii_topological = [u.id for u in root.levelorder()]
 
         # indexed by assinged id
         D = np.zeros((2 * sum(sample_sizes) - 1, 2 * sum(sample_sizes) - 1))
