@@ -84,6 +84,25 @@ def main():
                 outfile.write(json_object)
     
             ifiles.append(ofile)
+            
+    elif args.grid == "n02":
+        N = list(np.random.normal(500., 150, 128))
+        N = sorted([u for u in N if u > 100])
+        
+        for ix, n in enumerate(N):
+            ofile = os.path.join(args.odir, '{0:04d}.json'.format(ix))
+            d = {"N" : [n], "alpha" : alpha, "s" : s, "M" : M}
+        
+            # Serializing json
+            json_object = json.dumps(d, indent=4)
+            
+            # Writing to sample.json
+            with open(ofile, "w") as outfile:
+                outfile.write(json_object)
+    
+            ifiles.append(ofile)
+    
+        
     
     if len(ifiles) > 0:    
         cmd = 'sbatch -t 02:00:00 --mem=8G --wrap "python3 src/data/simulate_msprime_grid.py --ifile {0} --ofile {1} --n_replicates {2}"'
