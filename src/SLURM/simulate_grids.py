@@ -89,6 +89,10 @@ def main():
         N = list(np.random.normal(500., 150, 128))
         N = sorted([u for u in N if u > 100])
         
+        alpha = [0.01]
+        s = [64]
+        M = [0.]
+        
         for ix, n in enumerate(N):
             ofile = os.path.join(args.odir, '{0:04d}.json'.format(ix))
             d = {"N" : [n], "alpha" : alpha, "s" : s, "M" : M}
