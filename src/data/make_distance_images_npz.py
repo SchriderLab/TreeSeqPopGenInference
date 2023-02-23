@@ -11,6 +11,9 @@ from scipy.spatial.distance import squareform
 import matplotlib.pyplot as plt
 from scipy.special import expit
 
+from torchvision.utils import make_grid
+import torch
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -26,6 +29,7 @@ def parse_args():
     parser.add_argument("--mean_max_log", default = "6.252627993915886")
     parser.add_argument("--min_clip", default = "-2.0")
 
+    parser.add_argument("--sample_dir", default = "None")
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
 
@@ -52,6 +56,7 @@ def main():
 
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     
+    counter = 0
     for ifile in ifiles:
         logging.info('writing images for {}...'.format(ifile))
         
@@ -64,12 +69,23 @@ def main():
 
         D = cdf(D)
 
+        im = []
         for ix in range(len(D)):
             d = D[ix]
             
+            if ix < 64:
+                im.append(squareform(d))
+            
             cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 255).astype(np.uint8))
 
+        im = torch.FloatTensor(np.expand_dims(np.array(im), 1))
+        
+        grid_im = (make_grid(im, nrow = 8).numpy()[0,:,:] * 255).astype(np.uint8)
+
+        cv2.imwrite(os.path.join(args.sample_dir, '{0:03d}.png'.format(counter)), grid_im)
+        counter += 1        
             
+        
             
 
 if __name__ == '__main__':
