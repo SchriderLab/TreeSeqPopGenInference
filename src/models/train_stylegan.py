@@ -84,8 +84,10 @@ import torch.nn.functional as F
 import numpy as np
 
 import itertools
+import matplotlib
+matplotlib.use('Agg')
 
-
+import matplotlib.pyplot as plt
 
 class ManifoldNoise(object):
     def __init__(self, ifile, batch_size = 8):
@@ -346,7 +348,6 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
 
             generator.zero_grad()
             
-            
             weighted_path_loss = args.path_regularize * args.g_reg_every * path_loss
 
             if args.path_batch_shrink:
@@ -416,7 +417,22 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                     #sample = sample.detach().cpu().numpy() * args.mean_max_log
                     #h = np.histogram(sample.flatten())
                     
-                    
+            if i % 1000 == 0:
+                means = []
+                stds = []
+                with torch.no_grad():
+                    for ii in range(noise_generator.mu.shape[0]):
+                        z = noise_generator.get_batch_index(32, ii).to(device)
+                        sample = g_ema(z)
+                        
+                        i, j = torch.triu_indices(args.size, args.size, 1, device = device)
+
+                        means.append(torch.mean((sample[:,0,i,j] + sample[:,0,j,i]) / 2.))
+                        stds.append(torch.std((sample[:,0,i,j] + sample[:,0,j,i]) / 2.))
+
+                plt.scatter(means, stds, c = list(range(noise_generator.mu.shape[0])))
+                plt.savefig(os.path.join(args.odir, f"sample/ms_{str(i).zfill(6)}.png"))
+                plt.close()
 
             if i % 10000 == 0:
                 torch.save(
