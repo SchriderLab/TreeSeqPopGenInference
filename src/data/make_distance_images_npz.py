@@ -43,6 +43,10 @@ def parse_args():
         if not os.path.exists(args.odir):
             os.system('mkdir -p {}'.format(args.odir))
             logging.debug('root: made output directory {0}'.format(args.odir))
+            
+    if not os.path.exists(args.sample_dir):
+        os.system('mkdir -p {}'.format(args.sample_dir))
+        logging.debug('root: made output directory {0}'.format(args.sample_dir))
     # ${odir_del_block}
 
     return args
