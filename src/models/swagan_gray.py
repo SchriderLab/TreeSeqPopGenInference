@@ -336,10 +336,11 @@ class Discriminator(nn.Module):
         self.stddev_feat = 1
 
         self.final_conv = ConvLayer(in_channel + 1, channels[4], 3)
-        self.final_linear = nn.Sequential(
+        self.feature = nn.Sequential(
             EqualLinear(channels[4] * 4 * 4, channels[4], activation="fused_lrelu"),
-            EqualLinear(channels[4], 1),
         )
+        
+        self.final = EqualLinear(channels[4], 1)
 
     def forward(self, input):
         input = self.dwt(input)
@@ -364,9 +365,11 @@ class Discriminator(nn.Module):
         out = self.final_conv(out)
 
         out = out.view(batch, -1)
-        out = self.final_linear(out)
+        f = self.feature(out)
 
-        return out
+        out = self.final(f)
+
+        return out, f
 
 if __name__ == '__main__':
     device = torch.device('cuda')
