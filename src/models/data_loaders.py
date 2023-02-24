@@ -53,7 +53,7 @@ class ImgGenerator(object):
             self._zipfile = zipfile.ZipFile(self._path)
         return self._zipfile
 
-    def _file_ext(fname):
+    def _file_ext(self, fname):
         return os.path.splitext(fname)[1].lower()
     
     def _open_file(self, fname):
