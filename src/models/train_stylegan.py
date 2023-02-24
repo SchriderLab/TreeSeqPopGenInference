@@ -12,6 +12,8 @@ import torch.distributed as dist
 from torchvision import transforms, utils
 from tqdm import tqdm
 
+from data_loaders import ImgGenerator
+
 try:
     import wandb
 
@@ -90,7 +92,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 class ManifoldNoise(object):
-    def __init__(self, ifile, batch_size = 8):
+    def __init__(self, ifile, batch_size = 8, multiplier = 5.2619707157047735):
         x = np.load(ifile)
         self.mu = x['mu']
         self.sigma = x['sigma']
@@ -102,6 +104,8 @@ class ManifoldNoise(object):
         alpha1 = np.linspace(0.02, 0.025, n_grid_points)
         m12 = np.linspace(0.05, 0.3, int(n_grid_points))
 
+        
+
         self.p = np.array(list(itertools.product(N, alpha0, alpha1, m12)))
 
         self.p_mean = np.array((750, 0.01125, 0.0225, 0.175)).reshape(1, -1)
@@ -111,11 +115,12 @@ class ManifoldNoise(object):
         self.k = self.mu.shape[1]
         self.batch_size = batch_size
     
-    def get_batch(self, n):
+    def get_batch(self, n, ii = None):
         # standard normal
         z = np.random.normal(0, 1, (n, self.k))
         # sample the manifold uniformly
-        ii = np.random.choice(range(self.n), n)
+        if ii is None:
+            ii = np.random.choice(range(self.n), n)
         
         # transform to sigma, mu
         z *= self.sigma[ii]
@@ -123,7 +128,7 @@ class ManifoldNoise(object):
         
         c = (self.p[ii] - self.p_mean) / self.p_std
         
-        return torch.FloatTensor(z), torch.FloatTensor(c)
+        return torch.FloatTensor(z), ii
     
     def get_batch_index(self, n, i):
         # standard normal
@@ -255,16 +260,14 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             print("Done!")
             break
 
-        real_img, _ = next(loader)
-        #c_real = c_real.to(device)
+        noise, indices = noise_generator.get_batch(args.batch)
+        noise = noise.to(device)
+
+        real_img = loader.get_batch(indices)
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
-
-        noise, _ = noise_generator.get_batch(args.batch)
-        noise = noise.to(device)
-        #c_fake = c_fake.to(device)
         
         fake_img = generator(noise)
 
@@ -315,7 +318,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        noise, _ = noise_generator.get_batch(args.batch)
+        noise, _ = noise_generator.get_batch(args.batch, indices)
         noise = noise.to(device)
         #c_fake = c_fake.to(device)
         
@@ -340,7 +343,6 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             z.requires_grad = True
             
             fake_img, latents = generator(z, return_latents=True, no_repeat = True)
-            
             
             path_loss, mean_path_length, path_lengths = g_path_regularize(
                 fake_img, z, mean_path_length
@@ -560,6 +562,9 @@ if __name__ == "__main__":
         default=8,
         help="dimensionality of the latent space",
     )
+    
+    parser.add_argument("--compare_every")
+    
     parser.add_argument("--mean_max_log", default = "6.4580402832733474")
     parser.add_argument("--odir", default = "None")
     
@@ -650,6 +655,7 @@ if __name__ == "__main__":
             broadcast_buffers=False,
         )
 
+    """
     dataset = ImageFolderDataset(args.path)
     loader = data.DataLoader(
         dataset,
@@ -657,6 +663,8 @@ if __name__ == "__main__":
         sampler=data_sampler(dataset, shuffle=True, distributed=args.distributed),
         drop_last=True,
     )
+    """
+    loader = ImgGenerator(args.path)
 
     if get_rank() == 0 and wandb is not None and args.wandb:
         wandb.init(project="stylegan 2")

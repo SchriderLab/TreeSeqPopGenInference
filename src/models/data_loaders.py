@@ -13,6 +13,72 @@ import matplotlib.pyplot as plt
 from scipy.special import expit
 from scipy.spatial.distance import squareform
 
+import zipfile
+import PIL
+
+import pyspng
+
+def chunks(lst, n):
+    ret = dict()
+    
+    """Yield successive n-sized chunks from lst."""
+    
+    ix = 0
+    for i in range(0, len(lst), n):
+        ret[ix] = lst[i:i + n]
+
+        ix += 1
+        
+    return ret
+
+class ImgGenerator(object):
+    def __init__(self, path):
+        self._path = path
+        
+        self._type = 'zip'
+        self._all_fnames = set(self._get_zipfile().namelist())
+        
+        PIL.Image.init()
+        self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
+        
+        self.data = chunks(self._image_fnames, 4096)
+        
+        return
+    
+    def _get_zipfile(self):
+        assert self._type == 'zip'
+        if self._zipfile is None:
+            self._zipfile = zipfile.ZipFile(self._path)
+        return self._zipfile
+
+    def _file_ext(fname):
+        return os.path.splitext(fname)[1].lower()
+    
+    def _open_file(self, fname):
+        if self._type == 'dir':
+            return open(os.path.join(self._path, fname), 'rb')
+        if self._type == 'zip':
+            return self._get_zipfile().open(fname, 'r')
+        return None
+    
+    def get_batch(self, ii):
+        _ = [np.random.choice(self.data[u]) for u in ii]
+        
+        X = []
+        for fname in _:
+            f = self._open_file(fname)
+            image = pyspng.load(f.read())
+            
+            if image.ndim == 2:
+                image = image[:, :, np.newaxis] # HW => HWC
+            image = image.transpose(2, 0, 1)
+            
+            X.append(image)
+            
+        X = torch.FloatTensory(np.array(X))
+        
+        return X
+
 class ProjGenerator(object):
     def __init__(self, ifile, means, n_per = 8):
         self.n_per = n_per
