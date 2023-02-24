@@ -72,6 +72,8 @@ def main():
 
         entropies.append(np.mean(-1 * ll))
 
+    print('mean entropy: {}'.format(np.mean(entropies)))
+
     if args.grid == "n01":
         N = np.linspace(100., 1000., 128)
         
