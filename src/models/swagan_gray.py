@@ -364,10 +364,9 @@ class Discriminator(nn.Module):
 
         out = self.final_conv(out)
 
-        out = out.view(batch, -1)
-        f = self.feature(out)
-
-        out = self.final(f)
+        f = out.view(batch, -1)
+        out = self.feature(f)
+        out = self.final(out)
 
         return out, f
 
