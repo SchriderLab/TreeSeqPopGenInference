@@ -36,12 +36,14 @@ class ImgGenerator(object):
         self._path = path
         
         self._type = 'zip'
+        self._zipfile = None
         self._all_fnames = set(self._get_zipfile().namelist())
         
         PIL.Image.init()
         self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
         
         self.data = chunks(self._image_fnames, 4096)
+        
         
         return
     
