@@ -216,7 +216,7 @@ def set_grad_none(model, targets):
 
 
 def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, device):
-    loader = sample_data(loader)
+    #loader = sample_data(loader)
 
     pbar = range(args.iter)
 
