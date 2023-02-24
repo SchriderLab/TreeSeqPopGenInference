@@ -243,6 +243,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         g_module = generator
         d_module = discriminator
 
+    mse_loss = nn.MSELoss()
+
     accum = 0.5 ** (32 / (10 * 1000))
     ada_aug_p = args.augment_p if args.augment_p > 0 else 0.0
     r_t_stat = 0
@@ -278,8 +280,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         else:
             real_img_aug = real_img
 
-        fake_pred = discriminator(fake_img)
-        real_pred = discriminator(real_img_aug)
+        fake_pred, _ = discriminator(fake_img)
+        real_pred, _ = discriminator(real_img_aug)
         d_loss = d_logistic_loss(real_pred, fake_pred)
 
         loss_dict["d"] = d_loss
@@ -323,9 +325,14 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         #c_fake = c_fake.to(device)
         
         fake_img = generator(noise)
+        
+        real_img = loader.get_batch(indices)
+        real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
-        fake_pred = discriminator(fake_img)
-        g_loss = g_nonsaturating_loss(fake_pred)
+        fake_pred, f_fake = discriminator(fake_img)
+        real_pred, f_real = discriminator(fake_img)
+        
+        g_loss = g_nonsaturating_loss(fake_pred) + mse_loss(f_fake, f_real) * 0.1
 
         loss_dict["g"] = g_loss
 
