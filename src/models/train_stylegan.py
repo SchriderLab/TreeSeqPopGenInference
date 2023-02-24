@@ -307,7 +307,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             else:
                 real_img_aug = real_img
 
-            real_pred = discriminator(real_img_aug)
+            real_pred, _ = discriminator(real_img_aug)
             r1_loss = d_r1_loss(real_pred, real_img)
 
             discriminator.zero_grad()
