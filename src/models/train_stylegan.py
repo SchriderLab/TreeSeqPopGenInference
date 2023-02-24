@@ -666,6 +666,8 @@ if __name__ == "__main__":
     """
     loader = ImgGenerator(args.path)
 
+    print(loader)
+
     if get_rank() == 0 and wandb is not None and args.wandb:
         wandb.init(project="stylegan 2")
 
