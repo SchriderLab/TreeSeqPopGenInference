@@ -44,7 +44,6 @@ class ImgGenerator(object):
         
         self.data = chunks(self._image_fnames, 4096)
         
-        
         return
     
     def _get_zipfile(self):
@@ -77,7 +76,7 @@ class ImgGenerator(object):
             
             X.append(image)
             
-        X = torch.FloatTensory(np.array(X))
+        X = torch.FloatTensor(np.array(X))
         
         return X
 
