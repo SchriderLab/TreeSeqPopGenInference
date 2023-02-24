@@ -425,10 +425,10 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         z = noise_generator.get_batch_index(32, ii).to(device)
                         sample = g_ema(z)
                         
-                        i, j = torch.triu_indices(args.size, args.size, 1, device = device)
+                        i_, j_ = torch.triu_indices(args.size, args.size, 1, device = device)
 
-                        means.append(torch.mean((sample[:,0,i,j] + sample[:,0,j,i]) / 2.).item())
-                        stds.append(torch.std((sample[:,0,i,j] + sample[:,0,j,i]) / 2.).item())
+                        means.append(torch.mean((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.).item())
+                        stds.append(torch.std((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.).item())
 
                 plt.scatter(means, stds, c = list(range(noise_generator.mu.shape[0])))
                 plt.savefig(os.path.join(args.odir, f"sample/ms_{str(i).zfill(6)}.png"))
