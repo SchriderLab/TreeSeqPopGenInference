@@ -32,12 +32,13 @@ def chunks(lst, n):
     return ret
 
 class ImgGenerator(object):
-    def __init__(self, path):
+    def __init__(self, path, batch_size = 8):
         self._path = path
         
         self._type = 'zip'
         self._zipfile = None
         self._all_fnames = set(self._get_zipfile().namelist())
+        self.batch_size
         
         PIL.Image.init()
         self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
@@ -62,7 +63,9 @@ class ImgGenerator(object):
             return self._get_zipfile().open(fname, 'r')
         return None
     
-    def get_batch(self, ii):
+    def get_batch(self, ii = None):
+        if ii is None:
+            ii = np.random.choice(range(len(self.data.keys())), self.batch_size)
         _ = [np.random.choice(self.data[u]) for u in ii]
         
         X = []
