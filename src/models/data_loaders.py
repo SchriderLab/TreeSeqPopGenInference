@@ -38,7 +38,7 @@ class ImgGenerator(object):
         self._type = 'zip'
         self._zipfile = None
         self._all_fnames = set(self._get_zipfile().namelist())
-        self.batch_size
+        self.batch_size = batch_size
         
         PIL.Image.init()
         self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
