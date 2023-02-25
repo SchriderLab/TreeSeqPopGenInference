@@ -317,6 +317,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
 
         loss_dict["r1"] = r1_loss
 
+        generator.zero_grad()
+        
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
@@ -330,7 +332,6 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
 
         loss_dict["g"] = g_loss
 
-        generator.zero_grad()
         g_loss.backward()
         g_optim.step()
 
