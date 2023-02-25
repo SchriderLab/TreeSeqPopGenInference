@@ -325,13 +325,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         #c_fake = c_fake.to(device)
         
         fake_img = generator(noise)
-        
-        real_img = loader.get_batch(indices)
-        real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
-
-        #fake_pred, f_fake = discriminator(fake_img)
-        #real_pred, f_real = discriminator(fake_img)
-        
+                
         g_loss = g_nonsaturating_loss(fake_pred)
 
         loss_dict["g"] = g_loss
@@ -345,11 +339,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         if g_regularize:
             path_batch_size = max(1, args.batch // args.path_batch_shrink)
             z, _ = noise_generator.get_batch(path_batch_size)
-            z = noise.to(device)
-            z = z.repeat(generator.n_latent, 1, 1).transpose(0, 1)
-            z.requires_grad = True
             
-            fake_img, latents = generator(z, return_latents=True, no_repeat = True)
+            fake_img, latents = generator(z, return_latents = True)
             
             path_loss, mean_path_length, path_lengths = g_path_regularize(
                 fake_img, z, mean_path_length
