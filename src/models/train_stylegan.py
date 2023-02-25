@@ -340,6 +340,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         if g_regularize:
             path_batch_size = max(1, args.batch // args.path_batch_shrink)
             z, _ = noise_generator.get_batch(path_batch_size)
+            z = z.to(device)
             
             fake_img, latents = generator(z, return_latents = True)
             
