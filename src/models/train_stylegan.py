@@ -123,8 +123,8 @@ class ManifoldNoise(object):
             ii = np.random.choice(range(self.n), n)
         
         # transform to sigma, mu
-        z *= self.sigma[ii]
-        z += self.mu[ii]
+        #z *= self.sigma[ii]
+        #z += self.mu[ii]
         
         c = (self.p[ii] - self.p_mean) / self.p_std
         
@@ -265,7 +265,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         noise, indices = noise_generator.get_batch(args.batch)
         noise = noise.to(device)
 
-        real_img = loader.get_batch(indices)
+        real_img = loader.get_batch()
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
@@ -329,10 +329,10 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         real_img = loader.get_batch(indices)
         real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
-        fake_pred, f_fake = discriminator(fake_img)
-        real_pred, f_real = discriminator(fake_img)
+        #fake_pred, f_fake = discriminator(fake_img)
+        #real_pred, f_real = discriminator(fake_img)
         
-        g_loss = g_nonsaturating_loss(fake_pred) + mse_loss(f_fake, f_real) * 0.1
+        g_loss = g_nonsaturating_loss(fake_pred)
 
         loss_dict["g"] = g_loss
 
@@ -671,7 +671,7 @@ if __name__ == "__main__":
         drop_last=True,
     )
     """
-    loader = ImgGenerator(args.path)
+    loader = ImgGenerator(args.path, batch_size = args.batch)
 
     print(loader)
 
