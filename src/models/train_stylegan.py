@@ -345,6 +345,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             
             fake_img, latents = generator(z, return_latents = True)
             
+            print(latents.shape)
+            
             path_loss, mean_path_length, path_lengths = g_path_regularize(
                 fake_img, z, mean_path_length
             )
