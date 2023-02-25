@@ -316,22 +316,22 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
             d_optim.step()
 
         loss_dict["r1"] = r1_loss
-
-        generator.zero_grad()
         
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        noise, _ = noise_generator.get_batch(args.batch, indices)
+        noise, _ = noise_generator.get_batch(args.batch)
         noise = noise.to(device)
         #c_fake = c_fake.to(device)
         
         fake_img = generator(noise)
-                
+        fake_pred, _ = discriminator(fake_img)        
+        
         g_loss = g_nonsaturating_loss(fake_pred)
 
         loss_dict["g"] = g_loss
 
+        generator.zero_grad()
         g_loss.backward()
         g_optim.step()
 
