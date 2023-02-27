@@ -90,57 +90,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
-
-class ManifoldNoise(object):
-    def __init__(self, ifile, batch_size = 8, multiplier = 5.2619707157047735):
-        x = np.load(ifile)
-        self.mu = x['mu']
-        self.sigma = x['sigma']
-        
-        n_grid_points = 4
-
-        N = np.linspace(500, 1000, int(n_grid_points))
-        alpha0 = np.linspace(0.01, 0.0125, int(n_grid_points))
-        alpha1 = np.linspace(0.02, 0.025, n_grid_points)
-        m12 = np.linspace(0.05, 0.3, int(n_grid_points))
-
-        
-
-        self.p = np.array(list(itertools.product(N, alpha0, alpha1, m12)))
-
-        self.p_mean = np.array((750, 0.01125, 0.0225, 0.175)).reshape(1, -1)
-        self.p_std = np.array((144.33756729740642, 0.0007216878364870322, 0.0014433756729740645, 0.07216878364870322)).reshape(1, -1)
-    
-        self.n = self.mu.shape[0]
-        self.k = self.mu.shape[1]
-        self.batch_size = batch_size
-    
-    def get_batch(self, n, ii = None):
-        # standard normal
-        z = np.random.normal(0, 1, (n, self.k))
-        # sample the manifold uniformly
-        if ii is None:
-            ii = np.random.choice(range(self.n), n)
-        
-        # transform to sigma, mu
-        #z *= self.sigma[ii]
-        #z += self.mu[ii]
-        
-        c = (self.p[ii] - self.p_mean) / self.p_std
-        
-        return torch.FloatTensor(z), ii
-    
-    def get_batch_index(self, n, i):
-        # standard normal
-        z = np.random.normal(0, 1, (n, self.k))
-        s = self.sigma[i].reshape(1, -1)
-        mu = self.mu[i].reshape(1, -1)
-        
-        # transform to sigma, mu
-        z *= s
-        z += mu
-        
-        return torch.FloatTensor(z)
+from data_loaders import ManifoldNoise
 
 class OrthogonalProjectionLoss(nn.Module):
     def __init__(self, gamma=0.5):
@@ -214,9 +164,17 @@ def set_grad_none(model, targets):
         if n in targets:
             p.grad = None
 
+from scipy.interpolate import interp1d
 
 def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, device):
     #loader = sample_data(loader)
+
+    cdf = np.load(args.cdf)['cdf']
+    y = cdf.x
+    x = cdf.y
+    
+    # inverse cdf
+    cdf_ = interp1d(x, y)
 
     pbar = range(args.iter)
 
@@ -266,7 +224,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         noise = noise.to(device)
 
         real_img = loader.get_batch()
-        real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
+        real_img = (real_img.to(device).to(torch.float32) / 32767.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
@@ -417,9 +375,16 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         range = (-1., 1.)
                     )
                     
-                    #sample = sample.detach().cpu().numpy() * args.mean_max_log
-                    #h = np.histogram(sample.flatten())
+                    i, j = np.tril_indices(128, 1)
                     
+                    sample = (np.clip(sample.detach().cpu().numpy(), -1, 1) + 1.) / 2.
+                    sample = np.exp(cdf_((sample[:,0,i,j] + sample[:,0,j,i]) / 2.))
+                    
+                    plt.hist(sample, bins = 50)
+                    plt.savefig(os.path.join(args.odir, f"sample/{str(i).zfill(6)}_hist.png"), dpi = 100)
+                    plt.close()
+
+            """
             if i % 1000 == 0:
                 means = []
                 stds = []
@@ -436,7 +401,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                 plt.scatter(means, stds, c = list(range(noise_generator.mu.shape[0])))
                 plt.savefig(os.path.join(args.odir, f"sample/ms_{str(i).zfill(6)}.png"))
                 plt.close()
-
+            """
             if i % 10000 == 0:
                 torch.save(
                     {

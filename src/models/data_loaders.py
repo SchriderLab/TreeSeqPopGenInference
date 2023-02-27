@@ -18,6 +18,43 @@ import PIL
 
 import pyspng
 
+class ManifoldNoise(object):
+    def __init__(self, ifile, batch_size = 8, multiplier = 5.2619707157047735):
+        x = np.load(ifile)
+        self.mu = x['mu']
+        self.sigma = x['sigma']
+        
+        n_grid_points = 4
+
+        self.n = self.mu.shape[0]
+        self.k = self.mu.shape[1]
+        self.batch_size = batch_size
+    
+    def get_batch(self, n, ii = None):
+        # standard normal
+        z = np.random.normal(0, 1, (n, self.k))
+        # sample the manifold uniformly
+        if ii is None:
+            ii = np.random.choice(range(self.n), n)
+        
+        # transform to sigma, mu
+        #z *= self.sigma[ii]
+        #z += self.mu[ii]
+   
+        return torch.FloatTensor(z), ii
+    
+    def get_batch_index(self, n, i):
+        # standard normal
+        z = np.random.normal(0, 1, (n, self.k))
+        s = self.sigma[i].reshape(1, -1)
+        mu = self.mu[i].reshape(1, -1)
+        
+        # transform to sigma, mu
+        z *= s
+        z += mu
+        
+        return torch.FloatTensor(z)
+
 def chunks(lst, n):
     ret = dict()
     
@@ -30,6 +67,8 @@ def chunks(lst, n):
         ix += 1
         
     return ret
+
+import cv2
 
 class ImgGenerator(object):
     def __init__(self, path, batch_size = 8):
@@ -71,7 +110,7 @@ class ImgGenerator(object):
         X = []
         for fname in _:
             f = self._open_file(fname)
-            image = pyspng.load(f.read())
+            image = cv2.imdecode(np.frombuffer(f.read(), np.uint16), cv2.IMREAD_UNCHANGED)
             
             if image.ndim == 2:
                 image = image[:, :, np.newaxis] # HW => HWC
