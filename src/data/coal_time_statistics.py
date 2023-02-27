@@ -96,7 +96,10 @@ def main():
     # go to one in n_exp bins with alpha = -beta and x from 0 to 1 linear
     
     x = np.linspace(0., 1., int(args.n_exp))
-    bins = [np.min(mins)] + list(np.cumsum(bin_size(x, -1 * beta, beta)))
+    if np.min(mins) < x[0]:
+        bins = [np.min(mins)] + list(np.cumsum(bin_size(x, -1 * beta, beta)))
+    else:
+        bins = list(np.cumsum(bin_size(x, -1 * beta, beta)))
     bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
 
     h = np.zeros(len(bins) - 1)
