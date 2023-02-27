@@ -165,11 +165,12 @@ def set_grad_none(model, targets):
             p.grad = None
 
 from scipy.interpolate import interp1d
+import pickle
 
 def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, device):
     #loader = sample_data(loader)
 
-    cdf = np.load(args.cdf)['cdf']
+    cdf = pickle.load(open(args.cdf, 'rb'))['cdf']
     y = cdf.x
     x = cdf.y
     
