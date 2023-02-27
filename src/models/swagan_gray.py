@@ -251,6 +251,12 @@ class Generator(nn.Module):
 
         self.iwt = InverseHaarTransform(3)
         self.n_latent = self.log_size * 2 - 2
+        self.tanh = nn.Tanh()
+        
+    def get_latent(self, z):
+        latent = self.style(z)
+
+        return latent
         
     def forward(self, z, return_latents = False, no_repeat = False, input_is_latent = False):
         if not input_is_latent:
@@ -276,7 +282,7 @@ class Generator(nn.Module):
 
             i += 2
 
-        image = self.iwt(skip)
+        image = self.tanh(self.iwt(skip))
         
         if not return_latents:
             return image
