@@ -100,7 +100,7 @@ def main():
     max_log = np.log(np.max(maxs))
     x = np.linspace(0., 1., int(args.n_bins))
     
-    bins = list(np.cumsum(bin_size(x, max_log - beta, beta)))
+    bins = list(bin_size(x, max_log - beta, beta))
     #bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
 
     h = np.zeros(len(bins) - 1)
