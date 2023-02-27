@@ -67,7 +67,7 @@ def main():
         odir = os.path.join(args.odir, ifile.split('/')[-1].split('.')[0])
         
         x = np.load(ifile)
-        D = x['D']
+        D = np.log(x['D'])
         D[D < cdf.x[0]] = cdf.x[0]
         D[D > cdf.x[-1]] = cdf.x[-1]
 
@@ -80,7 +80,7 @@ def main():
             if ix < 64:
                 im.append(squareform(d))
             
-            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 255).astype(np.uint8))
+            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 65535).astype(np.uint16))
 
         im = torch.FloatTensor(np.expand_dims(np.array(im), 1))
         
