@@ -124,10 +124,7 @@ def main():
     
     x = x[ii]
     h = h[ii]
-    
-    x = np.concatenate([np.zeros(1), x])
-    h = np.concatenate([np.zeros(1), h])
-    
+        
     f = interp1d(x, h)
     
     result = dict()
