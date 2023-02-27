@@ -96,12 +96,10 @@ def main():
     # we have to go from max to min
     # go to one in n_exp bins with alpha = -beta and x from 0 to 1 linear
     
-    beta = np.log(np.min(mins))
+    min_log = np.log(np.min(mins))
     max_log = np.log(np.max(maxs))
-    x = np.linspace(0., 1., int(args.n_bins) + 1) ** 2
     
-    bins = list(bin_size(x, max_log - beta, beta))
-    #bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
+    bins = np.linspace(min_log, max_log, int(args.n_bins) + 1)
 
     h = np.zeros(len(bins) - 1)
     
@@ -112,7 +110,7 @@ def main():
         print(ifile)
         x = np.load(ifile)
         
-        D = x['D']
+        D = np.log(x['D'])
         
         h += np.histogram(D.flatten(), bins, density = True)[0]
         count += 1
