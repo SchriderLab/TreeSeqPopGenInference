@@ -110,7 +110,7 @@ class ImgGenerator(object):
         X = []
         for fname in _:
             f = self._open_file(fname)
-            image = cv2.imdecode(np.frombuffer(f, np.uint16), cv2.IMREAD_UNCHANGED)
+            image = cv2.imdecode(np.fromstring(f, np.uint16), cv2.IMREAD_UNCHANGED)
             
             if image.ndim == 2:
                 image = image[:, :, np.newaxis] # HW => HWC
