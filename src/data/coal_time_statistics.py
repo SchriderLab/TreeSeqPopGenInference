@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--n_bins", default = "1000")
+    parser.add_argument("--n_exp", default = "100")
 
     parser.add_argument("--grid", default = "n01")
 
@@ -45,6 +46,9 @@ def parse_args():
 from scipy.interpolate import interp1d
 import pickle
 
+def bin_size(x, alpha, beta):
+    return np.exp(beta + alpha * x)
+
 def main():
     args = parse_args()
     
@@ -57,6 +61,8 @@ def main():
     mins = []
     
     entropies = []
+    
+    beta = -8
     
     print('reading for maxima and minima...')
     for ifile in ifiles:
@@ -86,7 +92,13 @@ def main():
         plt.savefig(args.ofile.replace('.pkl', '_entropy.png'), dpi = 100)
         plt.close()
         
-    bins = np.linspace(np.min(mins), np.max(maxs), int(args.n_bins))
+    # we have to go from max to min
+    # go to one in n_exp bins with alpha = -beta and x from 0 to 1 linear
+    
+    x = np.linspace(0., 1., int(args.n_exp))
+    bins = [np.min(mins)] + list(np.cumsum(bin_size(x, -1 * beta, beta)))
+    bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
+
     h = np.zeros(len(bins) - 1)
     
     count = 0
