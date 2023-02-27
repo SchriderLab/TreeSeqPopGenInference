@@ -170,12 +170,13 @@ import pickle
 def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, device):
     #loader = sample_data(loader)
 
-    cdf = pickle.load(open(args.cdf, 'rb'))['cdf']
+    ifile = pickle.load(open(args.cdf, 'rb'))
+    cdf = ifile['cdf']
     y = cdf.x
     x = cdf.y
     
-    bins = cdf['bins']
-    H = cdf['H']
+    bins = ifile['bins']
+    H = ifile['H']
     
     # inverse cdf
     cdf_ = interp1d(x, y)
