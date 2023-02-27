@@ -99,7 +99,7 @@ class ImgGenerator(object):
         if self._type == 'dir':
             return open(os.path.join(self._path, fname), 'rb')
         if self._type == 'zip':
-            return self._get_zipfile().open(fname, 'rb')
+            return self._get_zipfile().open(fname, 'r')
         return None
     
     def get_batch(self, ii = None):
