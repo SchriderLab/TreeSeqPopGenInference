@@ -80,7 +80,7 @@ def main():
             if ix < 64:
                 im.append(squareform(d))
             
-            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (squareform(d) * 65535).astype(np.uint16))
+            cv2.imwrite('{1}_{0:05d}.png'.format(ix, odir), (cv2.resize(squareform(d), (128, 128)) * 65535).astype(np.uint16))
 
         im = torch.FloatTensor(np.expand_dims(np.array(im), 1))
         
