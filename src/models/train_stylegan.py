@@ -383,7 +383,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                     i_, j_ = np.tril_indices(128, 1)
                     
                     sample = (np.clip(sample.detach().cpu().numpy(), -1, 1) + 1.) / 2.
-                    sample = cdf_((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.)
+                    sample = cdf_(np.clip((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2., cdf_.x[0], cdf_.x[-1]))
                     
                     fig, axes = plt.subplots(nrows = 2, sharex = True)
                     H_ = np.histogram(sample.reshape(-1), bins, density = True)[0]
