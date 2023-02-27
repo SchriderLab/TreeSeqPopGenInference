@@ -74,14 +74,22 @@ class ImgGenerator(object):
     def __init__(self, path, batch_size = 8):
         self._path = path
         
-        self._type = 'zip'
         self._zipfile = None
-        self._all_fnames = set(self._get_zipfile().namelist())
-        self.batch_size = batch_size
-        
-        PIL.Image.init()
-        self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
-        
+
+        if self._path.split('.')[-1] == 'zip':
+            self._type = 'zip'
+            self._all_fnames = set(self._get_zipfile().namelist())
+            self.batch_size = batch_size
+            
+            PIL.Image.init()
+            self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
+        else:
+            self._type == 'dir'
+            self._all_fnames = os.listdir(self._path)
+            
+            PIL.Image.init()
+            self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
+            
         self.data = chunks(self._image_fnames, 4096)
         
         return
@@ -97,7 +105,7 @@ class ImgGenerator(object):
     
     def _open_file(self, fname):
         if self._type == 'dir':
-            return open(os.path.join(self._path, fname), 'rb')
+            return os.path.join(self._path, fname)
         if self._type == 'zip':
             return self._get_zipfile().open(fname, 'r')
         return None
@@ -110,7 +118,7 @@ class ImgGenerator(object):
         X = []
         for fname in _:
             f = self._open_file(fname)
-            image = cv2.imdecode(np.frombuffer(f, np.uint16), cv2.IMREAD_UNCHANGED)
+            image = cv2.imread(f, cv2.IMREAD_UNCHANGED)
             
             if image.ndim == 2:
                 image = image[:, :, np.newaxis] # HW => HWC
