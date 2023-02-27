@@ -125,7 +125,7 @@ class ImgGenerator(object):
                 image = image[:, :, np.newaxis] # HW => HWC
             image = image.transpose(2, 0, 1)
             
-            X.append(image)
+            X.append(image.astype(np.float32))
             
         X = torch.FloatTensor(np.array(X))
         
