@@ -99,7 +99,7 @@ class ImgGenerator(object):
         if self._type == 'dir':
             return open(os.path.join(self._path, fname), 'rb')
         if self._type == 'zip':
-            return self._get_zipfile().read(fname)
+            return self._get_zipfile().open(fname, 'rb')
         return None
     
     def get_batch(self, ii = None):
@@ -110,7 +110,7 @@ class ImgGenerator(object):
         X = []
         for fname in _:
             f = self._open_file(fname)
-            image = cv2.imdecode(f, cv2.IMREAD_UNCHANGED)
+            image = cv2.imdecode(np.frombuffer(f, np.uint16), cv2.IMREAD_UNCHANGED)
             
             if image.ndim == 2:
                 image = image[:, :, np.newaxis] # HW => HWC
