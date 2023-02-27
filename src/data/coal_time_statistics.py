@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 import cv2
 import glob
+import copy
 
 import numpy as np
 
@@ -100,8 +101,8 @@ def main():
         h += np.histogram(D.flatten(), bins, density = True)[0]
         count += 1
         
-    h /= count
-    h = np.cumsum(h)
+    H = h / count
+    h = np.cumsum(H)
     h /= np.max(h)
     
     x = bins[:-1] + np.diff(bins) / 2.
@@ -115,7 +116,14 @@ def main():
     
     f = interp1d(x, h)
     
-    pickle.dump(f, open(args.ofile, 'wb'))
+    result = dict()
+    result['cdf'] = f
+    result['H'] = H
+    result['bins'] = bins
+    result['means'] = means
+    result['stds'] = stds
+    
+    pickle.dump(result, open(args.ofile, 'wb'))
     print('done!')
     
     """
