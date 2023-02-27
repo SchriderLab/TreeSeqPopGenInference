@@ -173,6 +173,9 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     y = cdf.x
     x = cdf.y
     
+    bins = cdf['bins']
+    H = cdf['H']
+    
     # inverse cdf
     cdf_ = interp1d(x, y)
 
@@ -375,12 +378,16 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         range = (-1., 1.)
                     )
                     
-                    i, j = np.tril_indices(128, 1)
+                    i_, j_ = np.tril_indices(128, 1)
                     
                     sample = (np.clip(sample.detach().cpu().numpy(), -1, 1) + 1.) / 2.
-                    sample = np.exp(cdf_((sample[:,0,i,j] + sample[:,0,j,i]) / 2.))
+                    sample = cdf_((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.)
                     
-                    plt.hist(sample, bins = 50)
+                    fig, axes = plt.subplots(nrows = 2, sharex = True)
+                    H_ = np.histogram(sample.reshape(-1), bins, density = True)[0]
+                    
+                    axes[0].bar(bins[:-1], H)
+                    axes[1].bar(bins[:-1], H_)
                     plt.savefig(os.path.join(args.odir, f"sample/{str(i).zfill(6)}_hist.png"), dpi = 100)
                     plt.close()
 
@@ -531,6 +538,7 @@ if __name__ == "__main__":
     
     parser.add_argument("--compare_every")
     
+    parser.add_argument("--cdf", default = "None")
     parser.add_argument("--mean_max_log", default = "6.4580402832733474")
     parser.add_argument("--odir", default = "None")
     
