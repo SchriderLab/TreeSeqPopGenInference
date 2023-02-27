@@ -76,7 +76,7 @@ class ImgGenerator(object):
         
         self._zipfile = None
 
-        if self._path.split('.')[-1] == 'zip':
+        if not os.path.isdir(self._path):
             self._type = 'zip'
             self._all_fnames = set(self._get_zipfile().namelist())
             self.batch_size = batch_size
@@ -84,7 +84,7 @@ class ImgGenerator(object):
             PIL.Image.init()
             self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
         else:
-            self._type == 'dir'
+            self._type = 'dir'
             self._all_fnames = os.listdir(self._path)
             
             PIL.Image.init()
