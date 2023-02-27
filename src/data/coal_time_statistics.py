@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--n_bins", default = "1000")
     parser.add_argument("--n_exp", default = "100")
+    parser.add_argument("--beta_factor", default = "1")
 
     parser.add_argument("--grid", default = "n01")
 
@@ -96,10 +97,9 @@ def main():
     # go to one in n_exp bins with alpha = -beta and x from 0 to 1 linear
     
     x = np.linspace(0., 1., int(args.n_exp))
-    if np.min(mins) < x[0]:
-        bins = [np.min(mins)] + list(np.cumsum(bin_size(x, -1 * beta, beta)))
-    else:
-        bins = list(np.cumsum(bin_size(x, -1 * beta, beta)))
+    beta = np.log(np.min(mins))
+    
+    bins = list(np.cumsum(bin_size(x, -1 * beta * float(args.beta_factor), beta)))
     bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
 
     h = np.zeros(len(bins) - 1)
