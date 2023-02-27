@@ -96,11 +96,12 @@ def main():
     # we have to go from max to min
     # go to one in n_exp bins with alpha = -beta and x from 0 to 1 linear
     
-    x = np.linspace(0., 1., int(args.n_exp))
     beta = np.log(np.min(mins))
+    max_log = np.log(np.max(maxs))
+    x = np.linspace(0., max_log - beta, int(args.n_bins))
     
     bins = list(np.cumsum(bin_size(x, -1 * beta * float(args.beta_factor), beta)))
-    bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
+    #bins = bins + list(np.linspace(np.max(bins), np.max(maxs), int(args.n_bins) - int(args.n_exp)))[1:]
 
     h = np.zeros(len(bins) - 1)
     
