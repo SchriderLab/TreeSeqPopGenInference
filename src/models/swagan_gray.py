@@ -282,7 +282,7 @@ class Generator(nn.Module):
 
             i += 2
 
-        image = self.tanh(self.iwt(skip))
+        image = self.iwt(skip)
         
         if not return_latents:
             return image
