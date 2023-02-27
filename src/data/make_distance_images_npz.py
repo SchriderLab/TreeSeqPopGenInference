@@ -56,8 +56,8 @@ import pickle
 def main():
     args = parse_args()
     
-    cdf = pickle.load(open(args.cdf, 'rb'))
-
+    cdf = pickle.load(open(args.cdf, 'rb'))['cdf']
+    
     ifiles = sorted(glob.glob(os.path.join(args.idir, '*.npz')))
     
     counter = 0
