@@ -160,7 +160,7 @@ def main():
             
             D_ = D[chunk,:]
             for d in D_:
-                X.append(cv2.resize(squareform(d), (128, 128)))
+                X.append(np.expand_dims(cv2.resize(squareform(d), (128, 128)), 0))
                 
             X = torch.FloatTensor(X).to(device) * 2 - 1
         
