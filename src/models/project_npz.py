@@ -75,7 +75,7 @@ def parse_args():
     parser.add_argument(
         "--latent",
         type=int,
-        default=128,
+        default=32,
         help="dimensionality of the latent space",
     )
     parser.add_argument(
@@ -91,7 +91,7 @@ def parse_args():
         help="channel multiplier factor for the model. config-f = 2, else = 1",
     )
     parser.add_argument(
-        "--size", type=int, default=256, help="image sizes for the model"
+        "--size", type=int, default=128, help="image sizes for the model"
     )
     parser.add_argument("--lr", default = "0.001")
     parser.add_argument("--weight_decay", default = "0.0")
