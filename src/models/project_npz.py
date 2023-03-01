@@ -150,8 +150,7 @@ def main():
         
         ifile = np.load(ifile)
         D = ifile['D']
-        D = cdf(np.log(D))
-        
+        D = cdf(np.clip(np.log(D), cdf.x[0], cdf.x[-1]))
         c = chunks(list(range(D.shape[0])), 64)
         
         ret = []        
