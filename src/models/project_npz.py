@@ -51,6 +51,8 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         _.append(lst[i:i + n])
 
+    return _
+
 def map_to_im(x, size = 256, viridis = True):
     # x is (n, n) matrix of floats to (n, n, 3)
     i, j = np.where(x > 0)
