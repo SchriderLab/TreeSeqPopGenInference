@@ -129,7 +129,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using " + str(device) + " as device")
     
-    model = resnet34(num_classes = args.latent).to(device)
+    model = resnet34(num_classes = args.latent, in_channels = 1).to(device)
     checkpoint = torch.load(args.proj_ckpt, map_location = device)
     model.load_state_dict(checkpoint)
     model.eval()
