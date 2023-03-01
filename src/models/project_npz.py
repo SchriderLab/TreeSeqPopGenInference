@@ -162,7 +162,7 @@ def main():
             for d in D_:
                 X.append(np.expand_dims(cv2.resize(squareform(d), (128, 128)), 0))
                 
-            X = torch.FloatTensor(X).to(device) * 2 - 1
+            X = torch.FloatTensor(np.array(X)).to(device) * 2 - 1
         
             with torch.no_grad():
                 v = model(X)
