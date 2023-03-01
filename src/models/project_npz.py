@@ -124,7 +124,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cdf = pickle.load(open(args.cdf, 'r'))['cdf']
+    cdf = pickle.load(open(args.cdf, 'rb'))['cdf']
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using " + str(device) + " as device")
