@@ -101,7 +101,7 @@ def parse_args():
     parser.add_argument("--proj_ckpt", default = "None")
     parser.add_argument("--idir", default = "None")
     
-    parser.add_argument("--")
+    parser.add_argument("--cdf", default = "None")
     
     parser.add_argument("--odir", default = "None")
     
