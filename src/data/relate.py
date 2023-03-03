@@ -75,7 +75,7 @@ def main():
     rcmd = 'cd {3} && Rscript /nas/longleaf/home/ddray/SeqOrSwim/src/data/ms2haps.R {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
-    for ifile in ifiles[:1]:
+    for ifile in ifiles:
         tag = ifile.split('/')[-1].split('.')[0]
         
         logging.info('working on {}...'.format(ifile))
@@ -111,11 +111,11 @@ def main():
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
                                      samples[ix], map_file, 
-                                     haps[ix].split('/')[-1].replace('.haps', ''), odir)
+                                     haps[ix].split('/')[-1].replace('.haps', '') + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
             os.system(cmd_)
         
-        #os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
-        #os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
+        os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
+        os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
         
     # compress back
     logging.info('compressing back...')
