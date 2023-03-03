@@ -30,7 +30,7 @@ from compute_kl_matrix_vectorized import DemographyLL, MigExponentialRateFunctio
 
 def make_distance_matrix(root, sample_sizes):
     # include pop_labels
-    if sample_sizes.shape[0] > 1:
+    if len(sample_sizes) > 1:
         ii_topological = [root.id] + [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
                         + [u.id for u in root.levelorder() if u.pop == 1]
     else:
