@@ -114,8 +114,8 @@ def main():
                                      haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
             os.system(cmd_)
         
-        os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
-        os.system('rm -rf {}'.format(os.path.join(idir, '*.haps')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
     # compress back
     logging.info('compressing back...')
