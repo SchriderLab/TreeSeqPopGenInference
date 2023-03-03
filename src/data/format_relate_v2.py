@@ -187,7 +187,7 @@ def main():
                 for node in sk_nodes.keys():
                     node = sk_nodes[node]
                     if node.is_root() and hasattr(node, 'children'):
-                        if len(node.children()) == 2:
+                        if len(node.children) == 2:
                             root = node
                             break
                     
