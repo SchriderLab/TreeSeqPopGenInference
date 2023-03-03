@@ -202,6 +202,9 @@ def main():
                         _.extend(c.children)
                     
                     children = copy.copy(_)
+                    
+                print(children)
+                print(root.count())
                 
                 D = make_distance_matrix(root, sample_sizes)
                 Ds.append(squareform(D))
