@@ -186,7 +186,7 @@ def main():
                 root = None
                 for node in sk_nodes.keys():
                     node = sk_nodes[node]
-                    if node.is_root():
+                    if node.is_root() and len(root.children) == 2:
                         root = node
                         break
                     
