@@ -111,7 +111,7 @@ def main():
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
                                      samples[ix], map_file, 
-                                     haps[ix].split('/')[-1].replace('.haps', '') + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
+                                     haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
             os.system(cmd_)
         
         os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
