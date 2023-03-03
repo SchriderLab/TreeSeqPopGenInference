@@ -73,7 +73,7 @@ def main():
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
     logging.info('have {} files to parse...'.format(len(ifiles)))
     
-    tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
+    tags = [u.split('/')[-1].split('_')[0] for u in ifiles]
     sample_sizes = list(map(int, args.sample_sizes.split(',')))
     
     for ii in range(len(ifiles)):
