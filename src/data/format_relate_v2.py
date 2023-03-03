@@ -23,6 +23,7 @@ from ete3 import Tree
 import itertools
 from scipy.spatial.distance import squareform
 import time
+from simulate_msprime_grid import make_distance_matrix
 
 """
 notes:
@@ -47,9 +48,7 @@ def parse_args():
     
     parser.add_argument("--n_samples", default = "None")
     parser.add_argument("--val_prop", default = "0.1")
-    parser.add_argument("--pop_sizes", default = "32,32")
-    
-    parser.add_argument("--n_sample", default = "104")
+    parser.add_argument("--sample_sizes", default = "104")
     
     parser.add_argument("--topological_order", action = "store_true")
     parser.add_argument("--bidirectional", action = "store_true")
@@ -75,9 +74,7 @@ def main():
     logging.info('have {} files to parse...'.format(len(ifiles)))
     
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
-    pop_sizes = list(map(int, args.pop_sizes.split(',')))
-    
-    s0, s1 = pop_sizes
+    sample_sizes = list(map(int, args.sample_sizes.split(',')))
     
     for ii in range(len(ifiles)):
         tag = tags[ii]
@@ -112,14 +109,7 @@ def main():
                 continue
             
             anc_file = open(anc_files[ix], 'r')
-            
-            if args.n_sample != "None":
-                n_sample = int(args.n_sample)
-                
-                current_day_nodes = list(np.random.choice(range(sum(pop_sizes)), n_sample, replace = False))
-            else:
-                current_day_nodes = list(range(sum(pop_sizes)))
-                
+                            
             lines = anc_file.readlines()[2:]
             
             l = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1].shape[1]
@@ -200,19 +190,9 @@ def main():
                         root = node
                         break
                     
-                mat = root.tip_tip_distances()
-                ii = list(map(int, mat._ids))
-                ii_ = list(map(int, [u.name for u in list(root.levelorder())]))
+                D = make_distance_matrix(root, sample_sizes)
                 
-                ii = [ii.index(u) for u in ii_ if u in ii]
-                
-                D = mat._data
-                D = D[np.ix_(ii, ii)]
-                
-                i, j = np.where(D > 0.)
-                D[i, j] = np.log(D[i, j])
-                
-                Ds.append(D)
+                Ds.append(squareform(D))
                 
             if len(Ds) > 0:
                 if ix < N:

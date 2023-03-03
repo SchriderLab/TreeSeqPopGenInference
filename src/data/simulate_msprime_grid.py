@@ -28,6 +28,62 @@ sys.path.append('src/models/')
 
 from compute_kl_matrix_vectorized import DemographyLL, MigExponentialRateFunction, CoalExponentialRateFunction, setup_ll_inputs
 
+def make_distance_matrix(root, sample_sizes):
+    # include pop_labels
+    if sample_sizes.shape[0] > 1:
+        ii_topological = [root.id] + [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
+                        + [u.id for u in root.levelorder() if u.pop == 1]
+    else:
+        ii_topological = [u.id for u in root.levelorder()]
+    
+    ages = np.zeros(root.count())
+    for node in root.traverse():
+        ages[node.id] = node.age
+    
+    # indexed by assinged id
+    D = np.zeros((2 * sum(sample_sizes) - 1, 2 * sum(sample_sizes) - 1))
+    
+    children = root.children
+    c1, c2 = root.children
+    
+    todo = [root]
+    while len(todo) != 0:
+        root = todo[-1]
+        del todo[-1]
+        
+        t_coal = ages[root.id]
+        d_root = t_coal - ages
+        
+        if root.has_children():
+            c1, c2 = root.children
+            i1 = c1.id
+            i2 = c2.id
+            
+            if c1.has_children():
+                todo.append(c1)
+            if c2.has_children():
+                todo.append(c2)
+            
+            ii1 = [u.id for u in list(c1.traverse())]
+            ii2 = [u.id for u in list(c2.traverse())]
+
+            # n x m distance matrix for the descendants
+            # of left and right child
+            d1 = np.tile(d_root[ii1].reshape(-1, 1), (1, len(ii2))) 
+            d2 = np.tile(d_root[ii2].reshape(1, -1), (len(ii1), 1))
+
+            d = d1 + d2
+            
+            D[root.id,ii1 + ii2] = d_root[ii1 + ii2]
+            D[ii1 + ii2,root.id] = d_root[ii1 + ii2]
+            
+            D[np.ix_(ii1, ii2)] = d
+            D[np.ix_(ii2, ii1)] = d.T
+    
+    D = D[np.ix_(ii_topological, ii_topological)]
+    
+    return D
+
 class NPopSimulator(object):
     # s is the vector of integer samples sizes in the present day
     # N is the vector of effective population sizes
@@ -144,7 +200,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--ifile", default = "src/json/migration_001.json")
+    parser.add_argument("--ifile", default = "src/json/n_001.json")
     parser.add_argument("--n_replicates", default = "2500")
     
     parser.add_argument("--pop_labels", action = "store_true")
@@ -167,6 +223,9 @@ import json
 
 def main():
     args = parse_args()
+    
+    cdf = pickle.load(open('cdfs/cdf_n01_i3.pkl', 'rb'))['cdf']
+    
     
     ifile = json.load(open(args.ifile))
     
@@ -216,59 +275,8 @@ def main():
                 _.extend(c.children)
                 
             children = copy.copy(_)
-            
-        ages = np.zeros(len(tables.nodes.time))
-        for node in root.traverse():
-            ages[node.id] = node.age
 
-        # include pop_labels
-        if sample_sizes.shape[0] > 1:
-            ii_topological = [root.id] + [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
-                            + [u.id for u in root.levelorder() if u.pop == 1]
-        else:
-            ii_topological = [u.id for u in root.levelorder()]
-
-        # indexed by assinged id
-        D = np.zeros((2 * sum(sample_sizes) - 1, 2 * sum(sample_sizes) - 1))
-        
-        children = root.children
-        c1, c2 = root.children
-        
-        todo = [root]
-        while len(todo) != 0:
-            root = todo[-1]
-            del todo[-1]
-            
-            t_coal = ages[root.id]
-            d_root = t_coal - ages
-            
-            if root.has_children():
-                c1, c2 = root.children
-                i1 = c1.id
-                i2 = c2.id
-                
-                if c1.has_children():
-                    todo.append(c1)
-                if c2.has_children():
-                    todo.append(c2)
-                
-                ii1 = [u.id for u in list(c1.traverse())]
-                ii2 = [u.id for u in list(c2.traverse())]
-
-                # n x m distance matrix for the descendants
-                # of left and right child
-                d1 = np.tile(d_root[ii1].reshape(-1, 1), (1, len(ii2))) 
-                d2 = np.tile(d_root[ii2].reshape(1, -1), (len(ii1), 1))
-    
-                d = d1 + d2
-                
-                D[root.id,ii1 + ii2] = d_root[ii1 + ii2]
-                D[ii1 + ii2,root.id] = d_root[ii1 + ii2]
-                
-                D[np.ix_(ii1, ii2)] = d
-                D[np.ix_(ii2, ii1)] = d.T
-        
-        D = D[np.ix_(ii_topological, ii_topological)]
+        D = make_distance_matrix(root, sample_sizes)        
         Ds.append(squareform(D))
         
         E.append(events)
