@@ -28,8 +28,8 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--L", default = "10000")
-    parser.add_argument("--mu", default = "3.5e-9")
-    parser.add_argument("--r", default = "1.75e-8")
+    parser.add_argument("--mu", default = "1.1e-8")
+    parser.add_argument("--r", default = "1.2e-8")
     parser.add_argument("--relate_path", default = "/nas/longleaf/home/ddray/SeqOrSwim/relate/bin/Relate")
 
     parser.add_argument("--odir", default = "None")
@@ -111,7 +111,7 @@ def main():
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
                                      samples[ix], map_file, 
-                                     haps[ix].split('/')[-1].split('.')[0], odir)
+                                     haps[ix].split('/')[-1].replace('.haps', ''), odir)
             os.system(cmd_)
         
         os.system('rm -rf {}'.format(os.path.join(idir, '*.sample')))
