@@ -75,7 +75,7 @@ def main():
     rcmd = 'cd {3} && Rscript /nas/longleaf/home/ddray/SeqOrSwim/src/data/ms2haps.R {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
-    for ifile in ifiles[:5]:
+    for ifile in ifiles:
         tag = ifile.split('/')[-1].split('.')[0]
         
         logging.info('working on {}...'.format(ifile))
