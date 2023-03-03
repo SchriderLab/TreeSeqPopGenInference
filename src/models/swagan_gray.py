@@ -303,7 +303,7 @@ class ConvBlock(nn.Module):
         return out
     
 class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=2, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, size, channel_multiplier=2, out_shape = 1, blur_kernel=[1, 3, 3, 1]):
         super().__init__()
 
         channels = {
@@ -346,7 +346,7 @@ class Discriminator(nn.Module):
             EqualLinear(channels[4] * 4 * 4, channels[4], activation="fused_lrelu"),
         )
         
-        self.final = EqualLinear(channels[4], 1)
+        self.final = EqualLinear(channels[4], out_shape)
 
     def forward(self, input):
         input = self.dwt(input)
