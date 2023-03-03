@@ -187,10 +187,7 @@ def main():
                 for node in sk_nodes.keys():
                     node = sk_nodes[node]
                     if node.is_root() and hasattr(node, 'children'):
-                        print(node.children)
-                        if len(node.children) == 2:
-                            root = node
-                            break
+                        root = node.children[0]
                     
                 D_ = root.tip_tip_distances().data
                 root.age = np.max(D_) / 2.
