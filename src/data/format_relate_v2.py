@@ -190,8 +190,20 @@ def main():
                         root = node
                         break
                     
-                D = make_distance_matrix(root, sample_sizes)
+                D_ = root.tip_tip_distances().data
+                root.age = np.max(D_) / 2.
+                children = root.children
                 
+                while len(children) > 0:
+                    _ = []
+                    for c in children:
+                        c.age = c.parent.age - c.length
+                    
+                        _.extend(c.children)
+                    
+                    children = copy.copy(_)
+                
+                D = make_distance_matrix(root, sample_sizes)
                 Ds.append(squareform(D))
                 
             if len(Ds) > 0:
