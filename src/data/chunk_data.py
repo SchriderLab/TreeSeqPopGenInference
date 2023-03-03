@@ -54,7 +54,7 @@ def main():
         logging.info('working on {}...'.format(idir))
         
         tag = idir.split('/')[-1]
-        idir = os.path.join(idir, 'ms')
+        #idir = os.path.join(idir, 'ms')
         
         ifiles = glob.glob(os.path.join(idir, '*.msOut.gz'))
         random.shuffle(ifiles)
