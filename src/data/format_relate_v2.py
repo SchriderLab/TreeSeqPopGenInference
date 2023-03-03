@@ -189,6 +189,8 @@ def main():
                     if node.is_root() and hasattr(node, 'children'):
                         root = node.children[0]
                     
+                root.assign_ids()
+                    
                 D_ = root.tip_tip_distances().data
                 root.age = np.max(D_) / 2.
                 children = root.children
