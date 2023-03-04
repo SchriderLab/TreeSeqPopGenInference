@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--classes", default = "soft,hard,neutral")
 
+    parser.add_argument("--n_sample", default = "250")
     parser.add_argument("--sample_sizes", default = "104")
 
     parser.add_argument("--odir", default = "None")
@@ -60,6 +61,8 @@ def main():
     args = parse_args()
     
     anc_files = sorted(glob.glob(os.path.join(args.idir, '*.anc')))
+    random.shuffle(anc_files)
+    
     ofile = h5py.File(args.ofile, 'w')
     
     sample_sizes = list(map(int, args.sample_sizes.split(',')))
@@ -68,6 +71,9 @@ def main():
     
     for c in classes:
         counter[c] = 0
+        
+    min_log = np.inf
+    max_log = -np.inf
     
     for ix in range(len(anc_files)):
         if (ix + 1) % 5 == 0:
@@ -160,11 +166,22 @@ def main():
             D = make_distance_matrix(root, sample_sizes)
             Ds.append(squareform(D))
             
-        ofile.create_dataset('{0}/{1}/D'.format(tag, counter[tag]), data = np.array(Ds))
+        D = np.array(Ds)
+        logD = np.log(D)
+        
+        if np.max(logD) > max_log:
+            max_log = np.max(logD)
+            
+        if np.min(logD) < min_log:
+            min_log = np.min(logD)
+        
+        print('have min and max of: {}, {}'.format(min_log, max_log))
+        ofile.create_dataset('{0}/{1}/D'.format(tag, counter[tag]), data = D, compression = 'lzf')
         ofile.flush()
         
         counter[tag] += 1
         
+    ofile.create_dataset('max_min', data = np.array([min_log, max_log]))
     ofile.close()
 
     # ${code_blocks}
