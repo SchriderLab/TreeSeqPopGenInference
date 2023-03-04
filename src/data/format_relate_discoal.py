@@ -75,7 +75,7 @@ def main():
     min_log = np.inf
     max_log = -np.inf
     
-    for ix in range(len(anc_files)):
+    for ix in range(int(args.n_sample)):
         if (ix + 1) % 5 == 0:
             logging.info('on replicate {}...'.format(ix))
         
