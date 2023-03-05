@@ -19,15 +19,20 @@ import PIL
 import pyspng
 
 class ManifoldNoise(object):
-    def __init__(self, ifile, batch_size = 8, multiplier = 5.2619707157047735):
+    def __init__(self, ifile = None, k = 32, batch_size = 8, use_manifold = False):
         x = np.load(ifile)
-        self.mu = x['mu']
-        self.sigma = x['sigma']
+        if ifile is not None:
+            self.mu = x['mu']
+            self.sigma = x['sigma']
+            
+            self.n = self.mu.shape[0]
+            self.k = self.mu.shape[1]
+        else:
+            self.k = k
+            self.n = 1
         
-        n_grid_points = 4
-
-        self.n = self.mu.shape[0]
-        self.k = self.mu.shape[1]
+        self.use_manifold = use_manifold
+        
         self.batch_size = batch_size
     
     def get_batch(self, n, ii = None):
@@ -38,8 +43,9 @@ class ManifoldNoise(object):
             ii = np.random.choice(range(self.n), n)
         
         # transform to sigma, mu
-        #z *= self.sigma[ii]
-        #z += self.mu[ii]
+        if self.use_manifold:
+            z *= self.sigma[ii]
+            z += self.mu[ii]
    
         return torch.FloatTensor(z), ii
     

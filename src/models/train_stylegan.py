@@ -196,7 +196,10 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     mean_path_length_avg = 0
     loss_dict = {}
 
-    noise_generator = ManifoldNoise(args.manifold, args.batch)
+    if args.manifold == "None":
+        args.manifold = None
+
+    noise_generator = ManifoldNoise(args.manifold, args.batch, k = args.latent, use_manifold = args.use_manifold)
 
     if args.distributed:
         g_module = generator.module
@@ -371,6 +374,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                 with torch.no_grad():
                     g_ema.eval()
                     sample = g_ema(sample_z)
+                    sample = 2 * (sample - sample.min()) / (sample.max() - sample.min()) - 1
                     
                     utils.save_image(
                         sample,
@@ -393,24 +397,24 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                     plt.savefig(os.path.join(args.odir, f"sample/{str(i).zfill(6)}_hist.png"), dpi = 100)
                     plt.close()
 
-            """
-            if i % 1000 == 0:
-                means = []
-                stds = []
-                with torch.no_grad():
-                    for ii in range(noise_generator.mu.shape[0]):
-                        z = noise_generator.get_batch_index(32, ii).to(device)
-                        sample = g_ema(z)
-                        
-                        i_, j_ = torch.triu_indices(args.size, args.size, 1, device = device)
-
-                        means.append(torch.mean((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.).item())
-                        stds.append(torch.std((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.).item())
-
-                plt.scatter(means, stds, c = list(range(noise_generator.mu.shape[0])))
-                plt.savefig(os.path.join(args.odir, f"sample/ms_{str(i).zfill(6)}.png"))
-                plt.close()
-            """
+            if args.use_manifold:
+                if i % 1000 == 0:
+                    means = []
+                    stds = []
+                    with torch.no_grad():
+                        for ii in range(noise_generator.mu.shape[0]):
+                            z = noise_generator.get_batch_index(32, ii).to(device)
+                            sample = g_ema(z)
+                            
+                            i_, j_ = torch.triu_indices(args.size, args.size, 1, device = device)
+    
+                            means.append(torch.mean((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.).item())
+                            stds.append(torch.std((sample[:,0,i_,j_] + sample[:,0,j_,i_]) / 2.).item())
+    
+                    plt.scatter(means, stds, c = list(range(noise_generator.mu.shape[0])))
+                    plt.savefig(os.path.join(args.odir, f"sample/ms_{str(i).zfill(6)}.png"))
+                    plt.close()
+            
             if i % 10000 == 0:
                 torch.save(
                     {
@@ -506,7 +510,7 @@ if __name__ == "__main__":
         default=0,
         help="probability of applying augmentation. 0 = use adaptive augmentation",
     )
-    parser.add_argument("--manifold", default = "manifold.npz")
+    parser.add_argument("--manifold", default = "None")
     parser.add_argument(
         "--ada_target",
         type=float,
@@ -543,6 +547,7 @@ if __name__ == "__main__":
     parser.add_argument("--cdf", default = "None")
     parser.add_argument("--mean_max_log", default = "6.4580402832733474")
     parser.add_argument("--odir", default = "None")
+    parser.add_argument("--use_manifold", action = "store_true")
     
     args = parser.parse_args()
     if args.odir != "None":
