@@ -42,7 +42,7 @@ def parse_args():
             os.system('mkdir -p {}'.format(args.odir))
             logging.debug('root: made output directory {0}'.format(args.odir))
         else:
-            os.system('rm -rf {}'.format(args.odir))
+            os.system('rm -rf {}'.format(os.path.join(args.odir, '*')))
     # ${odir_del_block}
 
     return args
