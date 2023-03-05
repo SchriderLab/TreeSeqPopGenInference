@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 from scipy.spatial.distance import squareform
 import cv2
+import pickle
+import glob
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -19,8 +21,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--ifile", default = "seln_trees_auto.hdf5")
+    parser.add_argument("--idir", default = "None")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
+    parser.add_argument("--cdf", default = "None")
+    parser.add_argument("--n_sample", default = "75")
     
     parser.add_argument("--cl", default = "neutral")
 
@@ -46,33 +50,40 @@ def parse_args():
 def main():
     args = parse_args()
     
-    ifile = h5py.File(args.ifile, 'r')
-    logging.info('reading keys...')
-    classes = list(ifile.keys())
+    ifiles = sorted(glob.glob(os.path.join(args.idir, '*.hdf5')))
+    cdf = pickle.load(open(args.cdf, 'rb'))['cdf']
     
-    logging.info('writing images...')
-    for c in classes:
-        keys = list(ifile[c].keys())
-       
-        counter = 0
+    counter = 0
+    for ifile in ifiles:
+        print(ifile)
         
-        c_name = c
+        ifile = h5py.File(args.ifile, 'r')
+        logging.info('reading keys...')
+        classes = list(ifile.keys())
+        classes.remove('max_min')
         
-        odir = os.path.join(args.odir, c_name)
-        os.system('mkdir -p {}'.format(odir))
-        
-        for key in keys:
-            D = np.array(ifile[c][key]['D'])
+        logging.info('writing images...')
+        for c in classes:
+            keys = list(ifile[c].keys())
+            keys = np.random.choice(keys, int(args.n_sample), replace = False)
             
-            for k in range(D.shape[0]):
-                d = D[k]
+            c_name = c
+            
+            odir = os.path.join(args.odir, c_name)
+            os.system('mkdir -p {}'.format(odir))
+            
+            for key in keys:
+                D = np.array(ifile[c][key]['D'])
+                D = np.log(D)
+                D[D < cdf.x[0]] = cdf.x[0]
+                D[D > cdf.x[-1]] = cdf.x[-1]
+                D = cdf(D)
                 
-                d = ((d - np.min(d)) / (np.max(d) - np.min(d)) * 255.).astype(np.uint8)
-                
-                d = np.array([d, d, d], dtype = np.uint8).transpose(1, 2, 0)
-                
-                cv2.imwrite(os.path.join(odir, '{0:05d}.png'.format(counter)), d)
-                counter += 1
+                for k in range(D.shape[0]):
+                    d = cv2.resize(squareform(D[k]), (256, 256))
+                    
+                    cv2.imwrite(os.path.join(odir, '{1}_{0:07d}.png'.format(counter, c_name)), d)
+                    counter += 1
 
     # ${code_blocks}
 
