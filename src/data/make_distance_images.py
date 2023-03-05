@@ -57,7 +57,7 @@ def main():
     for ifile in ifiles:
         print(ifile)
         
-        ifile = h5py.File(args.ifile, 'r')
+        ifile = h5py.File(ifile, 'r')
         logging.info('reading keys...')
         classes = list(ifile.keys())
         classes.remove('max_min')
@@ -68,10 +68,7 @@ def main():
             keys = np.random.choice(keys, int(args.n_sample), replace = False)
             
             c_name = c
-            
-            odir = os.path.join(args.odir, c_name)
-            os.system('mkdir -p {}'.format(odir))
-            
+                        
             for key in keys:
                 D = np.array(ifile[c][key]['D'])
                 D = np.log(D)
@@ -82,7 +79,7 @@ def main():
                 for k in range(D.shape[0]):
                     d = cv2.resize(squareform(D[k]), (256, 256))
                     
-                    cv2.imwrite(os.path.join(odir, '{1}_{0:07d}.png'.format(counter, c_name)), d)
+                    cv2.imwrite(os.path.join(args.odir, '{1}_{0:07d}.png'.format(counter, c_name)), d)
                     counter += 1
 
     # ${code_blocks}
