@@ -84,7 +84,8 @@ def main():
     print('computing histogram...')
     for ifile in ifiles:
         ifile = h5py.File(ifile, 'r')
-        cases = list(ifile.keys()).remove('max_min')
+        cases = list(ifile.keys())
+        cases.remove('max_min')
         
         for c in cases: 
             keys = list(ifile[c].keys())
