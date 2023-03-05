@@ -20,8 +20,9 @@ import pyspng
 
 class ManifoldNoise(object):
     def __init__(self, ifile = None, k = 32, batch_size = 8, use_manifold = False):
-        x = np.load(ifile)
+        
         if ifile is not None:
+            x = np.load(ifile)
             self.mu = x['mu']
             self.sigma = x['sigma']
             
