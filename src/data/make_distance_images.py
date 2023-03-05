@@ -79,7 +79,7 @@ def main():
                 for k in range(D.shape[0]):
                     d = cv2.resize(squareform(D[k]), (256, 256))
                     
-                    cv2.imwrite(os.path.join(args.odir, '{1}_{0:07d}.png'.format(counter, c_name)), (d / 255).astype(np.uint8))
+                    cv2.imwrite(os.path.join(args.odir, '{1}_{0:07d}.png'.format(counter, c_name)), (d * 65535).astype(np.uint16))
                     counter += 1
 
     # ${code_blocks}
