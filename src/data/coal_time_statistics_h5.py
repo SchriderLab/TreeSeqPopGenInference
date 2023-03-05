@@ -31,6 +31,8 @@ def parse_args():
     parser.add_argument("--n_exp", default = "100")
     parser.add_argument("--beta_factor", default = "1")
 
+    parser.add_argument("--n_sample", default = "10")
+
     parser.add_argument("--grid", default = "n01")
 
     parser.add_argument("--ofile", default = "None")
@@ -83,12 +85,14 @@ def main():
         
     print('computing histogram...')
     for ifile in ifiles:
+        print(ifile)
         ifile = h5py.File(ifile, 'r')
         cases = list(ifile.keys())
         cases.remove('max_min')
         
         for c in cases: 
             keys = list(ifile[c].keys())
+            keys = np.random.choice(keys, int(args.n_sample))
             
             for k in keys:
                 D = np.log(ifile[c][k]['D'])
