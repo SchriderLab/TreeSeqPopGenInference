@@ -199,7 +199,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
     if args.manifold == "None":
         args.manifold = None
 
-    noise_generator = ManifoldNoise(args.manifold, args.batch, k = args.latent, use_manifold = args.use_manifold)
+    noise_generator = ManifoldNoise(args.manifold, args.latent, batch_size = args.batch, use_manifold = args.use_manifold)
 
     if args.distributed:
         g_module = generator.module
