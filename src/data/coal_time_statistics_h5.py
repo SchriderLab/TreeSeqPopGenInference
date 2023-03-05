@@ -63,6 +63,7 @@ def main():
     print('reading for maxima and minima...')
     for ifile in ifiles:
         ifile = h5py.File(ifile, 'r')
+        print(list(ifile.keys()))
         min_max = tuple(ifile['max_min'])
         
         mi, ma = min_max
