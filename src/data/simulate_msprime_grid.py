@@ -26,9 +26,83 @@ from scipy.spatial.distance import squareform
 import sys
 sys.path.append('src/models/')
 
+import matplotlib
+
 from compute_kl_matrix_vectorized import DemographyLL, MigExponentialRateFunction, CoalExponentialRateFunction, setup_ll_inputs
+cmap = matplotlib.cm.get_cmap('viridis')
+
+def make_FW_rep(root, sample_sizes):
+    non_zero_ages = []
+    
+    ages = np.zeros(root.count())
+    for node in root.traverse():
+        ages[node.id] = node.age
+        
+        if node.age > 0.:
+            non_zero_ages.append(node.age)
+            
+    non_zero_ages = sorted(non_zero_ages, reverse = True)
+
+    # indexed by assinged id
+    F = np.zeros((sum(sample_sizes) - 1, sum(sample_sizes) - 1))
+
+    children = root.children
+    c1, c2 = root.children
+    
+    extant = np.array(range(2, sum(sample_sizes) + 1))
+    start_end = []
+    
+    todo = [root]
+    while len(todo) != 0:
+        root = todo[-1]
+        del todo[-1]
+        
+        t_coal = ages[root.id]
+        
+        if root.has_children():
+            c1, c2 = root.children
+            
+            start_end.append((t_coal, c1.age))
+            
+            if not c1.is_tip():
+                todo.append(c1)
+                
+            start_end.append((t_coal, c2.age))
+            
+            if not c2.is_tip():
+                todo.append(c2)
+
+    start_end = np.array(start_end)
+    s = non_zero_ages + [0.]
+    
+    F[list(range(F.shape[0])), list(range(F.shape[0]))] = extant
+    
+    i, j = np.tril_indices(F.shape[0], -1)
+    ij = zip(i, j)
+    
+    for i, j in ij:
+        start = s[j]
+        end = s[i]
+
+        F[i, j] = sum((start_end[:,1] <= end) & (start_end[:,0] >= start))
+        F[j, i] = F[i, j]
+    
+    W = np.zeros(F.shape)
+    i, j = np.tril_indices(F.shape[0])
+    ij = zip(i, j)
+    
+    for i, j in ij:
+        W[i, j] = s[j] - s[i + 1]
+        W[j, i] = W[i, j]
+        
+    W = np.log(W)
+    
+    return F, W
+    
+        
 
 def make_distance_matrix(root, sample_sizes):
+    
     # include pop_labels
     if len(sample_sizes) > 1:
         ii_topological = [root.id] + [u.id for u in root.levelorder() if u.pop == -1] + [u.id for u in root.levelorder() if u.pop == 0] \
@@ -119,9 +193,16 @@ class NPopSimulator(object):
         for ix in range(self.n_nonzero):
             self.demography.set_migration_rate('pop_{0:03d}'.format(self.i[ix]), 'pop_{0:03d}'.format(self.j[ix]), self.m[self.i[ix], self.j[ix]])
             
-    def simulate(self, sequence_length = 1000):
+    def simulate(self, sequence_length = 1000, mu = 0):
         ret = msprime.sim_ancestry(samples = self.samples, recombination_rate = 0., 
                                  sequence_length = sequence_length, demography = self.demography, record_migrations = True)
+        
+        if mu > 0:
+            ret = msprime.sim_mutations(ret, mu)
+        
+            X = ret.genotype_matrix()
+        else:
+            X = None
         
         tables = ret.dump_tables()
         tables.sort()
@@ -151,13 +232,15 @@ class NPopSimulator(object):
             t = copy.copy(t1)
             
         migs = []
+        
+        
         # get the migration events
         
         time = tables.migrations.time
         node = tables.migrations.node
         src = tables.migrations.source
         dest = tables.migrations.dest
-        
+
         for ij in range(len(time)):
             t = time[ij]
             i = node[ij]
@@ -191,7 +274,7 @@ class NPopSimulator(object):
         
         events = np.array(events)
         
-        return ret, events
+        return ret, events, X
         
 import sys
 
@@ -224,9 +307,6 @@ import json
 def main():
     args = parse_args()
     
-    cdf = pickle.load(open('cdfs/cdf_n01_i3.pkl', 'rb'))['cdf']
-    
-    
     ifile = json.load(open(args.ifile))
     
     N = np.array(ifile['N'])
@@ -243,9 +323,15 @@ def main():
     E = []
     Ds = []
     P = []
+    Xs = []
+    Fs = []
+    Ws = []
     
     for j in range(int(args.n_replicates)):
-        s, events = simulator.simulate()
+        s, events, X = simulator.simulate(mu = 1e-5)
+        X[X > 0] = 1.
+        
+        Xs.append(np.sum(X.T, axis = 0))
         
         tables = s.dump_tables()
         tables.sort()
@@ -255,9 +341,10 @@ def main():
         f = StringIO(t.as_newick())  
         root = read(f, format="newick", into=TreeNode)
         root.assign_ids()
-        
+                
         children = root.children
         t = max(tables.nodes.time)
+        
         fm = lambda x: int(x.replace('n', '')) - 1
         
         root.age = t
@@ -266,9 +353,11 @@ def main():
         while len(children) > 0:
             _ = []
             for c in children:
+                
                 c.age = c.parent.age - c.length
                 if c.is_tip():
                     c.pop = populations[fm(c.name)]
+                    c.age = 0.
                 else:
                     c.pop = -1
                     
@@ -276,7 +365,12 @@ def main():
                 
             children = copy.copy(_)
 
-        D = make_distance_matrix(root, sample_sizes)        
+        D = make_distance_matrix(root, sample_sizes)    
+        F, W = make_FW_rep(root, sample_sizes)
+
+        Fs.append(F)
+        Ws.append(W)
+        
         Ds.append(squareform(D))
         
         E.append(events)
@@ -292,8 +386,9 @@ def main():
     Dmean = np.mean(D)
     Dstd = np.std(D)
         
-    np.savez_compressed(args.ofile, E = np.array(E, dtype = object), 
-                        D = D, stats = np.array([Dmean, Dstd]), P = P)
+    # now saving the SFS
+    np.savez_compressed(args.ofile, E = np.array(E, dtype = object), F = np.array(Fs, dtype = np.uint16),
+                        D = D, stats = np.array([Dmean, Dstd]), P = P, X = np.array(Xs), W = np.array(Ws))
     
     
         
