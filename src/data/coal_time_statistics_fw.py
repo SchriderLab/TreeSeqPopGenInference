@@ -73,6 +73,8 @@ def main():
         maxs.append(np.max(W))
         mins.append(np.min(W))
         
+        print(np.mean(W), np.max(W), np.min(W))
+        
         entropies.append(np.mean(-1 * ll))
 
     print('mean entropy: {}'.format(np.mean(entropies)))
