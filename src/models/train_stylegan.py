@@ -232,7 +232,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
         noise = noise.to(device)
 
         real_img = loader.get_batch()
-        real_img = (real_img.to(device).to(torch.float32) / 32767.5 - 1)
+        real_img = (real_img.to(device).to(torch.float32) / 127.5 - 1)
 
         requires_grad(generator, False)
         requires_grad(discriminator, True)
@@ -374,7 +374,6 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                 with torch.no_grad():
                     g_ema.eval()
                     sample = g_ema(sample_z)
-                    sample = 2 * (sample - sample.min()) / (sample.max() - sample.min()) - 1
                     
                     utils.save_image(
                         sample,
@@ -384,6 +383,7 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                         range = (-1., 1.)
                     )
                     
+                    """
                     i_, j_ = np.tril_indices(128, 1)
                     
                     sample = (np.clip(sample.detach().cpu().numpy(), -1, 1) + 1.) / 2.
@@ -396,7 +396,8 @@ def train(args, loader, generator, discriminator, g_optim, d_optim, g_ema, devic
                     axes[1].bar(bins[:-1], H_)
                     plt.savefig(os.path.join(args.odir, f"sample/{str(i).zfill(6)}_hist.png"), dpi = 100)
                     plt.close()
-
+                    """
+                    
             if args.use_manifold:
                 if i % 1000 == 0:
                     means = []
