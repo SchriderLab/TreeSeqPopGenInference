@@ -544,6 +544,7 @@ if __name__ == "__main__":
     )
     
     parser.add_argument("--compare_every")
+    parser.add_argument("--n_channels", default = "3")
     
     parser.add_argument("--cdf", default = "None")
     parser.add_argument("--mean_max_log", default = "6.4580402832733474")
@@ -574,16 +575,15 @@ if __name__ == "__main__":
     if args.arch == 'stylegan2':
         from model import Generator, Discriminator
 
-    elif args.arch == 'swagan_gray':
+    elif args.arch == 'swagan':
         from swagan_gray import Generator, Discriminator
-    else:
-        from swagan import Generator, Discriminator
+
         
     generator = Generator(
-        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
-    ).to(device)
+        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier,
+        n_channels = int(args.n_channels)).to(device)
     discriminator = Discriminator(
-        args.size, args.channel_multiplier
+        args.size, args.channel_multiplier, n_channels = int(args.n_channels)
     ).to(device)
     g_ema = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier

@@ -120,7 +120,7 @@ class InverseHaarTransform(nn.Module):
         return ll + lh + hl + hh
     
 class ToRGB(nn.Module):
-    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, in_channel, style_dim, upsample=True, blur_kernel=[1, 3, 3, 1], n_channels = 1):
         super().__init__()
 
         if upsample:
@@ -128,8 +128,8 @@ class ToRGB(nn.Module):
             self.upsample = Upsample(blur_kernel)
             self.dwt = HaarTransform(3)
 
-        self.conv = ModulatedConv2d(in_channel, 4, 1, style_dim, demodulate=False)
-        self.bias = nn.Parameter(torch.zeros(1, 4, 1, 1))
+        self.conv = ModulatedConv2d(in_channel, 4 * n_channels, 1, style_dim, demodulate=False)
+        self.bias = nn.Parameter(torch.zeros(1, 4 * n_channels, 1, 1))
 
     def forward(self, input, style, skip=None):
         out = self.conv(input, style)
@@ -145,7 +145,7 @@ class ToRGB(nn.Module):
         return out
     
 class FromRGB(nn.Module):
-    def __init__(self, out_channel, downsample=True, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, out_channel, downsample=True, blur_kernel=[1, 3, 3, 1], n_channels = 1):
         super().__init__()
 
         self.downsample = downsample
@@ -155,7 +155,7 @@ class FromRGB(nn.Module):
             self.downsample = Downsample(blur_kernel)
             self.dwt = HaarTransform(3)
 
-        self.conv = ConvLayer(4, out_channel, 3)
+        self.conv = ConvLayer(4 * n_channels, out_channel, 3)
 
     def forward(self, input, skip=None):
         if self.downsample:
@@ -179,6 +179,7 @@ class Generator(nn.Module):
         channel_multiplier=2,
         blur_kernel=[1, 3, 3, 1],
         lr_mlp=0.01,
+        n_channels = 1
     ):
         super().__init__()
 
@@ -213,7 +214,7 @@ class Generator(nn.Module):
         self.conv1 = StyledConv(
             self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel
         )
-        self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False)
+        self.to_rgb1 = ToRGB(self.channels[4], style_dim, upsample=False, n_channels = n_channels)
         
         self.log_size = int(math.log(size, 2)) - 1
         self.num_layers = (self.log_size - 2) * 2 + 1
@@ -245,7 +246,7 @@ class Generator(nn.Module):
                 )
             )
 
-            self.to_rgbs.append(ToRGB(out_channel, style_dim))
+            self.to_rgbs.append(ToRGB(out_channel, style_dim, n_channels = n_channels))
 
             in_channel = out_channel
 
@@ -303,7 +304,7 @@ class ConvBlock(nn.Module):
         return out
     
 class Discriminator(nn.Module):
-    def __init__(self, size, channel_multiplier=2, out_shape = 1, blur_kernel=[1, 3, 3, 1]):
+    def __init__(self, size, channel_multiplier=2, out_shape = 1, blur_kernel=[1, 3, 3, 1], n_channels = 1):
         super().__init__()
 
         channels = {
@@ -318,7 +319,6 @@ class Discriminator(nn.Module):
             1024: 16 * channel_multiplier,
         }
 
-
         self.dwt = HaarTransform(3)
 
         self.from_rgbs = nn.ModuleList()
@@ -331,12 +331,12 @@ class Discriminator(nn.Module):
         for i in range(log_size, 2, -1):
             out_channel = channels[2 ** (i - 1)]
 
-            self.from_rgbs.append(FromRGB(in_channel, downsample=i != log_size))
+            self.from_rgbs.append(FromRGB(in_channel, downsample=i != log_size, n_channels = n_channels))
             self.convs.append(ConvBlock(in_channel, out_channel, blur_kernel))
 
             in_channel = out_channel
 
-        self.from_rgbs.append(FromRGB(channels[4]))
+        self.from_rgbs.append(FromRGB(channels[4], n_channels = n_channels))
 
         self.stddev_group = 4
         self.stddev_feat = 1
@@ -379,8 +379,8 @@ class Discriminator(nn.Module):
 if __name__ == '__main__':
     device = torch.device('cuda')
     
-    G = Generator(128, 32, 8, 2).to(device)
-    D = Discriminator(128).to(device)
+    G = Generator(128, 32, 8, 2, n_channels = 3).to(device)
+    D = Discriminator(128, n_channels = 3).to(device)
     
     z = torch.randn((8, 32)).to(device)
     with torch.no_grad():
