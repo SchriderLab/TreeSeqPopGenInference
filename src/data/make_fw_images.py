@@ -70,7 +70,7 @@ def main():
 
         D = cdf(D)
         
-        F = x['F']
+        F = x['F'].astype(np.float32)
         F /= np.max(F)
         
         im_sample = []
