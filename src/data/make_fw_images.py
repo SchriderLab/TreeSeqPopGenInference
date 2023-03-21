@@ -95,3 +95,5 @@ def main():
         cv2.imwrite(os.path.join(args.sample_dir, '{0:03d}.png'.format(counter)), grid_im)
         counter += 1
 
+if __name__ == '__main__':
+    main()
