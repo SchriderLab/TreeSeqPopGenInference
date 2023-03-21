@@ -586,7 +586,7 @@ if __name__ == "__main__":
         args.size, args.channel_multiplier, n_channels = int(args.n_channels)
     ).to(device)
     g_ema = Generator(
-        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
+        args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier, n_channels = int(args.n_channels)
     ).to(device)
     g_ema.eval()
     accumulate(g_ema, generator, 0)
