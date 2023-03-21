@@ -31,7 +31,45 @@ import matplotlib
 from compute_kl_matrix_vectorized import DemographyLL, MigExponentialRateFunction, CoalExponentialRateFunction, setup_ll_inputs
 cmap = matplotlib.cm.get_cmap('viridis')
 
+import cv2
+
+#cdf = pickle.load(open('n01_w_stats.pkl', 'rb'))['cdf']
+
 def make_FW_rep(root, sample_sizes):
+    if len(sample_sizes > 1):
+        topo_tips = [u for u in root.levelorder() if u.is_tip()]
+        topo_ids = [u.id for u in topo_tips]
+        pop_vectors = [[u.pop for u in topo_tips]]
+        
+        ordered_nodes = sorted([u for u in root.levelorder() if not u.is_tip()], key = lambda x: x.age)
+        
+        for n in ordered_nodes:
+            c1, c2 = n.children
+            
+            i1 = topo_ids.index(c1.id)
+            i2 = topo_ids.index(c2.id)
+            
+            topo_ids[i1] = n.id
+            del topo_ids[i2]
+            
+            _ = copy.copy(pop_vectors[-1])
+            _[i1] = (_[i1] + _[i2]) / 2.
+            del _[i2]
+            
+            pop_vectors.append(_)
+        
+        pop_matrix = np.zeros((len(topo_tips), len(topo_tips)))
+        for k in range(len(pop_vectors)):
+            i, j = np.diag_indices(len(topo_tips) - k)
+            j = copy.copy(j) + k
+            
+            pop_matrix[i, j] = pop_vectors[k]
+            
+        i, j = np.triu_indices(pop_matrix.shape[0])
+        pop_matrix = np.squeeze(pop_matrix[i, j])
+    else:
+        pop_matrix = None
+
     non_zero_ages = []
     
     ages = np.zeros(root.count())
@@ -73,7 +111,7 @@ def make_FW_rep(root, sample_sizes):
                 todo.append(c2)
 
     start_end = np.array(start_end)
-    s = non_zero_ages + [0.]
+    s = np.array(non_zero_ages + [0.])
     
     F[list(range(F.shape[0])), list(range(F.shape[0]))] = extant
     
@@ -87,19 +125,63 @@ def make_FW_rep(root, sample_sizes):
         F[i, j] = sum((start_end[:,1] <= end) & (start_end[:,0] >= start))
         F[j, i] = F[i, j]
     
-    W = np.zeros(F.shape)
     i, j = np.tril_indices(F.shape[0])
-    ij = zip(i, j)
+
+    W = s[j] - s[i + 1]
+
+    """
+    print(np.min(W))
+    print(np.max(W))
+    print(np.min(cdf.x), np.max(cdf.x))    
+    W = cdf(W)
     
-    for i, j in ij:
-        W[i, j] = s[j] - s[i + 1]
-        W[j, i] = W[i, j]
+    F /= np.max(F)
         
-    W = np.log(W)
+    im = np.zeros(pop_matrix.shape + (3,))
+    im[:,:,0] = pop_matrix
+    im[:-1,:-1,1] = W
+    im[1:,-1,1] = W[:,-1]
     
-    return F, W
+    im[:-1,:-1,2] = F
+    im[-1,:-1,2] = F[-1]
+    im[1:,-1,2] = F[:,-1]
     
-        
+    plt.imshow(im)
+    plt.show()
+    """
+    
+    """
+    plt.scatter(F.flatten(), W.flatten())
+    plt.show()   
+
+    angle = (np.arctan2(W, F) + np.pi / 2.) / np.pi
+    plt.imshow(angle)
+    plt.colorbar()
+    plt.show()
+    
+    mag = np.sqrt(F ** 2 + W ** 2)
+    plt.imshow(mag)
+    plt.show()
+    
+    mag = mag / np.max(mag)
+    
+    im = np.zeros(F.shape + (3,))
+    im[:,:,0] = angle
+    im[:,:,1] = 0.2
+    im[:,:,2] = mag
+
+    plt.imshow(im)
+    plt.show()
+    
+    im = (im * 255).astype(np.uint8)
+    
+    im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+    
+    plt.imshow(im[:,:,[2, 0, 1]])
+    plt.show()    
+    """
+    
+    return F, W, pop_matrix
 
 def make_distance_matrix(root, sample_sizes):
     
@@ -113,7 +195,7 @@ def make_distance_matrix(root, sample_sizes):
     ages = np.zeros(root.count())
     for node in root.traverse():
         ages[node.id] = node.age
-    
+        
     # indexed by assinged id
     D = np.zeros((2 * sum(sample_sizes) - 1, 2 * sum(sample_sizes) - 1))
     
@@ -236,6 +318,7 @@ class NPopSimulator(object):
         
         # get the migration events
         
+        
         time = tables.migrations.time
         node = tables.migrations.node
         src = tables.migrations.source
@@ -326,6 +409,7 @@ def main():
     Xs = []
     Fs = []
     Ws = []
+    pop_mats = []
     
     for j in range(int(args.n_replicates)):
         s, events, X = simulator.simulate(mu = 1e-5)
@@ -366,10 +450,12 @@ def main():
             children = copy.copy(_)
 
         D = make_distance_matrix(root, sample_sizes)    
-        F, W = make_FW_rep(root, sample_sizes)
+        F, W, pop_matrix = make_FW_rep(root, sample_sizes)
 
         Fs.append(F)
         Ws.append(W)
+        if pop_matrix is not None:
+            pop_mats.append(pop_matrix)
         
         Ds.append(squareform(D))
         

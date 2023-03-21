@@ -20,6 +20,8 @@ def parse_args():
     parser.add_argument("--grid", default = "m01")
     parser.add_argument("--n_replicates", default = "4096")
 
+    parser.add_argument("--print_only", action = "store_true")
+
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
 
@@ -42,6 +44,32 @@ def main():
     args = parse_args()
 
     ifiles = []
+    if args.grid == "a04":
+        N = np.linspace(500, 1000, 4)
+        alpha0 = np.linspace(0.01, 0.0125, 4)
+        alpha1 = np.linspace(0.02, 0.025, 4)
+        m12 = np.linspace(0.05, 0.3, 4)
+        s = [32, 32]
+        
+        todo = list(itertools.product(N, alpha0, alpha1, m12))
+        
+        for ix, (n, a0, a1, m) in enumerate(todo):
+            N = [n, n]
+            alpha = [a0, a1]
+            M = [0., m, 0., 0.]
+            
+            ofile = os.path.join(args.odir, '{0:04d}.json'.format(ix))
+            d = {"N" : N, "alpha" : alpha, "s" : s, "M" : M}
+        
+            # Serializing json
+            json_object = json.dumps(d, indent=4)
+            
+            # Writing to sample.json
+            with open(ofile, "w") as outfile:
+                outfile.write(json_object)
+    
+            ifiles.append(ofile)
+    
     if args.grid == "m03":
         m01 = np.linspace(0.01, 0.15, 12)
         m10 = np.linspace(0.01, 0.15, 12)
@@ -107,15 +135,15 @@ def main():
             ifiles.append(ofile)
     
         
+    if not args.print_only:
+        if len(ifiles) > 0:    
+            cmd = 'sbatch -t 08:00:00 --mem=8G --wrap "python3 src/data/simulate_msprime_grid.py --ifile {0} --ofile {1} --n_replicates {2}"'
     
-    if len(ifiles) > 0:    
-        cmd = 'sbatch -t 02:00:00 --mem=8G --wrap "python3 src/data/simulate_msprime_grid.py --ifile {0} --ofile {1} --n_replicates {2}"'
-
-        for ix in range(len(ifiles)):
-            cmd_ = cmd.format(ifiles[ix], ifiles[ix].replace('.json', '.npz'), args.n_replicates)
-        
-            print(cmd_)
-            os.system(cmd_)
+            for ix in range(len(ifiles)):
+                cmd_ = cmd.format(ifiles[ix], ifiles[ix].replace('.json', '.npz'), args.n_replicates)
+            
+                print(cmd_)
+                os.system(cmd_)
 
     # ${code_blocks}
 
