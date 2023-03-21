@@ -574,8 +574,10 @@ if __name__ == "__main__":
     if args.arch == 'stylegan2':
         from model import Generator, Discriminator
 
-    elif args.arch == 'swagan':
+    elif args.arch == 'swagan_gray':
         from swagan_gray import Generator, Discriminator
+    else:
+        from swagan import Generator, Discriminator
         
     generator = Generator(
         args.size, args.latent, args.n_mlp, channel_multiplier=args.channel_multiplier
