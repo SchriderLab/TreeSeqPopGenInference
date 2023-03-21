@@ -67,14 +67,12 @@ def main():
     for ifile in ifiles:
         x = np.load(ifile)
         
-        W = x['W']
+        W =  np.exp(x['W'])
         ll = x['P']
         
         maxs.append(np.max(W))
         mins.append(np.min(W))
-        
-        print(np.mean(W), np.max(W), np.min(W))
-        
+                
         entropies.append(np.mean(-1 * ll))
 
     print('mean entropy: {}'.format(np.mean(entropies)))
@@ -92,7 +90,7 @@ def main():
         print(ifile)
         x = np.load(ifile)
         
-        D = x['W']
+        D = np.exp(x['W'])
         
         h += np.histogram(D.flatten(), bins, density = True)[0]
         count += 1
