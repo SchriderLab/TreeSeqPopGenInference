@@ -62,7 +62,7 @@ def main():
         cmd_ = cmd.format(cmd_)
         
         print(cmd_)
-        #os.system(cmd_)
+        os.system(cmd_)
         
 
     # ${code_blocks}
