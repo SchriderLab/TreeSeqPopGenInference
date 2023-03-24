@@ -474,7 +474,8 @@ def main():
         
     # now saving the SFS
     np.savez_compressed(args.ofile, E = np.array(E, dtype = object), F = np.array(Fs, dtype = np.uint16),
-                        D = D, stats = np.array([Dmean, Dstd]), P = P, X = np.array(Xs), W = np.array(Ws))
+                        D = D, stats = np.array([Dmean, Dstd]), P = P, X = np.array(Xs), W = np.array(Ws), 
+                            pop_mats = np.array(pop_mats))
     
     
         
