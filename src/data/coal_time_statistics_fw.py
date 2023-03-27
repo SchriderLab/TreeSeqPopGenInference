@@ -67,7 +67,7 @@ def main():
     for ifile in ifiles:
         x = np.load(ifile)
         
-        W =  np.exp(x['W'])
+        W =  x['W']
         ll = x['P']
         
         maxs.append(np.max(W))
@@ -90,7 +90,7 @@ def main():
         print(ifile)
         x = np.load(ifile)
         
-        D = np.exp(x['W'])
+        D = x['W']
         
         h += np.histogram(D.flatten(), bins, density = True)[0]
         count += 1
