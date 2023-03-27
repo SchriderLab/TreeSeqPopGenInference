@@ -64,24 +64,42 @@ def main():
         odir = os.path.join(args.odir, ifile.split('/')[-1].split('.')[0])
         
         x = np.load(ifile)
-        D = np.exp(x['W'])
+        
+        F = x['F'].astype(np.float32)
+        F /= np.max(F)
+        
+        D = x['W']
         D[D < cdf.x[0]] = cdf.x[0]
         D[D > cdf.x[-1]] = cdf.x[-1]
 
         D = cdf(D)
         
-        F = x['F'].astype(np.float32)
-        F /= np.max(F)
+        if 'pop_mats' in list(x.keys()):
+            pop_mat = x['pop_mats']
+        else:
+            pop_mat = None
         
         im_sample = []
         for ix in range(len(D)):
             d = D[ix]
             f = F[ix]
+                        
+            i, j = np.triu_indices(f.shape[0] + 1)
+            i_, j_ = np.tril_indices(f.shape[0])
             
-            im = np.zeros(d.shape + (3,))
-            im[:,:,0] = f * d
-            im[:,:,1] = d
-            im[:,:,2] = f
+            if pop_mat is None:
+                im = np.zeros(f.shape + (3, ))
+                im[:,:,0] = f * d
+                im[:,:,1] = d
+                im[:,:,2] = f
+            else:
+                im = np.zeros((f.shape[0] + 1, f.shape[1] + 1, 3))
+                im[i,j,0] = pop_mat[ix]
+                im[j_,i_,1] = d
+                                
+                im[:-1,:-1,2] = f
+                im[-1,:-1,2] = f[-1]
+                im[1:,-1,2] = f[:,-1]
             
             if ix < 64:
                 im_sample.append(im)
