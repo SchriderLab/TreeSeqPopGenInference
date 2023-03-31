@@ -52,8 +52,6 @@ def read_ms_tree(ifile, n = 34, L = 10000):
         
         align_lines = [u.replace('\n','') for u in align_lines]
 
-        print(align_lines)
-
         x = [np.array(list(map(int, [u for u in l])), dtype = np.uint8) for l in align_lines]
         x = np.array(x, dtype = np.float32).T
         
@@ -197,6 +195,8 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
             intros.append(False)
         
         pos = np.array([u for u in chunk[2].split(' ')[1:-1] if u != ''], dtype = np.float32)
+        
+        print(chunk[3:-1])
         
         x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
         # destroy the perfect information regarding
