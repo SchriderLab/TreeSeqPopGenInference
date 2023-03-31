@@ -223,6 +223,8 @@ def main():
                         root = node
                         break
                     
+                print(root)
+                    
                 root_ete = Tree(name = -1)
                 
                 cs = []
