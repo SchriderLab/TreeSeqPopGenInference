@@ -241,9 +241,9 @@ def main():
                     
                     for c in T_present:
                         c_ = int(c.name)
-                        branch_l = c.dist
+                        branch_l = c.length
                         
-                        p = c.up
+                        p = c.parent
                         if p is not None:
                         
                             p = int(c.parent.name)
