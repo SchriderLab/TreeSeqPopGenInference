@@ -210,8 +210,6 @@ def main():
                     break
                 
                 nodes.append(-1)
-                print(len(nodes))
-                
                 master_nodes = copy.copy(nodes)
                 
                 lengths.append(0.)
@@ -224,6 +222,7 @@ def main():
                         break
                     
                 print(root)
+                print(len([u for u in root.traverse()]))
                     
                 root_ete = Tree(name = -1)
                 
