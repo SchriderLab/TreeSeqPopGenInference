@@ -208,7 +208,7 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         if x.shape[0] == 0:
             X.append(None)
             Y.append(None)
-            pos.append(None)
+            P.append(None)
             params.append(None)
             
             continue
