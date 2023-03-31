@@ -52,6 +52,8 @@ def read_ms_tree(ifile, n = 34, L = 10000):
         
         align_lines = [u.replace('\n','') for u in align_lines]
 
+        print(align_lines)
+
         x = [np.array(list(map(int, [u for u in l])), dtype = np.uint8) for l in align_lines]
         x = np.array(x, dtype = np.float32).T
         
