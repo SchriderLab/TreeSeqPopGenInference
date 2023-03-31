@@ -137,7 +137,7 @@ def main():
                 
             lines = anc_file.readlines()[2:]
             
-            l = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1].shape[1]
+            l = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1].shape[1]
             #snp_widths.append(l)
             
             Xs = []
@@ -171,7 +171,7 @@ def main():
                     
                         end_snp = int(next_line[0])
                     else:
-                        end_snp = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1].shape[1]
+                        end_snp = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1].shape[1]
                 except:
                     break
     
@@ -403,9 +403,9 @@ def main():
                     ofile_val.create_dataset('{1}/{0}/info'.format(ix - N, tag), data = np.array(infos), compression = 'lzf')
                     #ofile_val.create_dataset('{1}/{0}/D'.format(ix - N, tag), data = np.array(Ds), compression = 'lzf')
             
-            Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
+            Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1]
             #A = np.array(As)
-            y = params[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
+            y = params[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1]
             
             
             if ix < N:
