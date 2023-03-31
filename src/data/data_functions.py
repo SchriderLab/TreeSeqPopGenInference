@@ -196,9 +196,11 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         
         pos = np.array([u for u in chunk[2].split(' ')[1:-1] if u != ''], dtype = np.float32)
         
-        print(chunk[3:-1])
-        
-        x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
+        #print(chunk[3:-1])
+        try:
+            x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
+        except:
+            x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-3]], dtype = np.uint8)
         # destroy the perfect information regarding
         # which allele is the ancestral one
         for k in range(x.shape[1]):
