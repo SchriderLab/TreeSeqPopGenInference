@@ -187,6 +187,8 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
     Y = []
     P = []
     intros = []
+    params = []
+    
     for chunk in ms_chunks:
         line = chunk[0]
         if '*' in line:
@@ -201,11 +203,13 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
             x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
         except:
             x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-3]], dtype = np.uint8)
-
+            params.append(float(chunk[-3].split()[6]))
+            
         if x.shape[1] == 0:
             X.append(None)
             Y.append(None)
             pos.append(None)
+            params.append(None)
             
             continue
         
@@ -239,4 +243,4 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         Y.append(y)
         P.append(pos)
         
-    return X, Y, P, intros
+    return X, Y, P, params

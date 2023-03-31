@@ -94,9 +94,8 @@ def main():
         
         # load the genotype matrices that correspond to the trees
         logging.info('reading data, {}...'.format(ifile))
-        x, y, p, intros = load_data(ifile, None)
+        x, y, p, params = load_data(ifile, None)
         
-        print(len(intros), len(x), len(anc_files))
         if ('mig12' in ifile) or ('mig21' in ifile):
             filter_zeros = True
         else:
@@ -406,11 +405,15 @@ def main():
             
             Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
             #A = np.array(As)
+            y = params[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
+            
             
             if ix < N:
                 ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
+                ofile.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
             else:
                 ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = Xg.astype(np.uint8), compression = 'lzf')
+                ofile_val.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
 
                 
           
