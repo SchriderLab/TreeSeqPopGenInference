@@ -23,6 +23,7 @@ from ete3 import Tree
 import itertools
 from scipy.spatial.distance import squareform
 import time
+from simulate_msprime_grid import make_distance_matrix
 
 """
 notes:
@@ -305,71 +306,9 @@ def main():
                         
                     T_present = copy.copy(_)
                     
-                ## Generating Distance matrices (via networkx)
-                ################ --
-                # ******************************************* #
-                # =========================================== #
-                lengths = dict(zip(range(len(T_names)), [lengths[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
-                n_mutations = dict(zip(range(len(T_names)), [n_mutations[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
-                regions = dict(zip(range(len(T_names)), [regions[u] for u in range(len(master_nodes)) if master_nodes[u].name in T_names]))
-                
-                Gu = nx.Graph()
-                for k in range(len(edges)):
-                    child = edges[k][0]
-                    
-                    Gu.add_edge(edges[k][0], edges[k][1], weight = lengths[child], 
-                               n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
-                               rp = np.mean(regions[k]))
-    
-                for k in range(len(edges)):
-                    child = edges[k][0]
-                    
-                    Gu.add_edge(edges[k][1], edges[k][0], weight = lengths[child], 
-                               n_mutations = n_mutations[child], hop = 0.5, r = regions[child][1] - regions[child][0],
-                               rp = np.mean(regions[k]))
-                    
-                paths = nx.shortest_path(Gu)
-
-                print(len(edges))                
-                print(len(list(Gu.nodes)))
-
-                indices = list(itertools.combinations(range(len(T_names)), 2))
-                D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
-                D_mut = []
-                for i,j in indices:
-                    path = paths[i][j]
-                    
-                    _ = [Gu.edges[path[k], path[k + 1]]['n_mutations'] for k in range(len(path) - 1)]
-
-                    D_mut.append(sum(_))
-                        
-                D_branch = []
-                for i,j in indices:
-                    path = paths[i][j]
-                    
-                    _ = [Gu.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
-    
-                    D_branch.append(sum(_))
-    
-                D_r = []
-                for i,j in indices:
-                    path = paths[i][j]
-                    
-                    _ = [Gu.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
-    
-                    D_r.append(np.mean(_))
-                    
-                D = squareform(np.array(D))
-                D_mut = squareform(np.array(D_mut))
-                D_r = squareform(np.array(D_r))
-                D_branch = squareform(np.array(D_branch))
-                
-                print(D.shape)
-
                 X = []
                 for node in T_names:
                     X.append(data[node])
-                    
                     
                 X = np.array(X)
                 
@@ -416,20 +355,6 @@ def main():
                     # as we ordered the node features
                     edges = [(indices_[u], indices_[v]) for u,v in edges]
                 
-                    D = D[np.ix_(indices, indices)]
-                    D_mut = D_mut[np.ix_(indices, indices)]
-                    D_branch = D_branch[np.ix_(indices, indices)]
-                    D_r = D_r[np.ix_(indices, indices)]
-                
-                # hops, mutations, branch lengths, and mean region size along shortest paths
-                D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
-                print(D.shape)
-                
-                sys.exit()
-                
-                Ds.append(D)
-                
-                
                 Xs.append(X)
                 
                 ii = list(np.where(X[:,0] > 0)[0])
@@ -471,27 +396,22 @@ def main():
                     ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
-                    ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
+                    #ofile.create_dataset('{1}/{0}/D'.format(ix, tag), data = np.array(Ds), compression = 'lzf')
                 else:
                     ofile_val.create_dataset('{1}/{0}/global_vec'.format(ix - N, tag), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/x'.format(ix - N, tag), data = np.array(Xs), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/edge_index'.format(ix - N, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                     ofile_val.create_dataset('{1}/{0}/info'.format(ix - N, tag), data = np.array(infos), compression = 'lzf')
-                    ofile_val.create_dataset('{1}/{0}/D'.format(ix - N, tag), data = np.array(Ds), compression = 'lzf')
+                    #ofile_val.create_dataset('{1}/{0}/D'.format(ix - N, tag), data = np.array(Ds), compression = 'lzf')
             
             Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1]) - 1]
-            A = np.array(As)
+            #A = np.array(As)
             
             if ix < N:
                 ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                if A.shape[0] > 0:
-                    ofile.create_dataset('{1}/{0}/A'.format(ix, tag), data = A, compression = 'lzf')
-                ofile.flush()
             else:
                 ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                if A.shape[0] > 0:
-                    ofile_val.create_dataset('{1}/{0}/A'.format(ix - N, tag), data = A, compression = 'lzf')
-                ofile_val.flush()
+
                 
           
     ofile.close()
