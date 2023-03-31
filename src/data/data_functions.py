@@ -202,7 +202,7 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         except:
             x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-3]], dtype = np.uint8)
         
-        print(chunk[3:-3])
+        print(chunk[3:-3], chunk)
         print(x.shape)
         
         # destroy the perfect information regarding
