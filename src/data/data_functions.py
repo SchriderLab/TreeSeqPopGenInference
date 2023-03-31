@@ -205,7 +205,7 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
             x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-3]], dtype = np.uint8)
             params.append(float(chunk[-3].split()[6]))
             
-        if x.shape[1] == 0:
+        if x.shape[0] == 0:
             X.append(None)
             Y.append(None)
             pos.append(None)
