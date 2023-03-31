@@ -186,7 +186,7 @@ def main():
                         
                         p = int(line[j])
                         if p not in sk_nodes.keys():
-                            sk_nodes[p] = TreeNode(name = p)
+                            sk_nodes[p] = TreeNode(name = str(p))
                             
                         length = float(line[j + 1])
                         
