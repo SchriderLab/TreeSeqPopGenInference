@@ -201,9 +201,13 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
             x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
         except:
             x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-3]], dtype = np.uint8)
-        
-        print(chunk[3:-3], chunk)
-        print(x.shape)
+
+        if x.shape[1] == 0:
+            X.append(None)
+            Y.append(None)
+            pos.append(None)
+            
+            continue
         
         # destroy the perfect information regarding
         # which allele is the ancestral one
