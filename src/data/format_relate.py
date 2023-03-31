@@ -209,9 +209,7 @@ def main():
                 except:
                     break
                 
-                master_nodes = copy.copy(nodes)
-                print(nodes)
-                
+                master_nodes = copy.copy(nodes)                
                 lengths.append(0.)
                 
                 root = None
@@ -223,16 +221,17 @@ def main():
                     
                 root = root.children[0]
                 T_present = [u for u in root.traverse() if u.is_tip()]
+                T_names = [int(u.name) for u in root.traverse() if u.is_tip()]
                 
                 data = dict()
                 if s1 > 0:
-                    for node in current_day_nodes[:s0]:
+                    for node in T_names[:s0]:
                         data[node] = np.array([0., 1., 0., 0., 0., 0.])
                     
-                    for node in current_day_nodes[s0:s0 + s1]:
+                    for node in T_names[s0:s0 + s1]:
                         data[node] = np.array([0., 0., 1., 0., 0., 0.])
                 else:
-                    for node in current_day_nodes:
+                    for node in T_names:
                         data[node] = np.array([0., 1., 0., mut_dict[node]])
                 
                 edges = []
