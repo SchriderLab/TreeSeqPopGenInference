@@ -209,8 +209,8 @@ def main():
                 except:
                     break
                 
-                nodes.append(-1)
                 master_nodes = copy.copy(nodes)
+                print(nodes)
                 
                 lengths.append(0.)
                 
@@ -221,31 +221,9 @@ def main():
                         root = node
                         break
                     
-                print(len(root.children))
-                    
-                root_ete = Tree(name = -1)
+                root = root.children[0]
+                T_present = [u for u in root.traverse() if u.is_tip()]
                 
-                cs = []
-                for c in root.children:
-                    cs.append(root_ete.add_child(Tree(), name = c.name, dist = c.length))
-                
-                while len(cs) > 0:
-                    _ = []
-                    
-                    for j in range(len(cs)):
-                        root_ete = cs[j]
-                        
-                        # find the edges
-                        n = root_ete.name
-                        ii = [u for u in range(len(edges)) if edges[u][0] == n]
-                        e = [edges[u] for u in ii]
-                        ls = [lengths[u] for u in ii]
-                        
-                        for e_, l_ in zip(e, ls):
-                            _.append(root_ete.add_child(Tree(), name = e_[1], dist = l_))
-                            
-                    cs = copy.copy(_)
-                                                
                 data = dict()
                 if s1 > 0:
                     for node in current_day_nodes[:s0]:
@@ -257,42 +235,18 @@ def main():
                     for node in current_day_nodes:
                         data[node] = np.array([0., 1., 0., mut_dict[node]])
                 
-                nodes = copy.copy(current_day_nodes)
-                
-                print(root_ete)
-                Tr = root_ete.get_tree_root()
-                master_nodes = list(Tr.iter_descendants()) + [Tr]
-                _ = [u.name for u in master_nodes]
-                
-                T = Tr.get_common_ancestor([u for u in Tr.get_descendants() if u.name in nodes])
-                
-                T_nodes = list(T.iter_descendants())
-                T_names = [u.name for u in T_nodes]
-                
-                T_present = [u for u in T_nodes if u.name in nodes]
-            
-                to_prune = copy.copy(current_day_nodes)
-                
-                to_prune = [u for u in T_nodes if u.name in to_prune]
-                T.prune(to_prune, True)
-
-                T_nodes = list(T.iter_descendants()) + [T]
-                T_names = [u.name for u in T_nodes]
-                
-                print(len(T_names))
-
                 edges = []
                 while len(T_present) > 0:
                     _ = []
                     
                     for c in T_present:
-                        c_ = c.name
+                        c_ = int(c.name)
                         branch_l = c.dist
                         
                         p = c.up
                         if p is not None:
                         
-                            p = c.up.name
+                            p = int(c.parent.name)
                             
                             if p not in data.keys():
                                 if p in mut_dict.keys():
@@ -300,21 +254,17 @@ def main():
                                 else:
                                     data[p] = np.array([data[c_][0] + branch_l, 0., 1., 0.])
                             
-                                _.append(c.up)
-                            
-                            if p in T_names:
-                                edges.append((T_names.index(c_), T_names.index(p)))
+                                _.append(c.parent)
                         
-                        
+                            edges.append((c_, p))
+                           
                     T_present = copy.copy(_)
                     
                 X = []
-                for node in T_names:
+                for node in nodes:
                     X.append(data[node])
                     
                 X = np.array(X)
-                
-                #print(len(edges), X.shape)
                 edges = edges[:X.shape[0]]
                 
                 if args.topological_order:
@@ -322,8 +272,8 @@ def main():
                     G.add_edges_from(edges)
                     
                     level_order = []
-                    for node in T.traverse("levelorder"):
-                        level_order.append(node.name)
+                    for node in root.levelorder():
+                        level_order.append(int(node.name))
                     # slim adjacency representation we have for TreeGANs
                     # for a potential RNN or CNN route
                     G_ = G.to_undirected()
@@ -341,8 +291,8 @@ def main():
                     A[i, j] = 0.
     
                     A = A[:,len(current_day_nodes):]
-                    indices = [T_names.index(u) for u in ii]
-                    indices_ = dict(zip(range(len(T_names)), [ii.index(u) for u in T_names]))
+                    indices = [nodes.index(u) for u in ii]
+                    indices_ = dict(zip(range(len(nodes)), [ii.index(u) for u in nodes]))
                     
                     lengths_ = np.array([lengths[u] for u in indices]).reshape(-1, 1)
                     
