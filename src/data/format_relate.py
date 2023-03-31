@@ -221,8 +221,7 @@ def main():
                         root = node
                         break
                     
-                print(root)
-                print(len([u for u in root.traverse()]))
+                print(len(root.children))
                     
                 root_ete = Tree(name = -1)
                 
