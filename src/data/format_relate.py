@@ -208,8 +208,10 @@ def main():
                         edges.append((parents[-1], nodes[-1]))
                 except:
                     break
-                    
+                
                 nodes.append(-1)
+                print(len(nodes))
+                
                 master_nodes = copy.copy(nodes)
                 
                 lengths.append(0.)
