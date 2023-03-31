@@ -191,7 +191,7 @@ def main():
                         length = float(line[j + 1])
                         
                         if (j - 1) // 5 not in sk_nodes.keys():
-                            sk_nodes[(j - 1) // 5] = TreeNode(name = (j - 1) // 5, parent = sk_nodes[p], length = length)
+                            sk_nodes[(j - 1) // 5] = TreeNode(name = str((j - 1) // 5), parent = sk_nodes[p], length = length)
                             sk_nodes[p].children.append(sk_nodes[(j - 1) // 5])
                         else:
                             sk_nodes[(j - 1) // 5].parent = sk_nodes[p]
