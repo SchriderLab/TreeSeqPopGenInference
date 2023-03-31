@@ -257,6 +257,7 @@ def main():
                 
                 nodes = copy.copy(current_day_nodes)
                 
+                print(root_ete)
                 Tr = root_ete.get_tree_root()
                 master_nodes = list(Tr.iter_descendants()) + [Tr]
                 _ = [u.name for u in master_nodes]
