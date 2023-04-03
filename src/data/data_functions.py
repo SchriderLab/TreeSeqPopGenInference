@@ -152,6 +152,8 @@ def get_nx_distance_matrices(G):
     # hops, mutations, branch lengths, and mean region size along shortest paths
     D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
 
+
+
 ######
 # generic function for msmodified
 # ----------------
@@ -170,9 +172,9 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         ms_lines = ms_lines[:-1]
 
     if ancFile is not None:
-        idx_list = [idx for idx, value in enumerate(ms_lines) if '//' in value] + [len(ms_lines)]
+        idx_list = [idx for idx, value in enumerate(ms_lines) if 'msdir/ms' in value] + [len(ms_lines)]
     else:
-        idx_list = [idx for idx, value in enumerate(ms_lines) if '//' in value] + [len(ms_lines)]
+        idx_list = [idx for idx, value in enumerate(ms_lines) if 'msdir/ms' in value] + [len(ms_lines)]
         
             
     ms_chunks = [ms_lines[idx_list[k]:idx_list[k+1]] for k in range(len(idx_list) - 1)]
@@ -196,15 +198,9 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         else:
             intros.append(False)
         
-        pos = np.array([u for u in chunk[2].split(' ')[1:-1] if u != ''], dtype = np.float32)
+        pos = np.array([u for u in chunk[5].split(' ')[1:-1] if u != ''], dtype = np.float32)
+        x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[6:]], dtype = np.uint8)
         
-        #print(chunk[3:-1])
-        try:
-            x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
-        except:
-            x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-3]], dtype = np.uint8)
-            params.append(float(chunk[-3].split()[6]))
-            
         if x.shape[0] == 0:
             X.append(None)
             Y.append(None)
@@ -212,6 +208,7 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
             params.append(None)
             
             continue
+        
         
         # destroy the perfect information regarding
         # which allele is the ancestral one
@@ -242,5 +239,6 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         X.append(x)
         Y.append(y)
         P.append(pos)
+        params.append(float(line.split()[6]))
         
     return X, Y, P, params
