@@ -122,6 +122,10 @@ def main():
             if (ix + 1) % 5 == 0:
                 logging.info('on replicate {}...'.format(ix))
             
+            iix = int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1
+            if x[iix] is None:
+                continue
+            
             if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
                 logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
                 continue
@@ -137,7 +141,7 @@ def main():
                 
             lines = anc_file.readlines()[2:]
             
-            l = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1].shape[1]
+            l = x[iix].shape[1]
             #snp_widths.append(l)
             
             Xs = []
