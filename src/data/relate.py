@@ -18,6 +18,11 @@ import string
 # mu = 1e-8
 # r = 1e-8
 
+# for recombination experiments
+# L = 20000
+# mu = 1.5e-8
+# r = 1e-7
+
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
 
@@ -114,8 +119,8 @@ def main():
                                      haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
             os.system(cmd_)
         
-        os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
-        os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
+        #os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
+        #os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
     # compress back
     logging.info('compressing back...')
