@@ -193,6 +193,8 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
     
     for chunk in ms_chunks:
         line = chunk[0]
+        print(line)
+        print(line.replace('//', '').replace('\n', '').split('\t'))
         params_ = list(map(float, line.replace('//', '').replace('\n', '').split('\t')))
         
         if '*' in line:
@@ -208,7 +210,6 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
             Y.append(None)
             P.append(None)
             params.append(None)
-            
             continue
         
         # destroy the perfect information regarding
