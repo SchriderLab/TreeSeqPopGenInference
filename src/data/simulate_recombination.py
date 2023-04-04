@@ -44,7 +44,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms 50 1 -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}"'
+    cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms 50 {2} -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}"'
     lines = open(args.ifile, 'r').readlines()
     
     c = chunks(lines, int(args.chunk_size))
@@ -62,7 +62,7 @@ def main():
             w.write(" ".join([t, r]) + "\n")
         w.close()
         
-        cmd_ = cmd.format(tbs_file, ofile)
+        cmd_ = cmd.format(tbs_file, ofile, len(chunk))
         
         print(cmd_)
         os.system(cmd_)
