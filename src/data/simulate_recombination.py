@@ -44,25 +44,28 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "{}"'
+    cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms 50 1 -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}"'
     lines = open(args.ifile, 'r').readlines()
     
     c = chunks(lines, int(args.chunk_size))
     
     for ix, chunk in enumerate(c):
-        cmd_file = os.path.join(args.odir, '{0:05d}.sh'.format(ix))
-        w = open(cmd_file, 'w')
+        tbs_file = os.path.join(args.odir, '{0:05d}.tbs'.format(ix))
+        w = open(tbs_file, 'w')
         ofile = os.path.join(args.odir, '{0:05d}.msOut'.format(ix))
-        
+
         for c_ in chunk:
-            w.write(c_.replace('all.LD.sims.txt', ofile).replace('./ms', 'msdir/ms'))
+            c_ = c_.split()
+            t = c_[4]
+            r = c_[6]
+            
+            w.write(" ".join([t, r]) + "\n")
         w.close()
         
-        cmd_ = 'chmod +x {0} && {0} && gzip {1}'.format(cmd_file, ofile)
-        cmd_ = cmd.format(cmd_)
+        cmd_ = cmd.format(tbs_file, ofile)
         
         print(cmd_)
-        os.system(cmd_)
+        #os.system(cmd_)
         
 
     # ${code_blocks}
