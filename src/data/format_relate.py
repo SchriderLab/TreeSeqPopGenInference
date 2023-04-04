@@ -70,7 +70,8 @@ def main():
     args = parse_args()
     
     ofile = h5py.File(args.ofile, 'w')
-    ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
+    if float(args.val_prop) > 0:
+        ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
     logging.info('have {} files to parse...'.format(len(ifiles)))
@@ -90,7 +91,6 @@ def main():
             continue
         else:
             logging.info('have {} anc files...'.format(len(anc_files)))
-        
         
         # load the genotype matrices that correspond to the trees
         logging.info('reading data, {}...'.format(ifile))

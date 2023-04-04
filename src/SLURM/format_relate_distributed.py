@@ -41,12 +41,15 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {3} --wrap "python3 src/data/format_relate_discoal.py --idir {0} --ofile {1} --sample_sizes {2}"'
+    
+    
+    cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {3} --wrap "python3 src/data/format_relate.py --idir {0} --ofile {1} --pop_sizes {2} --n_sample {4} --ms_dir {5}"'
     idirs = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if not '.' in u])
+    idirs_ms = sorted([os.path.join(args.idir, u) for u in os.listdir(args.ms_dir) if not '.' in u])
         
     for ix in range(len(idirs)):        
         cmd_ = cmd.format(idirs[ix], os.path.join(args.odir, '{0:04d}.hdf5'.format(ix)), args.pop_sizes, 
-                          os.path.join(args.odir, '{0:04d}_slurm.out'.format(ix)))
+                          os.path.join(args.odir, '{0:04d}_slurm.out'.format(ix)), args.n_sample, idirs_ms)
         
         print(cmd_)
         if not args.only_print:
