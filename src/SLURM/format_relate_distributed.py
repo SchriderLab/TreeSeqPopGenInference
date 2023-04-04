@@ -49,7 +49,7 @@ def main():
         
     for ix in range(len(idirs)):        
         cmd_ = cmd.format(idirs[ix], os.path.join(args.odir, '{0:04d}.hdf5'.format(ix)), args.pop_sizes, 
-                          os.path.join(args.odir, '{0:04d}_slurm.out'.format(ix)), args.n_sample, idirs_ms)
+                          os.path.join(args.odir, '{0:04d}_slurm.out'.format(ix)), args.n_sample, idirs_ms[ix])
         
         print(cmd_)
         if not args.only_print:
