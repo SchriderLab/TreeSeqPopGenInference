@@ -193,6 +193,8 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
     
     for chunk in ms_chunks:
         line = chunk[0]
+        params_ = list(map(float, line.replace('//', '').replace('\n', '').split('\t')))
+        
         if '*' in line:
             intros.append(True)
         else:
@@ -238,6 +240,6 @@ def load_data(msFile, ancFile, n = None, leave_out_last = False):
         X.append(x)
         Y.append(y)
         P.append(pos)
-        params.append(float(line.split()[6]))
+        params.append(params_)
         
     return X, Y, P, params
