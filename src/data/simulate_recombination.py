@@ -65,7 +65,7 @@ def main():
         cmd_ = cmd.format(tbs_file, ofile)
         
         print(cmd_)
-        #os.system(cmd_)
+        os.system(cmd_)
         
 
     # ${code_blocks}
