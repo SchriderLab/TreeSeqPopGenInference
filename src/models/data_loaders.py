@@ -536,7 +536,10 @@ class TreeSeqGenerator(object):
                 if self.categorical:
                     y.append(model)
                 else:
-                    y_ = np.array(self.ifile[model][key]['y'], dtype = np.float32)
+                    try:
+                        y_ = np.array(self.ifile[model][key]['y'], dtype = np.float32)
+                    except:
+                        return None, None, None, None, None, None, None
                     y.append(y_)
                     
                 s = [u for u in indices if u is not None][-1].shape
