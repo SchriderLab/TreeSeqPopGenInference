@@ -163,7 +163,10 @@ def main():
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True, categorical = classification)
         
         if args.n_sample == "None":
-            N = len(generator)
+            try:
+                N = len(generator)
+            except:
+                continue
         else:
             N = int(args.n_sample)
         
