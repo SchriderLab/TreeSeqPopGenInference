@@ -398,14 +398,15 @@ class TreeSeqGeneratorV2(object):
 
 class TreeSeqGenerator(object):
     def __init__(self, ifile, models = None, means = 'intro_means.npz', n_samples_per = 16, 
-                         sequence_length = 32, sequential = True, pad = False):
+                         sequence_length = 32, sequential = True, pad = False, categorical = True):
         if models is None:
             self.models = list(ifile.keys())
             print(self.models)
         else:
             self.models = models
 
-        
+        self.categorical = categorical        
+
         # hdf5 file we are reading from
         self.ifile = ifile
         try:
@@ -466,11 +467,8 @@ class TreeSeqGenerator(object):
                     
                     X_ = np.array(self.ifile[model][key]['x']) 
                     X1_ = np.array(self.ifile[model][key]['info'])
-                    D_ = np.array(self.ifile[model][key]['D'])[:,-2,:,:]
                     
-                    u, v = np.triu_indices(D_.shape[1])
-                    D_ = D_[:,u,v]
-                    
+
                     if X_.shape[0] == 0:
                         self.counts[model] += 1
                         continue
@@ -504,25 +502,21 @@ class TreeSeqGenerator(object):
                 mask = []
                 
                 X = []
-                D = []
                 
                 for j in range(pad_size[0]):
                     x = np.zeros(s)
                     
                     X.append(x)
-                    D.append(np.zeros(D_[0].shape))
                     indices.append(None)
                     mask.append(0.)
     
                 for ii_ in ii:
                     x = X_[ii_]
-                    d = D_[ii_]
                     
                     ik = list(np.where(x[:,0] > 0))
                     x[ik,0] = np.log(x[ik,0])
                     
                     X.append(x)
-                    D.append(d)
                     mask.append(1.)
                     indices.append(edges[ii_])
                     
@@ -532,23 +526,24 @@ class TreeSeqGenerator(object):
                     x = np.zeros(s)
                     
                     X.append(x)
-                    D.append(np.zeros(D_[0].shape))
                     indices.append(None)
                     mask.append(0.)
                     
                 X = np.array(X)
-                D = np.array(D)
                 
                 Xs.append(X)
-                Ds.append(D)
                 
-                y.append(model)
+                if self.categorical:
+                    y.append(model)
+                else:
+                    y_ = np.array(self.ifile[model][key]['y'], dtype = np.float32)
+                    y.append(y_)
+                    
                 s = [u for u in indices if u is not None][-1].shape
                 
                 for j in range(len(indices)):
                     if indices[j] is None:
                         indices[j] = np.zeros(s, dtype = np.int32)
-                
                 
                 mask = np.array(mask, dtype = np.uint8)
                 edge_index.append(np.array(indices))
@@ -561,7 +556,7 @@ class TreeSeqGenerator(object):
             self.counts[model] += 1
             
             
-        return Xs, X1, edge_index, masks, global_vec, y, Ds
+        return Xs, X1, edge_index, masks, global_vec, y
 
             
             

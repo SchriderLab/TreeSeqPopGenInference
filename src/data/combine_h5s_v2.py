@@ -21,6 +21,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
+from collections import deque
 
 def unbatch(src: Tensor, batch: Tensor, dim: int = 0) -> List[Tensor]:
     r"""Splits :obj:`src` according to a :obj:`batch` vector along dimension
@@ -112,18 +113,32 @@ def main():
     ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
     counts = dict()
     
-    classes = args.classes.split(',')
-    
-    data = dict()
-    for c in classes:
-        data[c] = dict()
-        data[c]['x'] = []
-        data[c]['x1'] = []
-        data[c]['edge_index'] = []
-        data[c]['mask'] = []
-        data[c]['global_vec'] = []
-        data[c]['D'] = []
-    
+    # classification
+    if ',' in args.classes:
+        classes = args.classes.split(',')
+        
+        data = dict()
+        for c in classes:
+            data[c] = dict()
+            data[c]['x'] = deque()
+            data[c]['x1'] = deque()
+            data[c]['edge_index'] = deque()
+            data[c]['mask'] = deque()
+            data[c]['global_vec'] = deque()
+            
+        classification = True
+    # regression
+    else:
+        classification = False
+        
+        data = dict()
+        data['x'] = deque()
+        data['x1'] = deque()
+        data['edge_index'] = deque()
+        data['mask'] = deque()
+        data['global_vec'] = deque()
+        data['y'] = deque()
+        
     ofile = h5py.File(args.ofile, 'w')
     ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
@@ -142,12 +157,10 @@ def main():
     
     val_prop = 0.1
     
-    
-    
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         
-        generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True)
+        generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True, categorical = classification)
         
         if args.n_sample == "None":
             N = len(generator)
@@ -155,7 +168,7 @@ def main():
             N = int(args.n_sample)
         
         for j in range(N):
-            x, x1, edge_index, masks, global_vecs, y, D = generator.get_single_model_batch(sample_mode = args.sampling_mode)
+            x, x1, edge_index, masks, global_vecs, y = generator.get_single_model_batch(sample_mode = args.sampling_mode)
             
             if x is None:
                 break
@@ -172,18 +185,30 @@ def main():
                     muts = x[k][np.where(masks[k] != 0.)[0],:,-1].flatten()
                     n_muts.extend(np.random.choice(muts, min([len(muts), 10]), replace = False))
                 
-                    
-                c = y[k]
                 
-                data[c]['x'].append(x[k])
-                data[c]['x1'].append(x1[k])
-                data[c]['edge_index'].append(edge_index[k])
-                data[c]['mask'].append(masks[k])
-                data[c]['global_vec'].append(global_vecs[k])
-                data[c]['D'].append(D[k])
+                if classification:
+                    c = y[k]
+                    
+                    data[c]['x'].append(x[k])
+                    data[c]['x1'].append(x1[k])
+                    data[c]['edge_index'].append(edge_index[k])
+                    data[c]['mask'].append(masks[k])
+                    data[c]['global_vec'].append(global_vecs[k])
+                else:
+                    data['x'].append(x[k])
+                    data['x1'].append(x1[k])
+                    data['edge_index'].append(edge_index[k])
+                    data['mask'].append(masks[k])
+                    data['global_vec'].append(global_vecs[k])
+                    data['y'].append(y)
                 
         # append sequence lengths for histogram
         lengths.extend(generator.lengths)
+        
+        if classification:
+            cond = all([len(data[u]['x']) > 0 for u in classes])
+        else:
+            cond = (len(data['x']) > 0)
         
         while all([len(data[u]['x']) > 0 for u in classes]):
             X = []
@@ -194,21 +219,25 @@ def main():
             global_vec = []
             y = []
             
-            for c in classes:
-                X.append(data[c]['x'][-1])
-                edge_index.append(data[c]['edge_index'][-1])
-                X1.append(data[c]['x1'][-1])
-                y.append(classes.index(c))
-                global_vec.append(data[c]['global_vec'][-1])
-                masks.append(data[c]['mask'][-1])
-                Ds.append(data[c]['D'][-1])
+            if classification:
+                for c in classes:
+                    X.append(data[c]['x'].pop())
+                    edge_index.append(data[c]['edge_index'].pop())
+                    X1.append(data[c]['x1'].pop())
+                    y.append(classes.index(c))
+                    global_vec.append(data[c]['global_vec'].pop())
+                    masks.append(data[c]['mask'].pop())
+
+                    
+
+            else:
+                X.append(data['x'].pop())
+                edge_index.append(data['edge_index'].pop())
+                X1.append(data['x1'].pop())
+                y.append(data['y'].pop())
+                global_vec.append(data['global_vec'].pop())
+                masks.append(data['mask'].pop())
                 
-                del data[c]['x'][-1]
-                del data[c]['edge_index'][-1]
-                del data[c]['x1'][-1]
-                del data[c]['mask'][-1]
-                del data[c]['global_vec'][-1]
-                del data[c]['D'][-1]
 
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
