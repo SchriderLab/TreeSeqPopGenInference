@@ -245,10 +245,9 @@ def main():
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
             X1 = np.array(X1)
-            y = np.array(y, dtype = np.uint8)
+            y = np.array(y, dtype = np.float32)
             global_vec = np.array(global_vec, dtype = np.float32)
             masks = np.array(masks, dtype = np.uint8)
-            Ds = np.array(Ds, dtype = np.float32)
             
             val = np.random.uniform() < val_prop
             
@@ -259,7 +258,6 @@ def main():
                 ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
                 ofile.create_dataset('{0:06d}/global_vec'.format(counter), data = global_vec, compression = 'lzf')
                 ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
-                ofile.create_dataset('{0:06d}/D'.format(counter), data = Ds, compression = 'lzf')
                 ofile.flush()
             
                 counter += 1
@@ -270,7 +268,6 @@ def main():
                 ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
                 ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/D'.format(val_counter), data = Ds, compression = 'lzf')
                 ofile_val.flush()
             
                 val_counter += 1
