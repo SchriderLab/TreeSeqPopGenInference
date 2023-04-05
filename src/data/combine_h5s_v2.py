@@ -210,7 +210,7 @@ def main():
         else:
             cond = (len(data['x']) > 0)
         
-        while all([len(data[u]['x']) > 0 for u in classes]):
+        while cond:
             X = []
             Ds = []
             edge_index = []
@@ -271,6 +271,11 @@ def main():
                 ofile_val.flush()
             
                 val_counter += 1
+                
+            if classification:
+                cond = all([len(data[u]['x']) > 0 for u in classes])
+            else:
+                cond = (len(data['x']) > 0)
         
         logging.info('have {} samples...'.format(len(x1_means)))
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
