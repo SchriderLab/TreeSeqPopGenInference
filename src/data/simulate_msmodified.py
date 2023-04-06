@@ -173,7 +173,7 @@ def main():
                     # 34 1 -t 58.3288 -r 365.8836 10000 -T -L -I 2 20 14 -n 1 18.8855 -n 2 0.05542 -eg 0 1 6.5160 -eg 0 2 -7.5960 -ma x 0.0 0.0 x -ej 0.66698 2 1 -en 0.66698 1 1 -es 0.02080 2 0.343619 -ej 0.02080 3 1 -seeds 12674 8050 3617
                     
                     # print the command, do the command, gzip the outputs
-                    cmd = "echo '{0}' && {0} && gzip {1}.mig.msOut".format(cmd, direction)
+                    cmd = "echo '{0}' && {0} && gzip {1}.mig.msOut".format(cmd, args.direction)
                     print('simulating for parameters: {}'.format(P))
                     sys.stdout.flush()
                     
