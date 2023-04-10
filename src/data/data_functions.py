@@ -157,14 +157,13 @@ def get_nx_distance_matrices(G):
 ######
 # generic function for msmodified
 # ----------------
-def load_data(msFile, ancFile, n = None, leave_out_last = False):
+def load_data(msFile, ancFile = None, n = None, leave_out_last = False):
     msFile = gzip.open(msFile, 'r')
 
     # no migration case
-    try:
+    if ancFile is not None:
         ancFile = gzip.open(ancFile, 'r')
-    except:
-        ancFile = None
+
 
     ms_lines = [u.decode('utf-8') for u in msFile.readlines()]
 
