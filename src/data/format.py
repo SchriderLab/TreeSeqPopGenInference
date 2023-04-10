@@ -67,7 +67,7 @@ def main():
             continue
         
         X, Y, pos, params = load_data(msFile)
-        seg_sites = [u.shape[0] for u in X]
+        seg_sites = [u.shape[1] for u in X]
         print('max segsites: {}'.format(max(seg_sites)))
         
         for k in range(len(X)):
