@@ -66,12 +66,12 @@ def main():
             comm.send([None, None], dest = 0)
             continue
         
-        X, Y, params = load_data(msFile)
+        X, Y, pos, params = load_data(msFile)
         seg_sites = [u.shape[0] for u in X]
         print('max segsites: {}'.format(max(seg_sites)))
         
         for k in range(len(X)):
-            np.savez(os.path.join(args.odir, '{0}_{2}_{1:05d}.npz'.format(tag, k, tag_)), x = X[k])
+            np.savez(os.path.join(args.odir, '{0}_{2}_{1:05d}.npz'.format(tag, k, tag_)), x = X[k], pos = pos[k])
             
     # ${code_blocks}
 
