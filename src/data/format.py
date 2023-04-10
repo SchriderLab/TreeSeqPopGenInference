@@ -54,8 +54,6 @@ def main():
     if comm.rank == 0:
         logging.info('found {} directories to read...'.format(len(idirs)))
         
-    chunk_size = int(args.chunk_size)        
-    pop_sizes = tuple(list(map(int, args.pop_sizes.split(','))))    
 
     for ix in range(comm.rank, len(idirs), comm.size):
         logging.info('{0}: on {1}...'.format(comm.rank, ix))
