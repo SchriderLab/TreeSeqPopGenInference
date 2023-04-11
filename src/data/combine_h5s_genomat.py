@@ -115,8 +115,8 @@ def main():
             X = deque()
         
         comm.Barrier()
-        
-        logging.info('reading {}...'.format(ifile))
+        if comm.rank == 0:
+            logging.info('reading {}...'.format(ifile))
         try:
             val = '_val' in ifile
             
@@ -158,11 +158,7 @@ def main():
                     n_received += 1
                     
                     if len(X) >= chunk_size:
-                        print([u.shape for u in X])
                         x_ = np.array([X.pop() for k in range(chunk_size)])
-                        
-                        print(counts[case])
-                        print(counts[case][1])
                         
                         if val:
                             ofile_val.create_dataset('{0}/{1}/x'.format(case, counts[case][1]), data = x_.astype(np.uint8), compression = 'lzf')
