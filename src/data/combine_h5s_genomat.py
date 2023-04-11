@@ -25,11 +25,11 @@ def seriate_match(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
     
     if s0 != n_ind:
         ii = np.random.choice(range(s0), n_ind)
-        x0 = x0[ii]
+        x0 = x0[ii,:]
     
     if s1 != n_ind:
         ii = np.random.choice(range(s1), n_ind)
-        x1 = x1[ii]
+        x1 = x1[ii,:]
 
     if x0.shape[1] > n_sites:
         ii = np.random.choice(range(x0.shape[1] - n_sites))
@@ -46,6 +46,8 @@ def seriate_match(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
         else:
             x0 = np.pad(x0, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
             x1 = np.pad(x1, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
+
+    print(x0.shape, x1.shape)
 
     # seriate population 1
     D = squareform(pdist(x0, metric = metric))
