@@ -158,6 +158,7 @@ def main():
                     n_received += 1
                     
                     if len(X) >= chunk_size:
+                        print([u.shape for u in X])
                         x_ = np.array([X.pop() for k in range(chunk_size)])
                         
                         print(counts[case])
