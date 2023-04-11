@@ -74,6 +74,7 @@ def parse_args():
     parser.add_argument("--pop_sizes", default = "20,14")
     parser.add_argument("--chunk_size", default = "4")
 
+    parser.add_argument("--ofile", default = "None")
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
 
@@ -163,7 +164,9 @@ def main():
                             ofile.create_dataset('{0}/{1}/x'.format(case, counts[case][0]), data = x_, compression = 'lzf')
                             counts[case][0] += 1
                 
-                
+    if comm.rank == 0:
+        ofile.close()
+        ofile_val.close()
                 
 
     # ${code_blocks}
