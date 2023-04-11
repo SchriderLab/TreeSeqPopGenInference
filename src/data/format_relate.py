@@ -268,6 +268,8 @@ def main():
                     X.append(data[node])
                     
                 X = np.array(X)
+                print(X.shape)
+                
                 edges = edges[:X.shape[0]]
                 
                 if args.topological_order:
@@ -360,7 +362,6 @@ def main():
             Xg = x[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1]
             #A = np.array(As)
             y = params[int(anc_files[ix].split('/')[-1].split('.')[0].split('chr')[-1].split('_')[0]) - 1]
-            
             
             if ix < N:
                 ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
