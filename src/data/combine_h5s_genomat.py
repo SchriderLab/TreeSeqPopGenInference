@@ -49,7 +49,7 @@ def seriate_match(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
 
     # seriate population 1
     D = squareform(pdist(x0, metric = metric))
-    ii = seriate(D, timeout = -1)
+    ii = seriate(D, timeout = 0.)
     
     x0 = x0[ii]
     
