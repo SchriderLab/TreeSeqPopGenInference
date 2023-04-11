@@ -228,12 +228,14 @@ def main():
                 T_names = [int(u.name) for u in root.traverse() if u.is_tip()]
                 
                 data = dict()
+                
+                # pop_labels + mutation
                 if s1 > 0:
                     for node in T_names[:s0]:
-                        data[node] = np.array([0., 1., 0., 0., 0., 0.])
+                        data[node] = np.array([0., 1., 0., 0., mut_dict[node]])
                     
                     for node in T_names[s0:s0 + s1]:
-                        data[node] = np.array([0., 0., 1., 0., 0., 0.])
+                        data[node] = np.array([0., 0., 1., 0., mut_dict[node]])
                 else:
                     for node in T_names:
                         data[node] = np.array([0., 1., 0., mut_dict[node]])
@@ -252,10 +254,16 @@ def main():
                             p = int(c.parent.name)
                             
                             if p not in data.keys():
+                                d = np.zeros(data[c_].shape)
+                                # pop_label
+                                d[-2] = 1.
+                                # time
+                                d[0] = data[c_][0] + branch_l
+                                
                                 if p in mut_dict.keys():
-                                    data[p] = np.array([data[c_][0] + branch_l, 0., 1., mut_dict[p]])
-                                else:
-                                    data[p] = np.array([data[c_][0] + branch_l, 0., 1., 0.])
+                                    d[-1] = mut_dict[p]
+
+                                data[p] = d
                             
                                 _.append(c.parent)
                         
@@ -266,12 +274,8 @@ def main():
                 X = []
                 for node in nodes:
                     X.append(data[node])
-                    
-                print([u.shape for u in X])
-                    
+                                        
                 X = np.array(X)
-                print(X.shape)
-                
                 edges = edges[:X.shape[0]]
                 
                 if args.topological_order:
