@@ -150,7 +150,7 @@ def main():
                     counts[case] = [0, 0]
                 
                 while n_received < len(keys):
-                    x = comm.recv(source = MPI.ANY_SOURCE)
+                    x = comm.recv(source = MPI.ANY_SOURCE)[0]
                     
                     if x is not None:
                         X.append(x)
