@@ -34,8 +34,8 @@ def seriate_match(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
     if x0.shape[1] > n_sites:
         ii = np.random.choice(range(x0.shape[1] - n_sites))
         
-        x0 = x0[:,ii]
-        x1 = x1[:,ii]
+        x0 = x0[:,ii:ii + n_sites]
+        x1 = x1[:,ii:ii + n_sites]
         
     else:
         to_pad = n_sites - x0.shape[1]
@@ -46,8 +46,6 @@ def seriate_match(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
         else:
             x0 = np.pad(x0, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
             x1 = np.pad(x1, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
-
-    print(x0.shape, x1.shape)
 
     # seriate population 1
     D = squareform(pdist(x0, metric = metric))
@@ -160,10 +158,10 @@ def main():
                         x_ = np.array([X.pop() for k in range(chunk_size)])
                         
                         if val:
-                            ofile_val.create_dataset('{0}/{1}/x'.format(case, counts[case][1]), data = x_, compression = 'lzf')
+                            ofile_val.create_dataset('{0}/{1}/x'.format(case, counts[case][1]), data = x_.astype(np.uint8), compression = 'lzf')
                             counts[case][1] += 1
                         else:
-                            ofile.create_dataset('{0}/{1}/x'.format(case, counts[case][0]), data = x_, compression = 'lzf')
+                            ofile.create_dataset('{0}/{1}/x'.format(case, counts[case][0]), data = x_.astype(np.uint8), compression = 'lzf')
                             counts[case][0] += 1
                 
     if comm.rank == 0:
