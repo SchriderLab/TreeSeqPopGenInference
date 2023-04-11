@@ -267,6 +267,8 @@ def main():
                 for node in nodes:
                     X.append(data[node])
                     
+                print([u.shape for u in X])
+                    
                 X = np.array(X)
                 print(X.shape)
                 
