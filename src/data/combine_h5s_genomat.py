@@ -142,6 +142,11 @@ def main():
                 for ij in range(comm.rank - 1, len(keys), comm.size - 1):
                     key = keys[ij]
                     
+                    if 'x_0' not in ifile[case][key].keys():
+                        x = None
+                        comm.send([x], dest = 0)
+                        continue
+
                     x = ifile[case][key]['x_0']
                     x = seriate_match(x, pop_sizes)
                     
