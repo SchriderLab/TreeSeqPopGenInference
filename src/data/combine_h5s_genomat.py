@@ -146,6 +146,9 @@ def main():
             else:
                 n_received = 0
                 
+                if case not in counts.keys():
+                    counts[case] = [0, 0]
+                
                 while n_received < len(keys):
                     x = comm.recv(source = MPI.ANY_SOURCE)
                     
