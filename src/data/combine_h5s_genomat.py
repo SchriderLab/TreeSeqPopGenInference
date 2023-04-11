@@ -58,8 +58,8 @@ def seriate_match(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
     
     x1 = x1[j]
     
-    return np.concatenate([np.expand_dims(x0), np.expand_dims(x1)], 0)
-       
+    return np.concatenate([np.expand_dims(x0, 0), np.expand_dims(x1, 0)], 0)
+    
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
