@@ -44,6 +44,11 @@ popSizeHistDir = "%s/popSizeHistories/" %(baseOutDir)
 popSizeHistPath = popSizeHistDir+"/"+filePrefix+".popSize"
 tbsDir = "%s/tbsFiles/" %(baseOutDir)
 tbsPath = tbsDir+"/"+filePrefix+".tbs"
+
+os.system('mkdir -p {}'.format(msOutDir))
+os.system('mkdir -p {}'.format(logDir))
+os.system('mkdir -p {}'.format(popSizeHistDir))
+
 L = 1500000
 msPath = "msdir/ms"
 sampleSize = 50
