@@ -89,8 +89,11 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
+    parser.add_argument("--mode", default = "pad")
+    
     parser.add_argument("--pop_sizes", default = "20,14")
     parser.add_argument("--chunk_size", default = "4")
+    parser.add_argument("--out_shape", default = "(1, 34, 512)")
 
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--odir", default = "None")
@@ -162,7 +165,7 @@ def main():
                         continue
 
                     x = ifile[case][key]['x_0']
-                    x = seriate_match(x, pop_sizes)
+                    x = format_matrix(x, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
                     
                     comm.send([x], dest = 0)
                     
