@@ -225,7 +225,7 @@ def main():
                     
                 root = root.children[0]
                 T_present = [u for u in root.traverse() if u.is_tip()]
-                T_names = [int(u.name) for u in root.traverse() if u.is_tip()]
+                T_names = sorted([int(u.name) for u in root.traverse() if u.is_tip()])
                 
                 data = dict()
                 
@@ -374,7 +374,7 @@ def main():
                 ofile.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
             else:
                 ofile_val.create_dataset('{1}/{0}/x_0'.format(ix - N, tag), data = Xg.astype(np.uint8), compression = 'lzf')
-                ofile_val.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
+                ofile_val.create_dataset('{1}/{0}/y'.format(ix - N, tag), data = np.array([y]), compression = 'lzf')
 
                 
           
