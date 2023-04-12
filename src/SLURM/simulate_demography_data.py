@@ -14,6 +14,9 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--n_jobs", default = "400")
     parser.add_argument("--n_replicates_per", default = "250")
+    
+    parser.add_argument("--pop_sizes", default = "20,14")
+    parser.add_argument("--factor", default = "")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -35,13 +38,13 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'python3 src/data/simulateTrainingAndTestDataFromDadiModel.py {0} {1}'
+    cmd = 'sbatch -t 08:00:00 --mem=8G -o /dev/null --wrap "python3 src/data/simulate_demography.py {0} {1} {2}"'
     n = int(args.n_replicates_per)
     
     for ix in range(int(args.n_jobs)):
         odir = os.path.join(args.odir, '{0:04d}'.format(ix))
         
-        cmd_ = cmd.format(odir, n)
+        cmd_ = cmd.format(odir, 'demo', n)
         print(cmd_)
         os.system(cmd_)
         
