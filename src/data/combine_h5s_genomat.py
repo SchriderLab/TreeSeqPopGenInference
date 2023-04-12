@@ -73,9 +73,9 @@ def format_matrix(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
             to_pad = n_sites - x.shape[1]
 
             if to_pad % 2 == 0:
-                x = np.pad(x, ((0,0), (to_pad // 2), (to_pad // 2)))
+                x = np.pad(x, ((0,0), (to_pad // 2, to_pad // 2)))
             else:
-                x = np.pad(x, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
+                x = np.pad(x, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
     
         return x
     
