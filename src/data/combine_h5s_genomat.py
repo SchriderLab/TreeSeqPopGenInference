@@ -93,7 +93,7 @@ def parse_args():
     
     parser.add_argument("--pop_sizes", default = "20,14")
     parser.add_argument("--chunk_size", default = "4")
-    parser.add_argument("--out_shape", default = "(1, 34, 512)")
+    parser.add_argument("--out_shape", default = "1,34,512")
 
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--odir", default = "None")
