@@ -38,7 +38,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch -t 08:00:00 --mem=8G -o /dev/null --wrap "python3 src/data/simulate_demography.py {0} {1} {2}"'
+    cmd = 'sbatch -t 08:00:00 --mem=8G --wrap "python3 src/data/simulate_demography.py {0} {1} {2}"'
     n = int(args.n_replicates_per)
     
     for ix in range(int(args.n_jobs)):
