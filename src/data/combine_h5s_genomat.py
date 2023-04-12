@@ -42,11 +42,11 @@ def format_matrix(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
             to_pad = n_sites - x0.shape[1]
         
             if to_pad % 2 == 0:
-                x0 = np.pad(x0, ((0,0), (to_pad // 2), (to_pad // 2)))
-                x1 = np.pad(x1, ((0,0), (to_pad // 2), (to_pad // 2)))
+                x0 = np.pad(x0, ((0,0), (to_pad // 2, to_pad // 2)))
+                x1 = np.pad(x1, ((0,0), (to_pad // 2, to_pad // 2)))
             else:
-                x0 = np.pad(x0, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
-                x1 = np.pad(x1, ((0,0), (to_pad // 2 + 1), (to_pad // 2)))
+                x0 = np.pad(x0, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
+                x1 = np.pad(x1, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
     
         # seriate population 1
         D = squareform(pdist(x0, metric = metric))
