@@ -48,6 +48,7 @@ tbsPath = tbsDir+"/"+filePrefix+".tbs"
 os.system('mkdir -p {}'.format(msOutDir))
 os.system('mkdir -p {}'.format(logDir))
 os.system('mkdir -p {}'.format(popSizeHistDir))
+os.system('mkdir -p {}'.format(tbsDir))
 
 L = 1500000
 msPath = "msdir/ms"
