@@ -42,7 +42,7 @@ msOutPath = msOutDir+"/"+filePrefix+".msOut"
 logPath = logDir+"/"+filePrefix+".log"
 popSizeHistDir = "%s/popSizeHistories/" %(baseOutDir)
 popSizeHistPath = popSizeHistDir+"/"+filePrefix+".popSize"
-tbsDir = "%s/tbsFiles/" %(baseOutDir)
+tbsDir = "%s/tbsFiles" %(baseOutDir)
 tbsPath = tbsDir+"/"+filePrefix+".tbs"
 
 os.system('mkdir -p {}'.format(msOutDir))
