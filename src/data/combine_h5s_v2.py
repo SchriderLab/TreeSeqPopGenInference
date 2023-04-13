@@ -154,6 +154,7 @@ def main():
     x1_stds = []
     bls = []
     n_muts = []
+    yl = []
     
     val_prop = 0.1
     
@@ -187,7 +188,7 @@ def main():
              
                     muts = x[k][np.where(masks[k] != 0.)[0],:,-1].flatten()
                     n_muts.extend(np.random.choice(muts, min([len(muts), 10]), replace = False))
-                
+                    yl.extend(y[k])
                 
                 if classification:
                     c = y[k]
@@ -230,9 +231,6 @@ def main():
                     y.append(classes.index(c))
                     global_vec.append(data[c]['global_vec'].pop())
                     masks.append(data[c]['mask'].pop())
-
-                    
-
             else:
                 X.append(data['x'].pop())
                 edge_index.append(data['edge_index'].pop())
@@ -245,7 +243,10 @@ def main():
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
             X1 = np.array(X1)
-            y = np.array(y, dtype = np.float32)
+            if classification:
+                y = np.array(y, dtype = np.float32)
+            else:
+                y = np.array(y, dtype = np.uint8)
             global_vec = np.array(global_vec, dtype = np.float32)
             masks = np.array(masks, dtype = np.uint8)
             
@@ -286,7 +287,10 @@ def main():
     m_x1 = np.mean(np.array(x1_means), axis = 0)
     s_x1 = np.std(np.array(x1_means), axis = 0)
     
-    np.savez(args.ofile, bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1)
+    m_y = np.mean(np.array(yl), axis = 0)
+    s_y = np.std(np.array(yl), axis = 0)
+    
+    np.savez(args.ofile.replace('hdf5', 'npz'), bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1, m_y = m_y, s_y =s_y)
     
     logging.info('closing files and plotting hist...')
     ofile.close()
