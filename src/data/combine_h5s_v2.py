@@ -157,6 +157,7 @@ def main():
     yl = []
     
     val_prop = 0.1
+    chunk_size = int(args.chunk_size)
     
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
@@ -244,9 +245,9 @@ def main():
             edge_index = np.array(edge_index, dtype = np.int32)
             X1 = np.array(X1)
             if classification:
-                y = np.array(y, dtype = np.float32)
-            else:
                 y = np.array(y, dtype = np.uint8)
+            else:
+                y = np.array(y, dtype = np.float32)
             global_vec = np.array(global_vec, dtype = np.float32)
             masks = np.array(masks, dtype = np.uint8)
             
