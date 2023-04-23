@@ -233,7 +233,7 @@ def main():
                         else:
                             ofile.create_dataset('{0}/{1}/x'.format(case, counts[case][0]), data = x_.astype(np.uint8), compression = 'lzf')
                             if y_ is not None:
-                                ofile.create_dataset('{0}/{1}/y'.format(case, counts[case][1]), data = y_.astype(np.float32), compression = 'lzf')
+                                ofile.create_dataset('{0}/{1}/y'.format(case, counts[case][0]), data = y_.astype(np.float32), compression = 'lzf')
                             counts[case][0] += 1
                 
     if comm.rank == 0:
