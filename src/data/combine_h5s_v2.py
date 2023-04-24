@@ -22,6 +22,8 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from collections import deque
+import glob
+import random
 
 def unbatch(src: Tensor, batch: Tensor, dim: int = 0) -> List[Tensor]:
     r"""Splits :obj:`src` according to a :obj:`batch` vector along dimension
@@ -109,8 +111,11 @@ def parse_args():
 
 def main():
     args = parse_args()
+    
+    ifiles = glob.glob(os.path.join(args.idir, '*/*.hdf5'))
+    random.shuffle(ifiles)
 
-    ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
+    #ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
     counts = dict()
     
     # classification
