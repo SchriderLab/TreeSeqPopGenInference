@@ -189,12 +189,13 @@ def main():
                         continue
 
                     x = ifile[case][key]['x_0']
+                    L = x.shape[1]
                     x = format_matrix(x, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
                     
                     if not args.regression:
-                        comm.send([x], dest = 0)
+                        comm.send((x, L), dest = 0)
                     else:
-                        comm.send((x, np.array(ifile[case][key]['y'])), dest = 0)
+                        comm.send((x, np.array(ifile[case][key]['y'], L)), dest = 0)
                     
             else:
                 n_received = 0
@@ -202,12 +203,15 @@ def main():
                 if case not in counts.keys():
                     counts[case] = [0, 0]
                 
+                Ls = []
                 while n_received < len(keys):
                     if not args.regression:
-                        x = comm.recv(source = MPI.ANY_SOURCE)[0]
+                        x, L = comm.recv(source = MPI.ANY_SOURCE)[0]
                     else:
-                        x, y = comm.recv(source = MPI.ANY_SOURCE)
+                        x, y, L = comm.recv(source = MPI.ANY_SOURCE)
                     
+                    
+                    Ls.append(L)
                     if x is not None:
                         X.append(x)
                         
@@ -239,7 +243,11 @@ def main():
     if comm.rank == 0:
         ofile.close()
         ofile_val.close()
-                
+        
+        logging.info('mean seq length: {}'.format(np.mean(Ls)))
+        logging.info('median seq length: {}'.format(np.median(Ls)))
+        logging.info('min seq length: {}'.format(np.min(Ls)))
+        logging.info('max seq length: {}'.format(np.max(Ls)))
 
     # ${code_blocks}
 
