@@ -195,7 +195,7 @@ def main():
                     if not args.regression:
                         comm.send((x, L), dest = 0)
                     else:
-                        comm.send((x, np.array(ifile[case][key]['y'], L)), dest = 0)
+                        comm.send((x, np.array(ifile[case][key]['y']), L), dest = 0)
                     
             else:
                 n_received = 0
