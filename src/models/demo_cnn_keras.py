@@ -1,168 +1,91 @@
-import numpy as np
-import tensorflow as tf
-from glob import glob
 import argparse
-from tensorflow import keras
+import os
 
-from tensorflow.keras.layers import (
-    Input,
-    Conv1D,
-    MaxPooling1D,
-    Conv2D,
-    MaxPooling2D,
-    Dropout,
+import h5py
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from keras import Model
+from keras.layers import (
     AveragePooling1D,
-    Flatten,
+    Conv1D,
+    Conv2D,
     Dense,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPooling1D,
+    MaxPooling2D,
     concatenate,
 )
-from tensorflow.keras import Model
-import h5py
-from sklearn.neighbors import NearestNeighbors
+from scipy.stats import spearmanr
 from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-import pandas as pd
+from tensorflow import keras
+from tqdm import tqdm
 
 
-class DataGenerator(tf.keras.utils.Sequence):
+class DemoDataGenerator(tf.keras.utils.Sequence):
     "Generates data for Keras"
 
-    def __init__(self, filelist, training, sort=True, pad_size=512, shuffle=True):
+    def __init__(self, h5file, model, norm_params, log, batch_size=32, shuffle=True):
         "Initialization"
-        self.filelist = filelist
+        self.h5file = h5file
+        self.batch_size = batch_size
         self.shuffle = shuffle
-        self.training = training
-        self.pad_size = pad_size
-        self.sort = sort
+        self.idxs = list(self.h5file["demo"].keys())
+        self.log = log
+        self.model = model
+        self.y_mean = norm_params[0]
+        self.y_std = norm_params[1]
+
         self.on_epoch_end()
 
     def __len__(self):
         "Denotes the number of batches per epoch"
-        return len(self.filelist)
-
-    def resort_min_diff(self, amat):
-        ###assumes your snp matrix is indv. on rows, snps on cols
-        mb = NearestNeighbors(n_neighbors=len(amat), metric="manhattan").fit(amat)
-        v = mb.kneighbors(amat)
-        smallest = np.argmin(v[0].sum(axis=1))
-        return amat[v[1][smallest]]
+        return int(np.floor(len(self.idxs) / self.batch_size))
 
     def __getitem__(self, index):
-        f = h5py.File(self.filelist[index], "r")
+        indices = self.idxs[index * self.batch_size : (index + 1) * self.batch_size]
         X = []
         y = []
+        for i in indices:
+            X.append(np.array(self.h5file[f"demo/{i}/x"]))
+            y.append(np.array(self.h5file[f"demo/{i}/y"]))
 
-        keys = sorted(list(f["demo"].keys()))
+        X_arr = np.concatenate(X)
+        y_arr = np.concatenate(y)
 
-        X = np.zeros((len(keys), f["demo/0/x_0"].shape[0], self.pad_size))
+        if self.model == "2dcnn":
+            X_arr = np.expand_dims(X_arr, 3)
 
-        for idx, i in enumerate(keys):
-            x_arr = np.array(f[f"demo/{i}/x_0"])
+        if self.log == "log":
+            y_arr = np.log(y_arr)
 
-            if self.sort:
-                x = self.resort_min_diff(x_arr)
-            else:
-                x = x_arr
+        # y_arr = norm(y_arr, self.y_mean, self.y_std)
 
-            if x.shape[1] > self.pad_size:
-                x = x[:, : self.pad_size]
+        X_arr = np.where(X_arr == 0.0, 0.0, 255.0)
 
-            X[idx, : x.shape[0], : x.shape[1]] += x
-            y.extend(np.array(f[f"demo/{i}/y"]))
-
-        y = np.stack(y)
-
-        if self.training:
-            np.random.shuffle(X)
-            np.random.shuffle(y)
-
-        return X, np.stack(y)
+        return X_arr, y_arr
 
     def on_epoch_end(self):
         "Updates indexes after each epoch"
+        self.indexes = np.arange(len(self.idxs))
         if self.shuffle == True:
-            np.random.shuffle(self.filelist)
-
-
-def get_LexNet(ksize=2, l2_lambda=0.0001):
-    b1_0 = Input(shape=(5000, 208))
-    b1 = Conv1D(
-        128 * 2,
-        kernel_size=ksize,
-        activation="relu",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(b1_0)
-    b1 = Conv1D(
-        128 * 2,
-        kernel_size=ksize,
-        activation="relu",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(b1)
-    b1 = MaxPooling1D(pool_size=ksize)(b1)
-    b1 = Dropout(0.2)(b1)
-
-    b1 = Conv1D(
-        128 * 2,
-        kernel_size=ksize,
-        activation="relu",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(b1)
-    b1 = MaxPooling1D(pool_size=ksize)(b1)
-    b1 = Dropout(0.2)(b1)
-
-    b1 = Conv1D(
-        128 * 2,
-        kernel_size=ksize,
-        activation="relu",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(b1)
-    b1 = AveragePooling1D(pool_size=ksize)(b1)
-    b1 = Dropout(0.2)(b1)
-
-    b1 = Conv1D(
-        128 * 2,
-        kernel_size=ksize,
-        activation="relu",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(b1)
-    b1 = AveragePooling1D(pool_size=ksize)(b1)
-    b1 = Dropout(0.2)(b1)
-    b1 = Flatten()(b1)
-
-    b2_0 = Input(shape=(5000,))
-    b2 = Dense(
-        64,
-        input_shape=(5000,),
-        activation="relu",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(b2_0)
-    b2 = Dropout(0.1)(b2)
-
-    merged = Concatenate(axis=1)([b1, b2])
-    merged = Dense(
-        256,
-        activation="relu",
-        kernel_initializer="normal",
-        kernel_regularizer=keras.regularizers.l2(l2_lambda),
-    )(merged)
-    merged = Dropout(0.25)(merged)
-    merged_output = Dense(5, activation="softmax")(merged)
-
-    model = Model(inputs=[b1_0, b2_0], outputs=merged_output)
-    print(model.summary())
-    model.compile(
-        loss=keras.losses.categorical_crossentropy,
-        optimizer=tf.keras.optimizers.Adam(),
-        metrics=["accuracy"],
-    )
-
-    return model
+            np.random.shuffle(self.indexes)
 
 
 def get_DemoNet(
-    convDim, imgRows, imgCols, convSize, poolSize=2, useDropout=True, numParams=5
+    convDim,
+    imgRows,
+    imgCols,
+    convSize,
+    nblocks=3,
+    poolSize=2,
+    useDropout=True,
+    numParams=5,
 ):
-    if convDim == "2d":
+    if convDim == "2dcnn":
         inputShape = (imgRows, imgCols, 1)
         convFunc = Conv2D
         poolFunc = MaxPooling2D
@@ -190,12 +113,7 @@ def get_DemoNet(
         pool14 = Dropout(0.25)(pool14)
     flat11 = Flatten()(pool14)
 
-    # b2 = Input(shape=(imgRows,))
-    # dense21 = Dense(32, activation="relu")(b2)
-    # if useDropout:
-    #    dense21 = Dropout(0.25)(dense21)
-
-    merged = concatenate([flat11])  # , dense21])
+    merged = concatenate([flat11])
     denseMerged = Dense(256, activation="relu", kernel_initializer="normal")(merged)
     if useDropout:
         denseMerged = Dropout(0.25)(denseMerged)
@@ -208,81 +126,166 @@ def get_DemoNet(
     return model
 
 
-def write_preds(true, preds, names):
+def write_preds(true, preds, names, run_name):
     resdict = {}
     for i, n in enumerate(names):
         resdict[f"true_{n}"] = true[:, i]
         resdict[f"pred_{n}"] = preds[:, i]
 
-    pd.DataFrame(resdict).to_csv("preds.csv", index=False)
+    pd.DataFrame(resdict).to_csv(f"{run_name}/{run_name}_preds.csv", index=False)
+
+    plot_preds(resdict, names, run_name)
 
 
-def plot_preds(true, pred, names):
-    fig, axes = plt.subplots(len(names))
-    for i, n in enumerate(names):
-        axes[i].scatter(true, pred)
-        axes[i].annotate(
-            f"MSE: {mean_squared_error(true[:, i], pred[:, i])}", (0.1, 0.5)
+def plot_preds(preds, names, run_name):
+    for i, name in enumerate(names):
+        plt.scatter(preds[f"true_{name}"], preds[f"pred_{name}"])
+        m, b = np.polyfit(preds[f"true_{name}"], preds[f"pred_{name}"], 1)
+        plt.plot(
+            preds[f"pred_{name}"],
+            m * preds[f"pred_{name}"] + b,
+            color="black",
+            label=f"""Spearmans rho: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[0]:.2f}, 
+                p-value: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[1]:.2f},
+                MSE: {mean_squared_error(preds[f"true_{name}"], preds[f"pred_{name}"]):.2f}""",
         )
-        axes[i].set_title(n)
+        plt.legend()
+        plt.plot()
+        plt.title(name)
+        plt.ylabel("True")
+        plt.xlabel("Pred")
+        plt.tight_layout()
 
-    plt.tight_layout()
+        plt.savefig(f"{run_name}/{run_name}_{name}_preds.png")
+        plt.clf()
 
-    plt.savefig("Predplots.png")
+
+def get_norm_params(h5file, log):
+    print("Calculating normalization parameters")
+    y = []
+    for i in h5file["demo"].keys():
+        y.append(h5file["demo"][i]["y"])
+
+    data = np.concatenate(y)
+    data = data
+
+    if log == "log":
+        data = np.log(data)
+
+    return np.mean(data, axis=0), np.std(data, axis=0)
+
+
+def zscore(data, y_mean, y_std):
+    return (data - y_mean) / y_std
+
+
+def r_zscore(data, y_mean, y_std):
+    return y_mean + (data * y_std)
+
+
+def get_data(h5file):
+    print("Getting data")
+    X, y = [], []
+    for i in tqdm(h5file["demo"].keys()):
+        X.append(h5file["demo"][i]["x"])
+        y.append(h5file["demo"][i]["y"])
+
+    return np.concatenate(X), np.concatenate(y)
 
 
 def get_ua():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--epochs", default=10)
-    ap.add_argument(
-        "--data_dir", default="/pine/scr/d/d/ddray/demography_regression_sims_1e5_h5/"
-    )
-    ap.add_argument("--model", default="DemoNet")
+    ap.add_argument("--batch_size", default=32, type=int)
+    ap.add_argument("--epochs", default=10, type=int)
+    ap.add_argument("--conv_blocks", default=4, type=int)
+    ap.add_argument("--model", default="2dcnn", choices=["2dcnn", "1dcnn"])
+    ap.add_argument("--nolog", action="store_true")
+    ap.add_argument("--in_train", default="/pine/scr/d/d/ddray/demo_n512_1c.hdf5")
+    ap.add_argument("--in_val", default="/pine/scr/d/d/ddray/demo_n512_1c_val.hdf5")
 
     return ap.parse_args()
 
 
 def main():
     ua = get_ua()
-    all_files = glob(f"{ua.data_dir}/*.hdf5")
-    all_files = [i for i in all_files if "demo" in list(h5py.File(i, "r").keys())]
-    train_files = [i for i in all_files if "val" not in i]
-    val_files = [i for i in all_files if "val" in i]
+    train_file = h5py.File(ua.in_train, "r")
+    val_file = h5py.File(ua.in_val, "r")
 
-    train_dl = DataGenerator(train_files, training=True)
-    val_dl = DataGenerator(val_files, training=False, shuffle=False)
+    model = ua.model
+    if ua.nolog:
+        log = "nolog"
+    else:
+        log = "log"
 
-    model = get_DemoNet("2d", 50, 512, 3)
+    run_name = ua.in_train.split("/")[-1].split(".")[0]
+    run_name = f"{run_name}_{model}_{log}_{ua.conv_blocks}blocks"
+    os.makedirs(run_name, exist_ok=True)
+
+    print(f"Running {run_name}")
+
+    train_X, train_y = get_data(train_file)
+    val_X, val_y = get_data(val_file)
+
+    # train_norm_params = get_norm_params(train_file, log)
+
+    train_y = np.log(train_y)
+    val_y = np.log(val_y)
+
+    t_mean = np.mean(train_y, axis=0)
+    t_std = np.std(train_y, axis=0)
+
+    print("Mean", t_mean)
+    print("std", t_std)
+
+    train_yz = zscore(train_y, t_mean, t_std)
+    val_yz = zscore(val_y, t_mean, t_std)
+
+    """
+    train_dl = DemoDataGenerator(
+        train_file, model, train_norm_params, log=log, batch_size=ua.batch_size
+    )
+    val_dl = DemoDataGenerator(
+        val_file,
+        model,
+        train_norm_params,
+        log=log,
+        batch_size=ua.batch_size,
+        shuffle=False,
+    )
+    """
+
+    cnn = get_DemoNet(model, 50, 512, 3)
 
     earlystop = keras.callbacks.EarlyStopping(
         monitor="val_loss", min_delta=0, patience=3, verbose=0, mode="auto"
     )
     checkpoint = keras.callbacks.ModelCheckpoint(
-        "weights.hdf5", monitor="val_loss", verbose=1, save_best_only=True, mode="min"
+        f"{run_name}.hdf5",
+        monitor="val_loss",
+        verbose=1,
+        save_best_only=True,
+        mode="min",
     )
     callbacks = [earlystop, checkpoint]
 
-    model.fit(
-        train_dl,
-        validation_data=val_dl,
+    cnn.fit(
+        x=train_X,
+        y=train_yz,
+        validation_data=[val_X, val_yz],
+        batch_size=ua.batch_size,
+        validation_batch_size=ua.batch_size,
         epochs=ua.epochs,
         callbacks=callbacks,
     )
 
     names = ["N0", "t1", "N1", "t2", "N2"]
 
-    all_preds = []
-    all_trues = []
-    for i in range(val_dl.__len__()):
-        X, y = val_dl[i]
-        all_preds.append(model.predict(X))
-        all_trues.append(y)
+    preds = cnn.predict(val_X)
 
-    preds = np.concatenate(all_preds)
-    trues = np.concatenate(all_trues)
+    raw_preds = r_zscore(preds, t_mean, t_std)
+    raw_trues = r_zscore(val_yz, t_mean, t_std)
 
-    write_preds(trues, preds, names)
-    plot_preds(trues, preds, names)
+    write_preds(raw_trues, raw_preds, names, run_name)
 
 
 if __name__ == "__main__":
