@@ -23,9 +23,9 @@ import warnings
 from torch import Tensor
 
 from torch_geometric.utils import to_dense_batch
-from torch_scatter import scatter_max, scatter, scatter_mean, scatter_std
+#from torch_scatter import scatter_max, scatter, scatter_mean, scatter_std
 
-from sparsenn.models.gcn.layers import DynamicGraphResBlock, GraphCyclicGRUBlock, GraphInceptionBlock
+#from sparsenn.models.gcn.layers import DynamicGraphResBlock, GraphCyclicGRUBlock, GraphInceptionBlock
 from torch_geometric.nn import global_mean_pool, MessageNorm, ASAPooling
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree, softmax, remove_self_loops
@@ -44,7 +44,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import inits
 import math
 
-from torch_sparse import SparseTensor, set_diag
+#from torch_sparse import SparseTensor, set_diag
 
 # not sure what I patched here...
 # I'm assuming it was something...
