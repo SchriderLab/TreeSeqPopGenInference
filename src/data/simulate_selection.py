@@ -112,7 +112,7 @@ def main():
         os.system(cmd)
 
     # locations drawn uniformly
-    x = np.random.uniform(0.03, 0.97, n_jobs)        
+    x = np.random.uniform(0.45, 0.55, n_jobs)        
     odir = os.path.join(args.odir, 'hard')
     os.system('mkdir -p {}'.format(odir))
     
@@ -129,12 +129,50 @@ def main():
         os.system(cmd)
         
     # locations drawn uniformly
-    x = np.random.uniform(0.03, 0.97, n_jobs)        
+    x = np.random.uniform(0.45, 0.55, n_jobs)      
     odir = os.path.join(args.odir, 'soft')
     os.system('mkdir -p {}'.format(odir))
     
     for ix in range(n_jobs):
         x_ = x[ix]
+        
+        slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
+        ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
+        
+        cmd = CMD_SOFT.format(binary, int(args.n_replicates), x_, ofile, ofile)
+        cmd = slurm_cmd.format(slurm_out, cmd)
+        
+        print(cmd)
+        os.system(cmd)
+
+    # locations drawn uniformly
+    x = np.random.uniform(0.03, 0.97, n_jobs)        
+    odir = os.path.join(args.odir, 'hard-near')
+    os.system('mkdir -p {}'.format(odir))
+    
+    for ix in range(n_jobs):
+        x_ = x[ix]
+        if x_ >= 0.45 and x <= 0.55:
+            continue
+        
+        slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
+        ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
+        
+        cmd = CMD_HARD.format(binary, int(args.n_replicates), x_, ofile, ofile)
+        cmd = slurm_cmd.format(slurm_out, cmd)
+        
+        print(cmd)
+        os.system(cmd)
+        
+    # locations drawn uniformly
+    x = np.random.uniform(0.03, 0.97, n_jobs)      
+    odir = os.path.join(args.odir, 'soft-near')
+    os.system('mkdir -p {}'.format(odir))
+    
+    for ix in range(n_jobs):
+        x_ = x[ix]
+        if x_ >= 0.45 and x <= 0.55:
+            continue
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
