@@ -14,6 +14,7 @@ import string
 # where to insert certain parts of the script
 # ${imports}
 
+# selection params
 # L = 110000
 # mu = 1e-8
 # r = 1e-8
@@ -22,6 +23,16 @@ import string
 # L = 20000
 # mu = 1.5e-8
 # r = 1e-7
+
+# dros params
+#parser.add_argument("--L", default = "10000")
+#parser.add_argument("--mu", default = "1.1e-8")
+#parser.add_argument("--r", default = "1.2e-8")
+
+# demographic regression
+# L = 1500000
+# u = 1.2e-9
+# r = 1e-8
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
@@ -35,6 +46,8 @@ def parse_args():
     parser.add_argument("--L", default = "10000")
     parser.add_argument("--mu", default = "1.1e-8")
     parser.add_argument("--r", default = "1.2e-8")
+    
+    parser.add_argument("--n_samples", default = "34")
     parser.add_argument("--relate_path", default = "/nas/longleaf/home/ddray/SeqOrSwim/relate/bin/Relate")
 
     parser.add_argument("--odir", default = "None")
@@ -101,7 +114,6 @@ def main():
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
-        
         """
         ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
         ofile.write('sample population group sex\n')
@@ -112,6 +124,14 @@ def main():
 
         samples = sorted(glob.glob(os.path.join(odir, '*.sample')))
         haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
+        
+        # we need to rewrite the haps files (for haploid organisms)
+        for sample in samples:
+            f = open(sample, 'w')
+            f.write('ID_1 ID_2 missing\n')
+            f.write('0    0    0\n')
+            for k in range(int(args.n_samples)):
+                f.write('UNR{} NA 0\n'.format(k + 1))
         
         for ix in range(len(samples)):
             cmd_ = relate_cmd.format(mu, L, haps[ix], 
