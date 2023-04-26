@@ -52,14 +52,14 @@ def main():
     # find leaf directories
     for root, dirs, files in os.walk(args.idir):
         for dr in dirs:
-            directory = root+"/"+dr
+            directory = root + "/" + dr
             if len([sub for sub in os.listdir(directory) \
                     if os.path.isdir(directory+"/"+sub)]) == 0:
-                idirs.append(directory)
+                idirs.append((directory, dr))
                 
-    for idir in idirs:
-        log_file = os.path.join(args.odir, '{}_slurm.out'.format(idir.split('/')[-1]))
-        odir = os.path.join(args.odir, idir.split('/')[-1])
+    for idir, dr in idirs:
+        odir = os.path.join(args.odir, dr)
+        log_file = os.path.join(odir, 'slurm.out')
         
         cmd_ = cmd.format(idir, odir, log_file, args.L, args.mu, args.r, args.n_samples)
         print(cmd_)
