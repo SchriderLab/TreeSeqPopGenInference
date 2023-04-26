@@ -19,8 +19,6 @@ def parse_args():
     parser.add_argument("--r", default = "1e-8")
     parser.add_argument("--n_samples", default = "34")
     
-    
-    
     parser.add_argument("--debug", action = "store_true")
 
     parser.add_argument("--odir", default = "None")
@@ -59,6 +57,8 @@ def main():
                 
     for idir in idirs:
         odir = os.path.join(args.odir, idir.replace(args.idir, ''))
+        os.system('mkdir -p {}'.format(odir))
+        
         log_file = os.path.join(odir, 'slurm.out')
         
         cmd_ = cmd.format(idir, odir, log_file, args.L, args.mu, args.r, args.n_samples)
