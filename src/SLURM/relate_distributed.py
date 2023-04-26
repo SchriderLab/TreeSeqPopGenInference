@@ -55,7 +55,7 @@ def main():
             directory = root + "/" + dr
             if len([sub for sub in os.listdir(directory) \
                     if os.path.isdir(directory+"/"+sub)]) == 0:
-                idirs.append((directory, dr))
+                idirs.append((directory, root))
                 
     for idir, dr in idirs:
         print(dr, idir)
