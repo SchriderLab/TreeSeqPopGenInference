@@ -63,7 +63,7 @@ def main():
         
         cmd_ = cmd.format(idir, odir, log_file, args.L, args.mu, args.r, args.n_samples)
         print(cmd_)
-        if not args.only_print:
+        if not args.debug:
             os.system(cmd_)
         
     # ${code_blocks}
