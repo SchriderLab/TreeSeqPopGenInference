@@ -55,10 +55,10 @@ def main():
             directory = root + "/" + dr
             if len([sub for sub in os.listdir(directory) \
                     if os.path.isdir(directory+"/"+sub)]) == 0:
-                idirs.append((directory, root))
+                idirs.append(directory)
                 
-    for idir, dr in idirs:
-        print(dr, idir)
+    for idir in idirs:
+        print(idir, idir.replace(args.idir, ''))
         odir = os.path.join(args.odir, dr)
         log_file = os.path.join(odir, 'slurm.out')
         
