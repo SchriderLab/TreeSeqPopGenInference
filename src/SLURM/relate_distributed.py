@@ -58,8 +58,7 @@ def main():
                 idirs.append(directory)
                 
     for idir in idirs:
-        print(idir, idir.replace(args.idir, ''))
-        odir = os.path.join(args.odir, dr)
+        odir = os.path.join(args.odir, idir.replace(args.idir, ''))
         log_file = os.path.join(odir, 'slurm.out')
         
         cmd_ = cmd.format(idir, odir, log_file, args.L, args.mu, args.r, args.n_samples)
