@@ -134,7 +134,7 @@ def parse_args():
     parser.add_argument("--val_prop", default = "0.05")
     parser.add_argument("--mode", default = "seriate_match")
 
-    parser.add_argument("--odir", default = "None")
+    parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
 
     if args.verbose:
@@ -143,10 +143,6 @@ def parse_args():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if args.odir != "None":
-        if not os.path.exists(args.odir):
-            os.system('mkdir -p {}'.format(args.odir))
-            logging.debug('root: made output directory {0}'.format(args.odir))
     # ${odir_del_block}
 
     return args
