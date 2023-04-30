@@ -173,6 +173,7 @@ def main():
     if comm.rank != 0:
         for ij in range(comm.rank - 1, len(ifiles), comm.size - 1):
             ifile = ifiles[ij]
+            logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
             X, Y, P, params = load_data(ifile)
             tag = ifile.split('/')[-2]
