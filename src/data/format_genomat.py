@@ -116,6 +116,8 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
 # where to insert certain parts of the script
 # ${imports}
 
+
+
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
@@ -130,6 +132,7 @@ def parse_args():
     
     parser.add_argument("--classes", default = "None")
     parser.add_argument("--val_prop", default = "0.05")
+    parser.add_argument("--mode", default = "seriate_match")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
