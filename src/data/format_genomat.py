@@ -161,7 +161,8 @@ def main():
     chunk_size = int(args.chunk_size)
     
     if not args.regression:
-        ifiles = glob.glob(os.path.join(args.idir, '*/*.msOut.gz'))
+        ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))
+        
         classes = sorted(os.listdir(args.idir)) 
     
         counts = dict()
@@ -176,7 +177,7 @@ def main():
             logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
             X, Y, P, params = load_data(ifile)
-            tag = ifile.split('/')[-2]
+            tag = ifile.split('/')[-3]
             
             for ix, x in enumerate(X):
                 x, p = format_matrix(x, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
