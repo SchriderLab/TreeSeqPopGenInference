@@ -20,12 +20,9 @@ from collections import deque
 def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'cosine', mode = 'seriate_match'):
     s0, s1 = pop_sizes
     n_pops, n_ind, n_sites = out_shape
-    
-    print(x.shape[0] == s0 + s1)
-    print(s0, s1)
-    
+        
     if x.shape[0] != s0 + s1:
-        return None
+        return None, None
     
     if mode == 'seriate_match':
         x0 = x[:s0,:]
@@ -184,16 +181,17 @@ def main():
             X, Y, P, params = load_data(ifile)
             tag = ifile.split('/')[-3]
             
+            X_ = []
+            P_ = []
             for ix, x in enumerate(X):
-                print(x.shape)
-                
                 x, p = format_matrix(x, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
             
-                X[ix] = x
-                P[ix] = p
+                if x is not None:
+                    X_.append(x)
+                    P_.append(p)
                 
             if not args.regression:
-                comm.send([X, P, tag], dest = 0)
+                comm.send([X_, P_, tag], dest = 0)
     else:
         n_received = 0
         counter = 0
