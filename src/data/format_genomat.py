@@ -182,6 +182,8 @@ def main():
             tag = ifile.split('/')[-3]
             
             for ix, x in enumerate(X):
+                print(x.shape)
+                
                 x, p = format_matrix(x.T, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
             
                 X[ix] = x
