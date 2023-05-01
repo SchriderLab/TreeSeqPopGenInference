@@ -41,7 +41,7 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
             
             x0 = x0[:,ii:ii + n_sites]
             x1 = x1[:,ii:ii + n_sites]
-            pos = pos[:,ii:ii + n_sites]
+            pos = pos[ii:ii + n_sites]
         else:
             to_pad = n_sites - x0.shape[1]
         
@@ -77,7 +77,7 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
             ii = np.random.choice(range(x.shape[1] - n_sites))
             
             x = x[:,ii:ii + n_sites]
-            pos = pos[:,ii:ii + n_sites]
+            pos = pos[ii:ii + n_sites]
         else:
             to_pad = n_sites - x.shape[1]
 
@@ -92,7 +92,7 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
             ii = np.random.choice(range(x.shape[1] - n_sites))
             
             x = x[:,ii:ii + n_sites]
-            pos = pos[:,ii:ii + n_sites]
+            pos = pos[ii:ii + n_sites]
         else:
             to_pad = n_sites - x.shape[1]
 
@@ -162,8 +162,10 @@ def main():
     
     if not args.regression:
         ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))
+        if comm.rank == 0:
+            logging.info('have {} files to parse...'.format(len(ifiles)))
         
-        classes = sorted(os.listdir(args.idir)) 
+        classes = sorted(os.listdir(args.idir))
     
         counts = dict()
         counts_val = dict()
