@@ -161,7 +161,7 @@ def main():
     chunk_size = int(args.chunk_size)
     
     if not args.regression:
-        ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))
+        ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))[:10]
         if comm.rank == 0:
             logging.info('have {} files to parse...'.format(len(ifiles)))
         
@@ -194,10 +194,11 @@ def main():
                 comm.send([X_, P_, tag], dest = 0)
     else:
         n_received = 0
-        counter = 0
                 
         while n_received < len(ifiles):
             Xf, p, tag = comm.recv(source = MPI.ANY_SOURCE)
+            
+            print([u.shape for u in Xf])
             
             while len(Xf) > chunk_size:
                 if np.random.uniform() < float(args.val_prop):
