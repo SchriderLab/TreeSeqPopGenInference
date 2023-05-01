@@ -115,9 +115,6 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
-
-
-
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
@@ -198,18 +195,16 @@ def main():
         while n_received < len(ifiles):
             Xf, p, tag = comm.recv(source = MPI.ANY_SOURCE)
             
-            print([u.shape for u in Xf])
-            
             while len(Xf) > chunk_size:
                 if np.random.uniform() < float(args.val_prop):
-                    ofile_val.create_dataset('{}/{}'.format(tag, counts_val[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
-                    ofile_val.create_dataset('{}/{}'.format(tag, counts_val[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
+                    ofile_val.create_dataset('{}/{}/x'.format(tag, counts_val[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
+                    ofile_val.create_dataset('{}/{}/p'.format(tag, counts_val[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
                     ofile.flush()
                     
                     counts_val[tag] += 1
                 else:
-                    ofile.create_dataset('{}/{}'.format(tag, counts[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
-                    ofile.create_dataset('{}/{}'.format(tag, counts[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
+                    ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
+                    ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
                     ofile.flush()
                 
                     counts[tag] += 1
