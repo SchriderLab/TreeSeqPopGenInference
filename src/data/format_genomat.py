@@ -21,6 +21,8 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
     s0, s1 = pop_sizes
     n_pops, n_ind, n_sites = out_shape
         
+    pos = np.array(pos)
+    
     if x.shape[0] != s0 + s1:
         return None, None
     
@@ -181,7 +183,7 @@ def main():
             X_ = []
             P_ = []
             for ix, x in enumerate(X):
-                x, p = format_matrix(x, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
+                x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
             
                 if x is not None:
                     X_.append(x)
