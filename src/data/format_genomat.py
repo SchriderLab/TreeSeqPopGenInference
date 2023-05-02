@@ -160,7 +160,7 @@ def main():
     chunk_size = int(args.chunk_size)
     
     if not args.regression:
-        ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))[:10]
+        ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))
         if comm.rank == 0:
             logging.info('have {} files to parse...'.format(len(ifiles)))
         
