@@ -85,8 +85,10 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
 
             if to_pad % 2 == 0:
                 x = np.pad(x, ((0,0), (to_pad // 2, to_pad // 2)))
+                pos = np.pad(pos, (to_pad // 2, to_pad // 2))
             else:
                 x = np.pad(x, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
+                pos = np.pad(pos, (to_pad // 2, to_pad // 2))
     
         
     elif mode == 'seriate': # one population
@@ -103,7 +105,7 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
                 pos = np.pad(pos, (to_pad // 2, to_pad // 2))
             else:
                 x = np.pad(x, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
-                pos = np.pad(pos, (to_pad // 2 + 1, to_pad // 2))
+                pos = np.pad(pos, (to_pad // 2, to_pad // 2))
                 
         D = squareform(pdist(x, metric = metric))
         D[np.isnan(D)] = 0.
