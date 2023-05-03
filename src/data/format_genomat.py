@@ -18,6 +18,8 @@ from scipy.optimize import linear_sum_assignment
 from collections import deque
 
 def find_files(idir):
+    matches = []
+    
     for root, dirnames, filenames in os.walk(idir):
         filenames = [ f for f in filenames if os.path.splitext(f)[1] in ('.msOut.gz') ]
         for filename in filenames:
