@@ -17,6 +17,14 @@ from scipy.optimize import linear_sum_assignment
 
 from collections import deque
 
+def find_files(idir):
+    for root, dirnames, filenames in os.walk(idir):
+        filenames = [ f for f in filenames if os.path.splitext(f)[1] in ('.msOut.gz') ]
+        for filename in filenames:
+            matches.append(os.path.join(root, filename))
+            
+    return matches
+
 def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'cosine', mode = 'seriate_match'):
     s0, s1 = pop_sizes
     n_pops, n_ind, n_sites = out_shape
@@ -162,11 +170,16 @@ def main():
     chunk_size = int(args.chunk_size)
     
     if not args.regression:
-        ifiles = glob.glob(os.path.join(args.idir, '*/*/*.msOut.gz'))
+        ifiles = []
+        
         if comm.rank == 0:
             logging.info('have {} files to parse...'.format(len(ifiles)))
         
         classes = sorted(os.listdir(args.idir))
+        
+        for c in classes:
+            idir = os.path.join(args.idir, c)
+            ifiles.extend([(c, u) for u in find_files(idir)])
     
         counts = dict()
         counts_val = dict()
@@ -176,12 +189,11 @@ def main():
     
     if comm.rank != 0:
         for ij in range(comm.rank - 1, len(ifiles), comm.size - 1):
-            ifile = ifiles[ij]
+            tag, ifile = ifiles[ij]
             logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
             X, Y, P, params = load_data(ifile)
-            tag = ifile.split('/')[-3]
-            
+
             X_ = []
             P_ = []
             for ix, x in enumerate(X):
