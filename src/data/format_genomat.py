@@ -174,14 +174,14 @@ def main():
     if not args.regression:
         ifiles = []
         
-        if comm.rank == 0:
-            logging.info('have {} files to parse...'.format(len(ifiles)))
-        
         classes = sorted(os.listdir(args.idir))
         
         for c in classes:
             idir = os.path.join(args.idir, c)
             ifiles.extend([(c, u) for u in find_files(idir)])
+            
+        if comm.rank == 0:
+            logging.info('have {} files to parse...'.format(len(ifiles)))
     
         counts = dict()
         counts_val = dict()
