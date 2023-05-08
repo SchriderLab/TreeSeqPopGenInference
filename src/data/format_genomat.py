@@ -199,8 +199,10 @@ def main():
             X_ = []
             P_ = []
             for ix, x in enumerate(X):
+                
+                print(x.shape)
                 x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
-            
+                
                 if x is not None:
                     X_.append(x)
                     P_.append(p)
