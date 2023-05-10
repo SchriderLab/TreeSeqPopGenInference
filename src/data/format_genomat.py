@@ -216,7 +216,7 @@ def main():
                 if x is None:
                     continue
                 
-                logging.info('have shape of {}...'.format(x.shape))
+                #logging.info('have shape of {}...'.format(x.shape))
                 x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
                 
                 if x is not None:
