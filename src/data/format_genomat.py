@@ -224,7 +224,7 @@ def main():
             if not args.regression:
                 comm.send([X_, P_, tag], dest = 0)
             else:
-                comm.send([X_, P_, params_])
+                comm.send([X_, P_, params_], dest = 0)
     else:
         n_received = 0
                 
@@ -277,6 +277,7 @@ def main():
                 
     if comm.rank == 0:
         ofile.close()
+        ofile_val.close()
             
     # ${code_blocks}
 
