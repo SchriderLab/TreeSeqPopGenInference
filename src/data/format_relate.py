@@ -34,6 +34,8 @@ training_results/seln_rnn_i5/ --n_steps 1000 --lr 0.0001 --L 128 --n_gcn_iter 32
 
 """
 
+import gzip
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -85,7 +87,7 @@ def main():
         tag = tags[ii]
         ifile = ifiles[ii]
         
-        anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc' and tag == u.split('_')[0])])
+        anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'anc.gz' and tag == u.split('_')[0])])
         if len(anc_files) == 0:
             logging.info('ERROR: have no matching .anc files for {}...'.format(ifile))
             continue
@@ -126,11 +128,11 @@ def main():
             if x[iix] is None:
                 continue
             
-            if not os.path.exists(anc_files[ix].replace('.anc', '.mut')):
+            if not os.path.exists(anc_files[ix].replace('.anc.gz', '.mut')):
                 logging.info('ERROR: {} has no matching .mut file!...'.format(anc_files[ix]))
                 continue
             
-            anc_file = open(anc_files[ix], 'r')
+            anc_file = gzip.open(anc_files[ix], 'r')
             
             if args.n_sample != "None":
                 n_sample = int(args.n_sample)
