@@ -257,6 +257,8 @@ def main():
                     if not args.regression:
                         ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
                         ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
+                        
+                        counts[tag] += 1
                     else:
                         ofile.create_dataset('{}/x'.format(count), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
                         ofile.create_dataset('{}/p'.format(count), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
@@ -265,8 +267,6 @@ def main():
                         count += 1    
                     
                     ofile.flush()
-                
-                    counts[tag] += 1
             
                 del Xf[-chunk_size:]
                 del p[-chunk_size:]
