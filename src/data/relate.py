@@ -16,7 +16,7 @@ import string
 
 # selection params
 # L = 110000
-# mu = 1e-8
+# mu = 1.2e-8
 # r = 1e-8
 
 # for recombination experiments
@@ -25,9 +25,9 @@ import string
 # r = 1e-7
 
 # dros params
-#parser.add_argument("--L", default = "10000")
-#parser.add_argument("--mu", default = "1.1e-8")
-#parser.add_argument("--r", default = "1.2e-8")
+# L = 10000
+# mu = 5e-9
+# r = 2e-8
 
 # demographic regression
 # L = 1500000
@@ -139,9 +139,14 @@ def main():
                                      haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
             os.system(cmd_)
         
-        #os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
-        #os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
+        
+    # compress back
+    logging.info('compressing anc files...')
+    os.system('gzip {}'.format(os.path.join(odir, '*.anc')))
+    
     # compress back
     logging.info('compressing back...')
     ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
