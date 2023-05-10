@@ -141,7 +141,7 @@ def main():
             else:
                 current_day_nodes = list(range(sum(pop_sizes)))
                 
-            lines = anc_file.readlines()[2:]
+            lines = [u.decode('utf-8') for u in anc_file.readlines()[2:]]
             
             l = x[iix].shape[1]
             #snp_widths.append(l)
