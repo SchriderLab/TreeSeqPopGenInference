@@ -19,6 +19,8 @@ def parse_args():
     parser.add_argument("--ifile", default = "None")
     parser.add_argument("--n_samples", default = "2500")
 
+    parser.add_argument("--regression", action = "store_true")
+
     parser.add_argument("--ofile", default = "intro_means.npz")
     args = parser.parse_args()
 
@@ -55,7 +57,8 @@ def main():
             v2 = np.array(ifile[key]['global_vec'])
             mask = np.array(ifile[key]['mask'])
 
-            ys.append(np.log(np.array(ifile[key]['y'])[0,0].flatten()))
+            if args.regression:
+                ys.append(np.log(np.array(ifile[key]['y'])[0,0].flatten()))
 
             ls.append(x.shape[0])
             
@@ -71,9 +74,10 @@ def main():
                 
             _.extend(x_)
             
-    ys = np.array(ys)
-    y_mean = np.mean(ys, axis = 0)
-    y_std = np.std(ys, axis = 0)
+    if args.regression:
+        ys = np.array(ys)
+        y_mean = np.mean(ys, axis = 0)
+        y_std = np.std(ys, axis = 0)
             
     vs = np.concatenate(vs)
     v2s = np.array(v2s)
@@ -84,8 +88,12 @@ def main():
     v2_mean = np.mean(v2s, axis = 0)
     v2_std = np.std(v2s, axis = 0)
     
-    np.savez(args.ofile, v_mean = v_mean, v_std = v_std, v2_mean = v2_mean, v2_std = v2_std, 
+    if args.regression:
+        np.savez(args.ofile, v_mean = v_mean, v_std = v_std, v2_mean = v2_mean, v2_std = v2_std, 
                      times = np.array([np.mean(_), np.std(_)]), y_mean = y_mean, y_std = y_std)
+    else:
+        np.savez(args.ofile, v_mean = v_mean, v_std = v_std, v2_mean = v2_mean, v2_std = v2_std, 
+                     times = np.array([np.mean(_), np.std(_)]))
     
     print(v_mean, v_std)
     print(v2_mean, v2_std)
