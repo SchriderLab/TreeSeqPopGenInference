@@ -303,7 +303,7 @@ class AutoGenerator(object):
         
 
 class TreeSeqGeneratorV2(object):
-    def __init__(self, ifile, means = 'demography_means.npz', n_samples_per = 4, chunk_size = 1, models = "none"): # must be in order, see combine_h5s_v2
+    def __init__(self, ifile, means = 'demography_means.npz', regression = False, n_samples_per = 4, chunk_size = 1, models = "none"): # must be in order, see combine_h5s_v2
         self.ifile = ifile
         
         self.models = models.split(',')
@@ -316,8 +316,11 @@ class TreeSeqGeneratorV2(object):
         self.global_mean = means['v2_mean'].reshape(1, -1)
         self.global_std = means['v2_std'].reshape(1, -1)
         
-        self.y_mean = means['y_mean'].reshape(1, -1)
-        self.y_std = means['y_std'].reshape(1, -1)
+        self.regression = regression
+        
+        if self.regression:
+            self.y_mean = means['y_mean'].reshape(1, -1)
+            self.y_std = means['y_std'].reshape(1, -1)
                                 
         
         self.info_std[np.where(self.info_std == 0.)] = 1.
@@ -386,14 +389,17 @@ class TreeSeqGeneratorV2(object):
                 edge_index_.extend(_)
                 
                 
-            y.append(np.log(y_))
+            y.extend(y_)
             X.extend(list(x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
 
             X1.extend(list(x1))
             X2.extend(list(global_vec))
             indices.extend(edge_index_)
 
-        y = torch.FloatTensor((np.array(y).astype(np.float32) - self.y_mean) / self.y_std)
+        if self.regression:
+            y = torch.FloatTensor((np.array(y).astype(np.float32) - self.y_mean) / self.y_std)
+        else:
+            y = torch.LongTensor(np.array(y))
         X1 = torch.FloatTensor(np.array(X1))
         X2 = torch.FloatTensor(np.array(X2))
         
