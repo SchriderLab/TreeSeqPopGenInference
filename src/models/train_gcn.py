@@ -89,6 +89,7 @@ def parse_args():
     parser.add_argument("--means", default = "None")
     
     parser.add_argument("--model", default = "gru")
+    parser.add_argument("--chunk_size", default = "3")
 
     args = parser.parse_args()
 
@@ -124,8 +125,8 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch))
-    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch))
+    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size))
+    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size))
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
