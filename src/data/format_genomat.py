@@ -215,12 +215,21 @@ def main():
             X_ = []
             P_ = []
             params_ = []
+            ls = []
+            
             for ix, x in enumerate(X):
                 if x is None:
                     continue
                 
+                try:
+                    ls.append(x.shape[1])
+                except:
+                    pass
+                
                 #logging.info('have shape of {}...'.format(x.shape))
                 x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
+                
+                
                 
                 if x is not None:
                     X_.append(x)
@@ -231,6 +240,9 @@ def main():
                 comm.send([X_, P_, tag], dest = 0)
             else:
                 comm.send([X_, P_, params_], dest = 0)
+                
+            if len(ls) > 0:
+                logging.info('have max shape: {}'.format(max(ls)))
     else:
         n_received = 0
                 
