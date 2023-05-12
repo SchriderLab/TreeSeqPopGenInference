@@ -261,7 +261,7 @@ def main():
                 loss = criterion(torch.squeeze(y_pred), y)
                 
                 if classification:
-                    y_pred = y_pred.detach().cpu().numpy().flatten()
+                    y_pred = y_pred.detach().cpu().numpy()
                     y = y.detach().cpu().numpy().flatten()
                     
                     y_pred = np.argmax(y_pred, axis=1)
