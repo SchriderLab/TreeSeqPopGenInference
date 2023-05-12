@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+
 class LabelSmoothing(nn.Module):
     """NLL loss with label smoothing.
     """
@@ -60,11 +62,11 @@ def parse_args():
     parser.add_argument("--lr_decay", default = "None")
     
     parser.add_argument("--n_per_batch", default = "16")
-    parser.add_argument("--L", default = "32", help = "tree sequence length")
+    parser.add_argument("--L", default = "128", help = "tree sequence length")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
     
     # data parameter
-    parser.add_argument("--in_dim", default = "6")
+    parser.add_argument("--in_dim", default = "4")
     parser.add_argument("--n_classes", default = "3")
     
     # hyper-parameters
@@ -73,16 +75,20 @@ def parse_args():
     parser.add_argument("--n_gru_layers", default = "1")
     parser.add_argument("--n_gcn_iter", default = "6")
     parser.add_argument("--gcn_dim", default = "26")
+    parser.add_argument("--conv_dim", default = "4")
     
     parser.add_argument("--pad_l", action = "store_true")
     
     parser.add_argument("--weights", default = "None")
     parser.add_argument("--weight_decay", default = "0.0")
-    parser.add_argument("--momenta_dir", default = "/pine/scr/d/d/ddray/seln_momenta_i1")
+    parser.add_argument("--momenta_dir", default = "None")
     parser.add_argument("--save_momenta_every", default = "250")
     parser.add_argument("--label_smoothing", default = "0.0")
+    parser.add_argument("--regression", action = "store_true")
     
-    parser.add_argument("--model", default = "conv")
+    parser.add_argument("--means", default = "None")
+    
+    parser.add_argument("--model", default = "gru")
 
     args = parser.parse_args()
 
@@ -118,8 +124,8 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), n_samples_per = int(args.n_per_batch))
-    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), n_samples_per = int(args.n_per_batch))
+    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch))
+    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch))
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
@@ -128,7 +134,7 @@ def main():
     elif args.model == 'conv':
         model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
-                             gcn_dim = int(args.gcn_dim))
+                             gcn_dim = int(args.gcn_dim), conv_dim = int(args.conv_dim))
     
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
@@ -156,8 +162,15 @@ def main():
 
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
-    criterion = LabelSmoothing(float(args.label_smoothing))
     
+    if int(args.n_classes) > 1 and not args.regression:
+        criterion = LabelSmoothing(float(args.label_smoothing))
+        classification = True
+    else:
+        criterion = nn.SmoothL1Loss()
+        classification = False
+        
+    #print(criterion)
     if args.lr_decay != "None":
         lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, float(args.lr_decay))
     else:
@@ -185,13 +198,14 @@ def main():
 
             y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
-            loss = criterion(y_pred, y)
+            loss = criterion(torch.squeeze(y_pred), y)
 
-            y_pred = y_pred.detach().cpu().numpy()
-            y_pred = np.argmax(y_pred, axis=1)
-            y = y.detach().cpu().numpy()
-
-            accuracies.append(accuracy_score(y, y_pred))
+            if classification:
+                y_pred = y_pred.detach().cpu().numpy()
+                y_pred = np.argmax(y_pred, axis=1)
+                y = y.detach().cpu().numpy()
+    
+                accuracies.append(accuracy_score(y, y_pred))
 
             losses.append(loss.detach().item())
 
@@ -230,7 +244,7 @@ def main():
         Y = []
         Y_pred = []
         with torch.no_grad():
-            for j in range(1000):
+            for j in range(len(validation_generator)):
                 batch, x1, x2, y = validation_generator[j]
                 
                 if batch is None:
@@ -243,16 +257,21 @@ def main():
 
                 y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
-                loss = criterion(y_pred, y)
-
-                y_pred = y_pred.detach().cpu().numpy()
-                y = y.detach().cpu().numpy()
-                y_pred = np.argmax(y_pred, axis=1)
+                loss = criterion(torch.squeeze(y_pred), y)
                 
+                if classification:
+                    y_pred = y_pred.detach().cpu().numpy().flatten()
+                    y = y.detach().cpu().numpy().flatten()
+                    
+                    y_pred = np.argmax(y_pred, axis=1)
+                    val_accs.append(accuracy_score(y, y_pred))
+                else:
+                    y_pred = y_pred.detach().cpu().numpy()
+                    y = y.detach().cpu().numpy()
+
                 Y.extend(y)
                 Y_pred.extend(y_pred)
 
-                val_accs.append(accuracy_score(y, y_pred))
                 val_losses.append(loss.detach().item())
                 
         val_loss = np.mean(val_losses)
@@ -272,8 +291,21 @@ def main():
             torch.save(model.state_dict(), os.path.join(args.odir, 'best.weights'))
             
             # do this for all the examples:
-            cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
-
+            if classification:
+                cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
+            
+            Y = np.array(Y) * generator.y_std + generator.y_mean
+            Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
+                        
+            mses = []
+            rs = []
+            
+            for k in range(Y.shape[1]):
+                mses.append(np.mean((Y[:,k] - Y_pred[:,k])**2))
+                rs.append(np.corrcoef(Y[:,k], Y_pred[:,k])[0, 1])
+                
+            print(mses, rs)
+            
             early_count = 0
         else:
             early_count += 1
