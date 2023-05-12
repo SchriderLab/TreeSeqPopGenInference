@@ -85,6 +85,7 @@ def parse_args():
     parser.add_argument("--save_momenta_every", default = "250")
     parser.add_argument("--label_smoothing", default = "0.0")
     parser.add_argument("--regression", action = "store_true")
+    parser.add_argument("--classes", default = "ab,ba,none")
     
     parser.add_argument("--means", default = "None")
     
@@ -125,8 +126,8 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size))
-    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size))
+    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size), models = args.classes)
+    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size), models = args.classes)
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
@@ -273,7 +274,6 @@ def main():
                     y_pred = y_pred.detach().cpu().numpy()
                     y = y.detach().cpu().numpy()
 
-                print(y.shape, y_pred.shape, classification)
 
                 Y.extend(y)
                 Y_pred.extend(y_pred)
