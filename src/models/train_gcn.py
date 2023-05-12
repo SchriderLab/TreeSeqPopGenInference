@@ -143,6 +143,8 @@ def main():
     
     classes = generator.models
     
+    print(classes)
+    
     model = model.to(device)
     print(model)
     count_parameters(model)
