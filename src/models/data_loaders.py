@@ -367,7 +367,7 @@ class TreeSeqGeneratorV2(object):
             
             y_ = np.array(self.ifile[key]['y']).flatten()
             x1 = (np.array(self.ifile[key]['x1']) - self.info_mean) / self.info_std
-            edge_index = np.array(self.ifile[key]['edge_index']) + 1
+            edge_index = np.array(self.ifile[key]['edge_index'])
             
             mask = np.array(self.ifile[key]['mask'])
             global_vec = (np.array(self.ifile[key]['global_vec']) - self.global_mean) / self.global_std
