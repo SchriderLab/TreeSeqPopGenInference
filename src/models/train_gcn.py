@@ -271,6 +271,8 @@ def main():
                     y_pred = y_pred.detach().cpu().numpy()
                     y = y.detach().cpu().numpy()
 
+                print(y.shape, y_pred.shape, classification)
+
                 Y.extend(y)
                 Y_pred.extend(y_pred)
 
