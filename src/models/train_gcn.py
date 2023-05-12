@@ -240,6 +240,7 @@ def main():
         val_accs = []
 
         logging.info('validating...')
+        logging.info('have {} validation steps...'.format(len(validation_generator)))
         model.eval()
         
         Y = []
