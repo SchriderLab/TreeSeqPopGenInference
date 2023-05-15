@@ -327,10 +327,11 @@ class TreeSeqGeneratorV2(object):
     def __init__(
         self,
         ifile,
-        means="seln_means.npz",
+        means="demography_means.npz",
+        regression=False,
         n_samples_per=4,
-        chunk_size=5,
-        models="hard,hard-near,neutral,soft,soft-near",
+        chunk_size=1,
+        models="none",
     ):  # must be in order, see combine_h5s_v2
         self.ifile = ifile
 
@@ -343,6 +344,12 @@ class TreeSeqGeneratorV2(object):
 
         self.global_mean = means["v2_mean"].reshape(1, -1)
         self.global_std = means["v2_std"].reshape(1, -1)
+
+        self.regression = regression
+
+        if self.regression:
+            self.y_mean = means["y_mean"].reshape(1, -1)
+            self.y_std = means["y_std"].reshape(1, -1)
 
         self.info_std[np.where(self.info_std == 0.0)] = 1.0
         self.global_std[np.where(self.global_std == 0.0)] = 1.0
@@ -387,9 +394,10 @@ class TreeSeqGeneratorV2(object):
             ii = np.where(x[:, :, :, -1] > 0)
             x[ii[0], ii[1], ii[2], -1] = np.log(x[ii[0], ii[1], ii[2], -1])
 
-            y_ = np.array(self.ifile[key]["y"])
+            y_ = np.array(self.ifile[key]["y"]).flatten()
             x1 = (np.array(self.ifile[key]["x1"]) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]["edge_index"])
+
             mask = np.array(self.ifile[key]["mask"])
             global_vec = (
                 np.array(self.ifile[key]["global_vec"]) - self.global_mean
@@ -402,7 +410,9 @@ class TreeSeqGeneratorV2(object):
                 e = edge_index[k]
                 for j in range(e.shape[0]):
                     if mask[k][j] == 1:
-                        _.append(torch.LongTensor(e[j]))
+                        e_ = np.product(e[j], axis=0)
+                        ii = np.where(e_ >= 0)[0]
+                        _.append(torch.LongTensor(e[j][:, ii]))
                     else:
                         _.append(torch.LongTensor([]))
 
@@ -410,11 +420,17 @@ class TreeSeqGeneratorV2(object):
 
             y.extend(y_)
             X.extend(list(x.reshape(x.shape[0] * x.shape[1], x.shape[2], x.shape[3])))
+
             X1.extend(list(x1))
             X2.extend(list(global_vec))
             indices.extend(edge_index_)
 
-        y = torch.LongTensor(np.array(y).astype(np.float32))
+        if self.regression:
+            y = torch.FloatTensor(
+                (np.array(y).astype(np.float32) - self.y_mean) / self.y_std
+            )
+        else:
+            y = torch.LongTensor(np.array(y))
         X1 = torch.FloatTensor(np.array(X1))
         X2 = torch.FloatTensor(np.array(X2))
 

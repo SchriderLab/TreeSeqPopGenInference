@@ -78,6 +78,27 @@ def format_matrix(x, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric = 'c
                 x = np.pad(x, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
     
         return x
+    elif mode == 'seriate': # one population
+        if x.shape[1] > n_sites:
+            ii = np.random.choice(range(x.shape[1] - n_sites))
+            
+            x = x[:,ii:ii + n_sites]
+        else:
+            to_pad = n_sites - x.shape[1]
+
+            if to_pad % 2 == 0:
+                x = np.pad(x, ((0,0), (to_pad // 2, to_pad // 2)))
+            else:
+                x = np.pad(x, ((0,0), (to_pad // 2 + 1, to_pad // 2)))
+                
+        D = squareform(pdist(x, metric = metric))
+        D[np.isnan(D)] = 0.
+        
+        ii = seriate(D, timeout = 0.)
+        
+        x = x[ii,:]
+        
+        return x
     
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -94,6 +115,7 @@ def parse_args():
     parser.add_argument("--pop_sizes", default = "20,14")
     parser.add_argument("--chunk_size", default = "4")
     parser.add_argument("--out_shape", default = "1,34,512")
+    parser.add_argument("--regression", action = "store_true")
 
     parser.add_argument("--ofile", default = "None")
     parser.add_argument("--odir", default = "None")
@@ -134,6 +156,8 @@ def main():
     for ifile in ifiles:
         if comm.rank == 0:
             X = deque()
+            if args.regression:
+                Y = deque()
         
         comm.Barrier()
         if comm.rank == 0:
@@ -165,9 +189,13 @@ def main():
                         continue
 
                     x = ifile[case][key]['x_0']
+                    L = x.shape[1]
                     x = format_matrix(x, pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
                     
-                    comm.send([x], dest = 0)
+                    if not args.regression:
+                        comm.send((x, L), dest = 0)
+                    else:
+                        comm.send((x, np.array(ifile[case][key]['y']), L), dest = 0)
                     
             else:
                 n_received = 0
@@ -175,28 +203,51 @@ def main():
                 if case not in counts.keys():
                     counts[case] = [0, 0]
                 
+                Ls = []
                 while n_received < len(keys):
-                    x = comm.recv(source = MPI.ANY_SOURCE)[0]
+                    if not args.regression:
+                        x, L = comm.recv(source = MPI.ANY_SOURCE)[0]
+                    else:
+                        x, y, L = comm.recv(source = MPI.ANY_SOURCE)
                     
+                    
+                    Ls.append(L)
                     if x is not None:
                         X.append(x)
+                        
+                        if args.regression:
+                            Y.append(y)
                         
                     n_received += 1
                     
                     if len(X) >= chunk_size:
                         x_ = np.array([X.pop() for k in range(chunk_size)])
                         
+                        if args.regression:
+                            y_ = np.concatenate([Y.pop() for k in range(chunk_size)])
+                        else:
+                            y_ = None
+                        
                         if val:
                             ofile_val.create_dataset('{0}/{1}/x'.format(case, counts[case][1]), data = x_.astype(np.uint8), compression = 'lzf')
+                            if y_ is not None:
+                                ofile_val.create_dataset('{0}/{1}/y'.format(case, counts[case][1]), data = y_.astype(np.float32), compression = 'lzf')
+                            
                             counts[case][1] += 1
                         else:
                             ofile.create_dataset('{0}/{1}/x'.format(case, counts[case][0]), data = x_.astype(np.uint8), compression = 'lzf')
+                            if y_ is not None:
+                                ofile.create_dataset('{0}/{1}/y'.format(case, counts[case][0]), data = y_.astype(np.float32), compression = 'lzf')
                             counts[case][0] += 1
                 
     if comm.rank == 0:
         ofile.close()
         ofile_val.close()
-                
+        
+        logging.info('mean seq length: {}'.format(np.mean(Ls)))
+        logging.info('median seq length: {}'.format(np.median(Ls)))
+        logging.info('min seq length: {}'.format(np.min(Ls)))
+        logging.info('max seq length: {}'.format(np.max(Ls)))
 
     # ${code_blocks}
 

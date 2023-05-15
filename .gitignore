@@ -12,3 +12,6 @@ msmove
 *.vscode
 *.pyc
 *test*
+*.hdf5
+*out
+*err
