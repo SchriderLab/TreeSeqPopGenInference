@@ -293,10 +293,14 @@ def main():
     m_x1 = np.mean(np.array(x1_means), axis = 0)
     s_x1 = np.std(np.array(x1_means), axis = 0)
     
-    m_y = np.mean(np.array(yl), axis = 0)
-    s_y = np.std(np.array(yl), axis = 0)
+    if not classification:
+        m_y = np.mean(np.array(yl), axis = 0)
+        s_y = np.std(np.array(yl), axis = 0)
     
-    np.savez(args.ofile.replace('hdf5', 'npz'), bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1, m_y = m_y, s_y =s_y)
+        np.savez(args.ofile.replace('hdf5', 'npz'), bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1, m_y = m_y, s_y = s_y)
+    else:
+        np.savez(args.ofile.replace('hdf5', 'npz'), bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1)
+        
     
     logging.info('closing files and plotting hist...')
     ofile.close()
