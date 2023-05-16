@@ -535,8 +535,11 @@ class TreeSeqGenerator(object):
                         print(tree_bins)
                         ii = np.random.uniform(0.0, max(tree_bins), self.s_length)
 
-                        ii = sorted(list(np.digitize(ii, tree_bins) - 1))
-
+                        # must investigate this later
+                        try:
+                            ii = sorted(list(np.digitize(ii, tree_bins) - 1))
+                        except:
+                            continue
                         padding = False
                         pad_size = (0, 0)
 
