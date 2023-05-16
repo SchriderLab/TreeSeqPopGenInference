@@ -33,7 +33,7 @@ class DemoDataGenerator(tf.keras.utils.Sequence):
         self.h5file = h5file
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.idxs = list(self.h5file["demo"].keys())
+        self.idxs = list(self.h5file.keys())
         self.log = log
         self.model = model
         self.y_mean = norm_params[0]
@@ -50,13 +50,13 @@ class DemoDataGenerator(tf.keras.utils.Sequence):
         X = []
         y = []
         for i in indices:
-            X.append(np.array(self.h5file[f"demo/{i}/x"]))
-            y.append(np.array(self.h5file[f"demo/{i}/y"]))
+            X.append(np.array(self.h5file[f"{i}/x"]))
+            y.append(np.array(self.h5file[f"{i}/y"]))
 
         X_arr = np.concatenate(X)
         y_arr = np.concatenate(y)
 
-        if self.model == "2dcnn":
+        if "2d" in self.model:
             X_arr = np.expand_dims(X_arr, 3)
 
         if self.log == "log":
@@ -77,24 +77,20 @@ class DemoDataGenerator(tf.keras.utils.Sequence):
 
 def get_DemoNet(
     convDim,
-    imgRows,
-    imgCols,
+    inputShape,
     convSize,
-    nblocks=3,
     poolSize=2,
     useDropout=True,
     numParams=5,
 ):
     if convDim == "2dcnn":
-        inputShape = (imgRows, imgCols, 1)
         convFunc = Conv2D
         poolFunc = MaxPooling2D
     else:
-        inputShape = (imgRows, imgCols)
         convFunc = Conv1D
         poolFunc = AveragePooling1D
 
-    b1 = Input(shape=inputShape)
+    b1 = Input(inputShape)
     conv11 = convFunc(128, kernel_size=convSize, activation="relu")(b1)
     pool11 = poolFunc(pool_size=poolSize)(conv11)
     if useDropout:
@@ -160,7 +156,7 @@ def plot_preds(preds, names, run_name):
             m * preds[f"pred_{name}"] + b,
             color="black",
             label=f"""Spearmans rho: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[0]:.2f}, 
-                p-value: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[1]:.2f},
+                p-value: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[1]:.6f},
                 MSE: {mean_squared_error(preds[f"true_{name}"], preds[f"pred_{name}"]):.2f}""",
         )
         plt.legend()
@@ -177,8 +173,8 @@ def plot_preds(preds, names, run_name):
 def get_norm_params(h5file, log):
     print("Calculating normalization parameters")
     y = []
-    for i in h5file["demo"].keys():
-        y.append(h5file["demo"][i]["y"])
+    for i in h5file.keys():
+        y.append(h5file[i]["y"])
 
     data = np.concatenate(y)
     data = data
@@ -200,9 +196,9 @@ def r_zscore(data, y_mean, y_std):
 def get_data(h5file):
     print("Getting data")
     X, y = [], []
-    for i in tqdm(h5file["demo"].keys()):
-        X.append(h5file["demo"][i]["x"])
-        y.append(h5file["demo"][i]["y"])
+    for i in tqdm(h5file.keys()):
+        X.append(h5file[i]["x"])
+        y.append(h5file[i]["y"])
 
     return np.concatenate(X), np.concatenate(y)
 
@@ -232,7 +228,7 @@ def main():
         log = "log"
 
     run_name = ua.in_train.split("/")[-1].split(".")[0]
-    run_name = f"{run_name}_{model}_{log}_{ua.conv_blocks}blocks_2d"
+    run_name = f"{run_name}_{model}_{log}_{ua.conv_blocks}blocks"
     os.makedirs(run_name, exist_ok=True)
 
     print(f"Running {run_name}")
@@ -252,8 +248,14 @@ def main():
     train_yz = zscore(train_y, t_mean, t_std)
     val_yz = zscore(val_y, t_mean, t_std)
 
-    # cnn = get_Resnet(512, 50)
-    cnn = get_DemoNet(model, 512, 50, 3)
+    if ua.model == "2dcnn":
+        data_shape = (*train_X.shape[1:], 1)
+    elif ua.model == "1dcnn":
+        data_shape = train_X.shape[1:]
+
+    cnn = get_DemoNet(model, data_shape, 3)
+
+    print("Data shape:", data_shape)
 
     earlystop = keras.callbacks.EarlyStopping(
         monitor="val_loss", min_delta=0, patience=3, verbose=0, mode="auto"
@@ -267,7 +269,7 @@ def main():
     )
     callbacks = [earlystop, checkpoint]
 
-    train_X, val_X = [np.swapaxes(i, 1, 2) for i in [train_X, val_X]]
+    # train_X, val_X = [np.swapaxes(i, 1, 2) for i in [train_X, val_X]]
 
     cnn.fit(
         x=train_X,
