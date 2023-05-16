@@ -215,6 +215,7 @@ def main():
         # append sequence lengths for histogram
         lengths.extend(generator.lengths)
         
+        print([len(data[u]['x']) for u in classes])
         if classification:
             cond = all([len(data[u]['x']) > 0 for u in classes])
         else:
