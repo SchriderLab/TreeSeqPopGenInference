@@ -550,7 +550,7 @@ class TreeSeqGenerator(object):
                             padding = False
                             pad_size = (0, 0)
                         else:
-                            to_pad = self.s_length - X_.shape
+                            to_pad = self.s_length - X_.shape[0]
                             if to_pad % 2 == 0:
                                 pad_size = (to_pad // 2, to_pad // 2)
                             else:
