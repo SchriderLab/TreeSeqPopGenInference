@@ -499,7 +499,7 @@ class TreeSeqGenerator(object):
         return
 
     # for internal use
-    def get_single_model_batch(self, n_samples=3, sample_mode="scattered"):
+    def get_single_model_batch(self, n_samples=1, sample_mode="scattered"):
         Xs = []
         Ds = []  # branch length distance matrices
         X1 = []  # tree-level features (same size as batch_)
@@ -532,15 +532,32 @@ class TreeSeqGenerator(object):
 
                     if sample_mode == "equi":
                         tree_bins = [0.0] + list(np.cumsum(X1_[:, -2]))
-                        print(tree_bins)
                         ii = np.random.uniform(0.0, max(tree_bins), self.s_length)
 
                         ii = sorted(list(np.digitize(ii, tree_bins) - 1))
                         
                         padding = False
                         pad_size = (0, 0)
-                    
-
+                    elif sample_mode == "sequential":
+                        if X_.shape[0] == self.s_length:
+                            ii = range(X_.shape[0])
+                            padding = False
+                            pad_size = (0, 0)
+                        elif X_.shape[0] > self.s_length:
+                            ii = np.random.choice(range(X_.shape[0] - self.s_length))
+                            ii = range(ii, ii + self.s_length)
+                            
+                            padding = False
+                            pad_size = (0, 0)
+                        else:
+                            to_pad = self.s_length - X_.shape
+                            if to_pad % 2 == 0:
+                                pad_size = (to_pad // 2, to_pad // 2)
+                            else:
+                                pad_size = (to_pad // 2, to_pad // 2 + 1)
+                                
+                            ii = range(X_.shape[0])
+                            padding = True
                     break
 
                 # this guaruntees batches are always balanced
