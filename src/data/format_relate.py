@@ -78,7 +78,10 @@ def main():
     ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
     logging.info('have {} files to parse...'.format(len(ifiles)))
     
-    tags = [u.split('/')[-1].split('_')[0] for u in ifiles]
+    if '_' in ifiles[0].split('/')[-1]:
+        tags = [u.split('/')[-1].split('_')[0] for u in ifiles]
+    else:
+        tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
     s0, s1 = pop_sizes
