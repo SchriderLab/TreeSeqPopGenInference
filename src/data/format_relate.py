@@ -90,6 +90,9 @@ def main():
         tag = tags[ii]
         ifile = ifiles[ii]
         
+        print(tag)
+        print([u.split('_')[0] for u in os.listdir(args.idir)])
+        
         anc_files = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('_')[0] == tag)])
         if len(anc_files) == 0:
             logging.info('ERROR: have no matching .anc files for {}...'.format(ifile))
