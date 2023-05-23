@@ -219,7 +219,7 @@ def main():
         if classification:
             cond = all([len(data[u]['x']) > 0 for u in classes])
         else:
-            cond = (len(data['x']) > 0)
+            cond = (len(data['x']) >= chunk_size)
         
         while cond:
             X = []
@@ -239,12 +239,13 @@ def main():
                     global_vec.append(data[c]['global_vec'].pop())
                     masks.append(data[c]['mask'].pop())
             else:
-                X.append(data['x'].pop())
-                edge_index.append(data['edge_index'].pop())
-                X1.append(data['x1'].pop())
-                y.append(data['y'].pop())
-                global_vec.append(data['global_vec'].pop())
-                masks.append(data['mask'].pop())
+                for c in range(chunk_size):
+                    X.append(data['x'].pop())
+                    edge_index.append(data['edge_index'].pop())
+                    X1.append(data['x1'].pop())
+                    y.append(data['y'].pop())
+                    global_vec.append(data['global_vec'].pop())
+                    masks.append(data['mask'].pop())
                 
 
             X = np.array(X, dtype = np.float32)
@@ -283,7 +284,7 @@ def main():
             if classification:
                 cond = all([len(data[u]['x']) > 0 for u in classes])
             else:
-                cond = (len(data['x']) > 0)
+                cond = (len(data['x']) >= chunk_size)
         
         logging.info('have {} samples...'.format(len(x1_means)))
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
