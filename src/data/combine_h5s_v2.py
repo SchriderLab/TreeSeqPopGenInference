@@ -112,7 +112,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    ifiles = glob.glob(os.path.join(args.idir, '*/*.hdf5'))
+    ifiles = glob.glob(os.path.join(args.idir, '*/*.hdf5')) + glob.glob(os.path.join(args.idir, '*.hdf5'))
     random.shuffle(ifiles)
 
     #ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
@@ -215,7 +215,6 @@ def main():
         # append sequence lengths for histogram
         lengths.extend(generator.lengths)
         
-        print([len(data[u]['x']) for u in classes])
         if classification:
             cond = all([len(data[u]['x']) > 0 for u in classes])
         else:
