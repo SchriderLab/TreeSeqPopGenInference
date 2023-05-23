@@ -112,7 +112,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    ifiles = glob.glob(os.path.join(args.idir, '*/*.hdf5')) + glob.glob(os.path.join(args.idir, '*.hdf5'))
+    ifiles = glob.glob(os.path.join(args.idir, '*/*.hdf5'))
     random.shuffle(ifiles)
 
     #ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
@@ -250,6 +250,8 @@ def main():
             X = np.array(X, dtype = np.float32)
             edge_index = np.array(edge_index, dtype = np.int32)
             X1 = np.array(X1)
+            print([u.shape for u in y])
+            
             if classification:
                 y = np.array(y, dtype = np.uint8)
             else:

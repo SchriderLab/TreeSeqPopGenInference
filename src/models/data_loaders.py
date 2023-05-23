@@ -739,7 +739,6 @@ class TreeSeqGenerator(object):
 
         for key in self.keys.keys():
             random.shuffle(self.keys[key])
-            print(len(self.keys[key]))
 
     def __len__(self):
         return int(
