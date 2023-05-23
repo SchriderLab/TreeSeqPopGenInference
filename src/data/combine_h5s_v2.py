@@ -242,7 +242,7 @@ def main():
                     X.append(data['x'].pop())
                     edge_index.append(data['edge_index'].pop())
                     X1.append(data['x1'].pop())
-                    y.append(data['y'].pop())
+                    y.append(data['y'].pop()[0])
                     global_vec.append(data['global_vec'].pop())
                     masks.append(data['mask'].pop())
                 
