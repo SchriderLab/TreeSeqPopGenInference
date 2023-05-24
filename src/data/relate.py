@@ -99,7 +99,7 @@ def main():
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
-        m_ofile = ifile.replace('.msOut', '.anc')
+        m_ofile = os.path.join(odir, ifile.split('/')[-1].replace('.msOut', '.anc'))
         
         tag = ifile.split('/')[-1].split('.')[0]
         
@@ -161,7 +161,7 @@ def main():
                    
             os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
         
-        os.system('gzip {0}'.format(ifile.replace('.msOut', '.anc')))
+        os.system('gzip {0}'.format(m_ofile))
         
         os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
