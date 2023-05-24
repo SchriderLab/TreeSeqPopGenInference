@@ -306,6 +306,7 @@ def main():
             ofile.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
             ofile.flush()
 
+            ix += 1
                 
           
     ofile.close()
