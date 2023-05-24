@@ -99,6 +99,8 @@ def main():
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
+        m_ofile = ifile.replace('.msOut', '.anc')
+        
         tag = ifile.split('/')[-1].split('.')[0]
         
         logging.info('working on {}...'.format(ifile))
@@ -138,7 +140,7 @@ def main():
             for k in range(int(args.n_samples)):
                 f.write('UNR{} NA 0\n'.format(k + 1))
         
-        file_list = []
+
         for ix in range(len(samples)):
             ofile = haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', '')
             cmd_ = relate_cmd.format(mu, int(args.N), haps[ix], 
@@ -148,17 +150,18 @@ def main():
             print(cmd_)
             os.system(cmd_)
             
-            f = open(ofile + '.anc', 'a')
+            f = open(os.path.join(odir, ofile) + '.anc', 'a')
             c_ix = int(re.findall(r'chr\d+', haps[ix].split('/')[-1])[0].replace('chr', ''))
             f.write('chromosome: {}\n'.format(c_ix))
             f.close()
             
-            file_list.append(ofile + '.anc')
-            
-            os.system('rm -rf {}'.format(ofile))
+            cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
+            print(cmd_)
+            os.system(cmd_)
+                   
+            os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
         
-        os.system('cat ' + ' '.join(file_list) + ' > {0} && gzip {0}'.format(ifile.replace('.msOut', '.anc')))
-        os.system('rm ' + ' '.join(file_list))
+        os.system('gzip {0}'.format(ifile.replace('.msOut', '.anc')))
         
         os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
