@@ -77,10 +77,9 @@ def parse_args():
 def main():
     args = parse_args()
     
-    idir = args.idir
     odir = args.odir
     
-    logging.info('working on {}...'.format(idir))
+    logging.info('working on {}...'.format(args.ifile))
     
     ### get haplotype and sample files
     logging.info('uncompressing data...')
