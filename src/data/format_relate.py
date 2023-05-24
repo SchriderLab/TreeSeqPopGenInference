@@ -217,7 +217,7 @@ def main():
             for k in range(3):
                 line = anc_file.readline()
             
-            if not '(' in line:
+            if not '(' in line.decode('utf-8'):
                 break
             
             current_day_nodes = list(range(sum(pop_sizes)))
