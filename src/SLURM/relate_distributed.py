@@ -60,7 +60,8 @@ def main():
     print(idirs)
                 
     for idir in idirs:
-        odir = os.path.join(args.odir, idir.split)
+        odir = os.path.join(args.odir, idir.split('/')[-1])
+        print(odir)
         os.system('mkdir -p {}'.format(odir))
         
         log_file = os.path.join(odir, 'slurm.out')
