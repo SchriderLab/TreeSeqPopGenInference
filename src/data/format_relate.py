@@ -164,7 +164,7 @@ def parse_args():
     parser.add_argument("--val_prop", default = "0.1")
     parser.add_argument("--pop_sizes", default = "20,14")
     
-    parser.add_argument("--n_sample", default = "104")
+    parser.add_argument("--n_sample", default = "None")
     
     parser.add_argument("--topological_order", action = "store_true")
     parser.add_argument("--bidirectional", action = "store_true")
@@ -232,11 +232,11 @@ def main():
             snps = []
 
             lines = []            
-            while '(' in line:
-                lines.append(line)
+            while '(' in line.decode('utf-8'):
+                lines.append(line.decode('utf-8'))
                 line = anc_file.readline()
                 
-            iix = int(line.replace('\n', '').split()[-1]) - 1
+            iix = int(line.decode('utf-8').replace('\n', '').split()[-1]) - 1
             l = x[iix].shape[1]
             
             t0 = time.time()
