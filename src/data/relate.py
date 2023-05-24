@@ -18,11 +18,13 @@ import string
 # L = 110000
 # mu = 1.2e-8
 # r = 1e-8
+# 
 
 # for recombination experiments
 # L = 20000
 # mu = 1.5e-8
 # r = 1e-7
+# N = 14714
 
 # dros params
 # L = 10000
@@ -46,6 +48,7 @@ def parse_args():
     parser.add_argument("--L", default = "10000")
     parser.add_argument("--mu", default = "1.1e-8")
     parser.add_argument("--r", default = "1.2e-8")
+    parser.add_argument("--N", default = "1000")
     
     parser.add_argument("--n_samples", default = "34")
     parser.add_argument("--relate_path", default = "/nas/longleaf/home/ddray/SeqOrSwim/relate/bin/Relate")
@@ -134,9 +137,11 @@ def main():
                 f.write('UNR{} NA 0\n'.format(k + 1))
         
         for ix in range(len(samples)):
-            cmd_ = relate_cmd.format(mu, L, haps[ix], 
+            cmd_ = relate_cmd.format(mu, int(args.N), haps[ix], 
                                      samples[ix], map_file, 
                                      haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
+            
+            print(cmd_)
             os.system(cmd_)
         
         os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
