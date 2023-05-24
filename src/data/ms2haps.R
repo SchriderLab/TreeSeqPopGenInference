@@ -101,7 +101,7 @@ if(length(startlines) > 1){
     }
     if(length(pos) == 0){
       cat("No segsites\nBP have to be integers! (Use third argument)")
-      quit(status = 1)
+      next
     }
 
     N <- dim(seq)[2]
