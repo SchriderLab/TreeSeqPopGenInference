@@ -57,8 +57,10 @@ def main():
                     if os.path.isdir(directory+"/"+sub)]) == 0:
                 idirs.append(directory)
                 
+    print(idirs)
+                
     for idir in idirs:
-        odir = os.path.join(args.odir, idir.replace(args.idir, ''))
+        odir = os.path.join(args.odir, idir.split)
         os.system('mkdir -p {}'.format(odir))
         
         log_file = os.path.join(odir, 'slurm.out')
