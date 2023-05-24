@@ -52,7 +52,7 @@ def main():
     # find leaf directories
     for root, dirs, files in os.walk(args.idir):
         for dr in dirs:
-            directory = root + "/" + dr
+            directory = root + dr
             if len([sub for sub in os.listdir(directory) \
                     if os.path.isdir(directory+"/"+sub)]) == 0:
                 idirs.append(directory)
