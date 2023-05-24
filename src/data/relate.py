@@ -44,7 +44,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--idir", default = "None")
+    
+    parser.add_argument("--ifile", default = "None")
+    
     parser.add_argument("--L", default = "10000")
     parser.add_argument("--mu", default = "1.1e-8")
     parser.add_argument("--r", default = "1.2e-8")
@@ -82,70 +84,70 @@ def main():
     
     ### get haplotype and sample files
     logging.info('uncompressing data...')
-    ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
-    for ix in range(len(ifiles)):
-        ifile = ifiles[ix]
-        
-        if '.gz' in ifile:
-            os.system('gzip -d {}'.format(ifile))
-            
-            ifile = ifile.replace('.gz', '')
-            
-        ifiles[ix] = ifile
+   
+    ifile = args.ifile
     
+    if '.gz' in ifile:
+        os.system('gzip -d {}'.format(ifile))
+        
+        ifile = ifile.replace('.gz', '')
+        
     rcmd = 'cd {3} && Rscript /nas/longleaf/home/ddray/SeqOrSwim/src/data/ms2haps.R {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
-    for ifile in ifiles:
-        tag = ifile.split('/')[-1].split('.')[0]
-        
-        logging.info('working on {}...'.format(ifile))
-        logging.info('converting to haps / sample files via Rscript...')
-        cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
-        os.system(cmd_)        
-        
-        L = float(args.L)  
-        r = float(args.r)
-        mu = float(args.mu)
-        
-        map_file = ifile.replace('.msOut', '.map')
-        logging.info('writing map file {}...'.format(map_file))
-        
-        ofile = open(map_file, 'w')
-        ofile.write('pos COMBINED_rate Genetic_Map\n')
-        ofile.write('0 {} 0\n'.format(r * L))
-        ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
-        ofile.close()
-        
-        """
-        ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
-        ofile.write('sample population group sex\n')
-        for k in range(1, 26):
-            ofile.write('UNR{} POP POP 1\n'.format(k))
-        ofile.close()
-        """
+    tag = ifile.split('/')[-1].split('.')[0]
+    
+    logging.info('working on {}...'.format(ifile))
+    logging.info('converting to haps / sample files via Rscript...')
+    cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
+    os.system(cmd_)        
+    
+    L = float(args.L)  
+    r = float(args.r)
+    mu = float(args.mu)
+    
+    map_file = ifile.replace('.msOut', '.map')
+    logging.info('writing map file {}...'.format(map_file))
+    
+    ofile = open(map_file, 'w')
+    ofile.write('pos COMBINED_rate Genetic_Map\n')
+    ofile.write('0 {} 0\n'.format(r * L))
+    ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
+    ofile.close()
+    
+    """
+    ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
+    ofile.write('sample population group sex\n')
+    for k in range(1, 26):
+        ofile.write('UNR{} POP POP 1\n'.format(k))
+    ofile.close()
+    """
 
-        samples = sorted(glob.glob(os.path.join(odir, '*.sample')))
-        haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
+    samples = sorted(glob.glob(os.path.join(odir, '*.sample')))
+    haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
+    
+    # we need to rewrite the haps files (for haploid organisms)
+    for sample in samples:
+        f = open(sample, 'w')
+        f.write('ID_1 ID_2 missing\n')
+        f.write('0    0    0\n')
+        for k in range(int(args.n_samples)):
+            f.write('UNR{} NA 0\n'.format(k + 1))
+    
+    for ix in range(len(samples)):
+        ofile = haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', '')
+        cmd_ = relate_cmd.format(mu, int(args.N), haps[ix], 
+                                 samples[ix], map_file, 
+                                 ofile, odir)
         
-        # we need to rewrite the haps files (for haploid organisms)
-        for sample in samples:
-            f = open(sample, 'w')
-            f.write('ID_1 ID_2 missing\n')
-            f.write('0    0    0\n')
-            for k in range(int(args.n_samples)):
-                f.write('UNR{} NA 0\n'.format(k + 1))
+        print(cmd_)
+        os.system(cmd_)
+        # only deletes Relates working directory
+        os.system('rm -rf {}'.format(ofile))
+    
+    os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
+    os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
-        for ix in range(len(samples)):
-            cmd_ = relate_cmd.format(mu, int(args.N), haps[ix], 
-                                     samples[ix], map_file, 
-                                     haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', ''), odir)
-            
-            print(cmd_)
-            os.system(cmd_)
-        
-        os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
-        os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
         
     # compress back
@@ -154,10 +156,8 @@ def main():
     
     # compress back
     logging.info('compressing back...')
-    ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
-    for ifile in ifiles:
-        if '.gz' not in ifile:
-            os.system('gzip {}'.format(ifile))
+    
+    os.system('gzip {}'.format(ifile))
 
 if __name__ == '__main__':
     main()
