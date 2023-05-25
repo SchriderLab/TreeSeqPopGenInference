@@ -176,7 +176,7 @@ def main():
             # each is a tree seq
             
             for skey in skeys:
-                x, x1, edge_index, mask, global_vec, y = generator.get_seq(key, skey, args.sample_mode)
+                x, x1, edge_index, mask, global_vec, y = generator.get_seq(key, skey, args.sampling_mode)
                 
                 if classification:
                     c = y
