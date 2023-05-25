@@ -95,7 +95,7 @@ def parse_args():
     parser.add_argument("--L", default = "128")
     parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
     parser.add_argument("--chunk_size", default = "5")
-    parser.add_argument("--sampling_mode", default = "equi")
+    parser.add_argument("--sampling_mode", default = "sequential")
     
     parser.add_argument("--n_sample", default = "None")
 
@@ -166,131 +166,112 @@ def main():
     
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
-        
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, sequence_length = L, pad = True, categorical = classification)
         
-        if args.n_sample == "None":
-            try:
-                N = len(generator)
-            except:
-                continue
-        else:
-            N = int(args.n_sample)
+        hfile = h5py.File(ifile, 'r')
+        keys = list(hfile.keys())
         
-        for j in range(N):
-            x, x1, edge_index, masks, global_vecs, y = generator.get_single_model_batch(sample_mode = args.sampling_mode)
+        for key in range(len(keys)):
+            skeys = hfile[key].keys()
+            # each is a tree seq
             
-            if x is None:
-                break
-                    
-            for k in range(len(x)):
-                if np.random.uniform() < 0.02:
-                    x1_means.append(np.mean(x1[k][np.where(masks[k] != 0.)[0],:], axis = 0))
-                    x1_stds.append(np.std(x1[k][np.where(masks[k] != 0.)[0],:], axis = 0))
-                    
-                    # sequence, node, feature
-                    ii = np.where(x[k][:,:,0] > 0)
-                    bls.extend(np.random.choice(np.log(x[k][ii[0],ii[1],0]), min([len(ii[0]), 10]), replace = False))
-             
-                    muts = x[k][np.where(masks[k] != 0.)[0],:,-1].flatten()
-                    n_muts.extend(np.random.choice(muts, min([len(muts), 10]), replace = False))
-                    yl.extend(y[k])
-                
-                if classification:
-                    c = y[k]
-                    
-                    data[c]['x'].append(x[k])
-                    data[c]['x1'].append(x1[k])
-                    data[c]['edge_index'].append(edge_index[k])
-                    data[c]['mask'].append(masks[k])
-                    data[c]['global_vec'].append(global_vecs[k])
-                else:
-                    data['x'].append(x[k])
-                    data['x1'].append(x1[k])
-                    data['edge_index'].append(edge_index[k])
-                    data['mask'].append(masks[k])
-                    data['global_vec'].append(global_vecs[k])
-                    data['y'].append(y)
-                
-        # append sequence lengths for histogram
-        lengths.extend(generator.lengths)
-        
-        if classification:
-            cond = all([len(data[u]['x']) > 0 for u in classes])
-        else:
-            cond = (len(data['x']) >= chunk_size)
-        
-        while cond:
-            X = []
-            Ds = []
-            edge_index = []
-            masks = []
-            X1 = []
-            global_vec = []
-            y = []
+            x, x1, edge_index, mask, global_vec, y = generator.get_seq
             
             if classification:
-                for c in classes:
-                    X.append(data[c]['x'].pop())
-                    edge_index.append(data[c]['edge_index'].pop())
-                    X1.append(data[c]['x1'].pop())
-                    y.append(classes.index(c))
-                    global_vec.append(data[c]['global_vec'].pop())
-                    masks.append(data[c]['mask'].pop())
-            else:
-                for c in range(chunk_size):
-                    X.append(data['x'].pop())
-                    edge_index.append(data['edge_index'].pop())
-                    X1.append(data['x1'].pop())
-                    y.append(data['y'].pop()[0])
-                    global_vec.append(data['global_vec'].pop())
-                    masks.append(data['mask'].pop())
+                c = y
                 
-
-            X = np.array(X, dtype = np.float32)
-            edge_index = np.array(edge_index, dtype = np.int32)
-            X1 = np.array(X1)
-            print([u.shape for u in y])
-            
-            if classification:
-                y = np.array(y, dtype = np.uint8)
+                data[c]['x'].append(x)
+                data[c]['x1'].append(x1)
+                data[c]['edge_index'].append(edge_index)
+                data[c]['mask'].append(mask)
+                data[c]['global_vec'].append(global_vec)
             else:
-                y = np.array(y, dtype = np.float32)
-            global_vec = np.array(global_vec, dtype = np.float32)
-            masks = np.array(masks, dtype = np.uint8)
+                data['x'].append(x)
+                data['x1'].append(x1)
+                data['edge_index'].append(edge_index)
+                data['mask'].append(mask)
+                data['global_vec'].append(global_vec)
+                data['y'].append(y)
             
-            val = np.random.uniform() < val_prop
-            
-            if not val:
-                ofile.create_dataset('{0:06d}/x'.format(counter), data = X, compression = 'lzf')
-                ofile.create_dataset('{0:06d}/x1'.format(counter), data = X1, compression = 'lzf')
-                ofile.create_dataset('{0:06d}/edge_index'.format(counter), data = edge_index, compression = 'lzf')
-                ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
-                ofile.create_dataset('{0:06d}/global_vec'.format(counter), data = global_vec, compression = 'lzf')
-                ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
-                ofile.flush()
-            
-                counter += 1
-            else:
-                ofile_val.create_dataset('{0:06d}/x'.format(val_counter), data = X, compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/x1'.format(val_counter), data = X1, compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/edge_index'.format(val_counter), data = edge_index, compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
-                ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
-                ofile_val.flush()
-            
-                val_counter += 1
+        
                 
+        
+        
             if classification:
                 cond = all([len(data[u]['x']) > 0 for u in classes])
             else:
                 cond = (len(data['x']) >= chunk_size)
-        
-        logging.info('have {} samples...'.format(len(x1_means)))
+            
+            while cond:
+                X = []
+                Ds = []
+                edge_index = []
+                masks = []
+                X1 = []
+                global_vec = []
+                y = []
+                
+                if classification:
+                    for c in classes:
+                        X.append(data[c]['x'].pop())
+                        edge_index.append(data[c]['edge_index'].pop())
+                        X1.append(data[c]['x1'].pop())
+                        y.append(classes.index(c))
+                        global_vec.append(data[c]['global_vec'].pop())
+                        masks.append(data[c]['mask'].pop())
+                else:
+                    for c in range(chunk_size):
+                        X.append(data['x'].pop())
+                        edge_index.append(data['edge_index'].pop())
+                        X1.append(data['x1'].pop())
+                        y.append(data['y'].pop()[0])
+                        global_vec.append(data['global_vec'].pop())
+                        masks.append(data['mask'].pop())
+                    
+    
+                X = np.array(X, dtype = np.float32)
+                edge_index = np.array(edge_index, dtype = np.int32)
+                X1 = np.array(X1)
+                
+                if classification:
+                    y = np.array(y, dtype = np.uint8)
+                else:
+                    y = np.array(y, dtype = np.float32)
+                global_vec = np.array(global_vec, dtype = np.float32)
+                masks = np.array(masks, dtype = np.uint8)
+                
+                val = np.random.uniform() < val_prop
+                
+                if not val:
+                    ofile.create_dataset('{0:06d}/x'.format(counter), data = X, compression = 'lzf')
+                    ofile.create_dataset('{0:06d}/x1'.format(counter), data = X1, compression = 'lzf')
+                    ofile.create_dataset('{0:06d}/edge_index'.format(counter), data = edge_index, compression = 'lzf')
+                    ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
+                    ofile.create_dataset('{0:06d}/global_vec'.format(counter), data = global_vec, compression = 'lzf')
+                    ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
+                    ofile.flush()
+                
+                    counter += 1
+                else:
+                    ofile_val.create_dataset('{0:06d}/x'.format(val_counter), data = X, compression = 'lzf')
+                    ofile_val.create_dataset('{0:06d}/x1'.format(val_counter), data = X1, compression = 'lzf')
+                    ofile_val.create_dataset('{0:06d}/edge_index'.format(val_counter), data = edge_index, compression = 'lzf')
+                    ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
+                    ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
+                    ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
+                    ofile_val.flush()
+                
+                    val_counter += 1
+                    
+                if classification:
+                    cond = all([len(data[u]['x']) > 0 for u in classes])
+                else:
+                    cond = (len(data['x']) >= chunk_size)
+
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
             
         
+    """
     mean_bl = np.mean(bls)
     std_bl = np.std(bls)
     m_x1 = np.mean(np.array(x1_means), axis = 0)
@@ -316,7 +297,7 @@ def main():
     plt.hist(n_muts, bins = 35)
     plt.savefig('nmut_hist.png', dpi = 100)
     plt.close()
-    
+    """
     
         
         
