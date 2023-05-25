@@ -497,6 +497,116 @@ class TreeSeqGenerator(object):
         self.lengths = []
 
         return
+    
+    def get_seq(self, model, key, sample_mode = "sequential"):
+        X_ = np.array(self.ifile[model][key]["x"])
+        X1_ = np.array(self.ifile[model][key]["info"])
+
+        if X_.shape[0] == 0:
+            return None, None, None, None, None, None
+        
+        if sample_mode == "equi":
+            tree_bins = [0.0] + list(np.cumsum(X1_[:, -2]))
+            ii = np.random.uniform(0.0, max(tree_bins), self.s_length)
+
+            ii = sorted(list(np.digitize(ii, tree_bins) - 1))
+            
+            padding = False
+            pad_size = (0, 0)
+        elif sample_mode == "sequential":
+            if X_.shape[0] == self.s_length:
+                ii = range(X_.shape[0])
+                padding = False
+                pad_size = (0, 0)
+            elif X_.shape[0] > self.s_length:
+                ii = np.random.choice(range(X_.shape[0] - self.s_length))
+                ii = range(ii, ii + self.s_length)
+                
+                padding = False
+                pad_size = (0, 0)
+            else:
+                to_pad = self.s_length - X_.shape[0]
+                if to_pad % 2 == 0:
+                    pad_size = (to_pad // 2, to_pad // 2)
+                else:
+                    pad_size = (to_pad // 2, to_pad // 2 + 1)
+                    
+                ii = range(X_.shape[0])
+                padding = True
+
+        edges = np.array(self.ifile[model][key]["edge_index"], dtype=np.int32)
+        global_vec = np.array(
+            self.ifile[model][key]["global_vec"], dtype=np.float32
+        )
+
+        # n_nodes, n_features
+        s = (X_.shape[1], X_.shape[2])
+
+        # record sequence length
+        self.lengths.append(X_.shape[0])
+
+        indices = []
+        mask = []
+
+        X = []
+
+        for j in range(pad_size[0]):
+            x = np.zeros(s)
+
+            X.append(x)
+            indices.append(None)
+            mask.append(0.0)
+
+        for ii_ in ii:
+            x = X_[ii_]
+
+            ik = list(np.where(x[:, 0] > 0))
+            x[ik, 0] = np.log(x[ik, 0])
+
+            X.append(x)
+            mask.append(1.0)
+            indices.append(edges[ii_])
+
+        X1 = np.pad(
+                X1_[ii],
+                ((pad_size[0], pad_size[1]), (0, 0)),
+                constant_values=0.0,
+            )
+        
+        for j in range(pad_size[1]):
+            x = np.zeros(s)
+
+            X.append(x)
+            indices.append(None)
+            mask.append(0.0)
+
+        X = np.array(X)
+        
+        s = [u for u in indices if u is not None][-1].shape
+
+        for j in range(len(indices)):
+            if indices[j] is None:
+                indices[j] = np.zeros(s, dtype=np.int32)
+
+        mask = np.array(mask, dtype=np.uint8)
+        
+        s = [u for u in indices if u is not None][-1].shape
+
+        for j in range(len(indices)):
+            if indices[j] is None:
+                indices[j] = np.zeros(s, dtype=np.int32)
+        
+        edge_index = np.array(indices)
+    
+        if self.categorical:
+            y = model
+        else:
+            try:
+                y = np.array(self.ifile[model][key]["y"], dtype=np.float32)
+            except:
+                return None, None, None, None, None, None
+    
+        return X, X1, edge_index, mask, global_vec, y
 
     # for internal use
     def get_single_model_batch(self, n_samples=1, sample_mode="scattered"):
