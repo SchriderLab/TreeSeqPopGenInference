@@ -175,23 +175,24 @@ def main():
             skeys = hfile[key].keys()
             # each is a tree seq
             
-            x, x1, edge_index, mask, global_vec, y = generator.get_seq
-            
-            if classification:
-                c = y
+            for skey in skeys:
+                x, x1, edge_index, mask, global_vec, y = generator.get_seq(key, skey, args.sample_mode)
                 
-                data[c]['x'].append(x)
-                data[c]['x1'].append(x1)
-                data[c]['edge_index'].append(edge_index)
-                data[c]['mask'].append(mask)
-                data[c]['global_vec'].append(global_vec)
-            else:
-                data['x'].append(x)
-                data['x1'].append(x1)
-                data['edge_index'].append(edge_index)
-                data['mask'].append(mask)
-                data['global_vec'].append(global_vec)
-                data['y'].append(y)
+                if classification:
+                    c = y
+                    
+                    data[c]['x'].append(x)
+                    data[c]['x1'].append(x1)
+                    data[c]['edge_index'].append(edge_index)
+                    data[c]['mask'].append(mask)
+                    data[c]['global_vec'].append(global_vec)
+                else:
+                    data['x'].append(x)
+                    data['x1'].append(x1)
+                    data['edge_index'].append(edge_index)
+                    data['mask'].append(mask)
+                    data['global_vec'].append(global_vec)
+                    data['y'].append(y)
             
         
                 
