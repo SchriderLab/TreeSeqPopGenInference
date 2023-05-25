@@ -30,11 +30,13 @@ import string
 # L = 10000
 # mu = 5e-9
 # r = 2e-8
+# N = 233863
 
 # demographic regression
 # L = 1500000
 # u = 1.2e-9
 # r = 1e-8
+# N = 1000
 
 import re
 
@@ -129,8 +131,9 @@ def main():
         ofile.close()
         """
 
-        samples = sorted(glob.glob(os.path.join(odir, '*.sample')))
+        
         haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
+        samples = [u.replace('.haps', '.sample') for u in haps if os.path.exists(u.replace('.haps', '.sample'))]
         
         # we need to rewrite the haps files (for haploid organisms)
         for sample in samples:
@@ -140,7 +143,6 @@ def main():
             for k in range(int(args.n_samples)):
                 f.write('UNR{} NA 0\n'.format(k + 1))
         
-
         for ix in range(len(samples)):
             ofile = haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', '')
             cmd_ = relate_cmd.format(mu, int(args.N), haps[ix], 
@@ -159,7 +161,7 @@ def main():
             print(cmd_)
             os.system(cmd_)
                    
-            os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
+            os.system('rm -rf {}'.format(os.path.join(odir, ofile)))
         
         os.system('gzip {0}'.format(m_ofile))
         
