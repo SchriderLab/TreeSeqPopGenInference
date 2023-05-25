@@ -171,7 +171,7 @@ def main():
         hfile = h5py.File(ifile, 'r')
         keys = list(hfile.keys())
         
-        for key in range(len(keys)):
+        for key in keys:
             skeys = hfile[key].keys()
             # each is a tree seq
             
