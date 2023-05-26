@@ -396,7 +396,7 @@ class TreeSeqGeneratorV2(object):
             ii = np.where(x[:, :, :, -1] > 0)
             x[ii[0], ii[1], ii[2], -1] = np.log(x[ii[0], ii[1], ii[2], -1])
 
-            y_ = np.array(self.ifile[key]["y"]).flatten()
+            y_ = np.array(self.ifile[key]["y"])
             x1 = (np.array(self.ifile[key]["x1"]) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]["edge_index"])
 
