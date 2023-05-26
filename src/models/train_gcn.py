@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
+import time
 
 class LabelSmoothing(nn.Module):
     """NLL loss with label smoothing.
@@ -91,6 +91,8 @@ def parse_args():
     
     parser.add_argument("--model", default = "gru")
     parser.add_argument("--chunk_size", default = "3")
+    
+    parser.add_argument("--n_val_steps", default = "128")
 
     args = parser.parse_args()
 
@@ -185,7 +187,7 @@ def main():
     for epoch in range(int(args.n_epochs)):
         model.train()
         
-        n_steps = int(args.n_steps)
+        n_steps = min([int(args.n_steps), len(generator)])
         for j in range(int(args.n_steps)):
             batch, x1, x2, y = generator[j]
             
@@ -249,7 +251,7 @@ def main():
         Y = []
         Y_pred = []
         with torch.no_grad():
-            for j in range(len(validation_generator)):
+            for j in range(min([int(args.n_val_steps), len(validation_generator)])):
                 batch, x1, x2, y = validation_generator[j]
                 
                 if batch is None:
