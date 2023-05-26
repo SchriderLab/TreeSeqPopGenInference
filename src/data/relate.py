@@ -161,7 +161,7 @@ def main():
             print(cmd_)
             os.system(cmd_)
                    
-            os.system('rm -rf {}'.format(os.path.join(odir, ofile)))
+            os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
         
         os.system('gzip {0}'.format(m_ofile))
         
