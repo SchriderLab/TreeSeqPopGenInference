@@ -382,7 +382,7 @@ class TreeSeqGeneratorV2(object):
         batch_ = []
 
         for ix in range(self.n_per):
-            if self.ix > len(self.keys[self.ix]) - 1:
+            if self.ix > len(self.keys) - 1:
                 return None, None, None, None
             
             key = self.keys[self.ix]
