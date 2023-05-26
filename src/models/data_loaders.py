@@ -427,6 +427,8 @@ class TreeSeqGeneratorV2(object):
             X2.extend(list(global_vec))
             indices.extend(edge_index_)
 
+        print(y_.shape)
+
         if self.regression:
             if self.log_y:
                 y = np.log(np.array(y).astype(np.float32))
