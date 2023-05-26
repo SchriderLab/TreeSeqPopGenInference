@@ -203,6 +203,7 @@ def main():
             optimizer.zero_grad()
 
             y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
+            print(y_pred.shape, y.shape)
 
             loss = criterion(torch.squeeze(y_pred), y)
 
