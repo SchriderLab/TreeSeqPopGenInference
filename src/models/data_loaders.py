@@ -332,10 +332,12 @@ class TreeSeqGeneratorV2(object):
         n_samples_per=4,
         chunk_size=1,
         models="none",
+        log_y = True
     ):  # must be in order, see combine_h5s_v2
         self.ifile = ifile
 
         self.models = models.split(",")
+        self.log_y = log_y
 
         means = np.load(means)
 
@@ -426,8 +428,12 @@ class TreeSeqGeneratorV2(object):
             indices.extend(edge_index_)
 
         if self.regression:
+            if self.log_y:
+                y = np.log(np.array(y).astype(np.float32))
+            else:
+                y = np.array(y, dtype = np.float32)
             y = torch.FloatTensor(
-                (np.array(y).astype(np.float32) - self.y_mean) / self.y_std
+                (y - self.y_mean) / self.y_std
             )
         else:
             y = torch.LongTensor(np.array(y))
