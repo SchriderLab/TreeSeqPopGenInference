@@ -58,9 +58,8 @@ def main():
             mask = np.array(ifile[key]['mask'])
 
             if args.regression:
-                ys.append(np.log(np.array(ifile[key]['y'])))
-                print(ys[-1].shape)
-                
+                ys.extend(np.log(np.array(ifile[key]['y'])))
+        
             ls.append(x.shape[0])
             
             x_ = x[:,:,:,0]
