@@ -128,8 +128,10 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size), models = args.classes)
-    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), chunk_size = int(args.chunk_size), models = args.classes)
+    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
+                                   chunk_size = int(args.chunk_size), models = args.classes)
+    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
+                                              chunk_size = int(args.chunk_size), models = args.classes)
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
@@ -302,8 +304,8 @@ def main():
             if classification:
                 cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
             else:
-                Y = np.array(Y) * generator.y_std + generator.y_mean
-                Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
+                Y = np.exp(np.array(Y)) * generator.y_std + generator.y_mean
+                Y_pred = np.exp(np.array(Y_pred)) * generator.y_std + generator.y_mean
                             
                 mses = []
                 rs = []
