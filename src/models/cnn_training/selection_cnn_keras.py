@@ -9,13 +9,12 @@ from keras import Model, Sequential
 from keras.layers import (
     AveragePooling1D,
     AveragePooling2D,
-    Concatenate,
     Conv1D,
     Conv2D,
     Dense,
     Dropout,
     Flatten,
-    Input,
+    Concatenate,
     MaxPooling1D,
     MaxPooling2D,
 )
@@ -28,7 +27,7 @@ from tqdm import tqdm
 class SelGenerator(tf.keras.utils.Sequence):
     "Generates data for Keras"
 
-    def __init__(self, h5file, np_idxs, network="2dcnn", batch_size=32, shuffle=True):
+    def __init__(self, h5file, np_idxs, network="1dcnn", batch_size=32, shuffle=True):
         "Initialization"
         self.h5file = h5file
         self.batch_size = batch_size
@@ -61,7 +60,7 @@ class SelGenerator(tf.keras.utils.Sequence):
         else:
             x_arr = np.concatenate(X)
 
-        return np.swapaxes(x_arr, 1, 2), np.concatenate(y)
+        return x_arr, np.concatenate(y)
 
     def on_epoch_end(self):
         "Updates indexes after each epoch"
@@ -73,29 +72,98 @@ class SelGenerator(tf.keras.utils.Sequence):
 def get_CNN(input_shape, num_classes):
     if len(input_shape) == 3:
         convf = Conv2D
-        poolf = AveragePooling2D
+        mpoolf = MaxPooling2D
+        apoolf = MaxPooling2D
     else:
         convf = Conv1D
-        poolf = AveragePooling1D
+        mpoolf = MaxPooling1D
+        apoolf = MaxPooling1D
+
+    ksize = 2
+    l2_lambda = 0.0001
+
+    b1 = Sequential()
+    b1.add(
+        convf(
+            128 * 2,
+            kernel_size=ksize,
+            activation="relu",
+            input_shape=input_shape,
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
+    b1.add(
+        convf(
+            128 * 2,
+            kernel_size=ksize,
+            activation="relu",
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
+    b1.add(mpoolf(pool_size=ksize))
+    b1.add(Dropout(0.2))
+
+    b1.add(
+        convf(
+            128 * 2,
+            kernel_size=ksize,
+            activation="relu",
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
+    b1.add(mpoolf(pool_size=ksize))
+    b1.add(Dropout(0.2))
+
+    b1.add(
+        convf(
+            128 * 2,
+            kernel_size=ksize,
+            activation="relu",
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
+    b1.add(apoolf(pool_size=ksize))
+    b1.add(Dropout(0.2))
+
+    b1.add(
+        convf(
+            128 * 2,
+            kernel_size=ksize,
+            activation="relu",
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
+    b1.add(apoolf(pool_size=ksize))
+    b1.add(Dropout(0.2))
+
+    b1.add(Flatten())
+    b2 = Sequential()
+    b2.add(
+        Dense(
+            64,
+            input_shape=(5000,),
+            activation="relu",
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
+    b2.add(Dropout(0.1))
 
     model = Sequential()
-    model.add(convf(256, kernel_size=2, activation="relu", input_shape=(input_shape)))
-    model.add(convf(128, kernel_size=2, activation="relu"))
-    model.add(poolf(pool_size=2))
+    model.add(Concatenate([b1, b2]))
+    model.add(
+        Dense(
+            256,
+            activation="relu",
+            kernel_initializer="normal",
+            kernel_regularizer=keras.regularizers.l2(l2_lambda),
+        )
+    )
     model.add(Dropout(0.25))
-    model.add(convf(128, kernel_size=2, activation="relu"))
-    model.add(poolf(pool_size=2))
-    model.add(Dropout(0.25))
-    model.add(Flatten())
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.5))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.5))
     model.add(Dense(num_classes, activation="softmax"))
     model.compile(
         loss=keras.losses.categorical_crossentropy,
         optimizer=keras.optimizers.Adam(),
-        metrics=["accuracy"],
+        metrics=["val_accuracy"],
     )
 
     print(model.summary())
@@ -105,11 +173,12 @@ def get_CNN(input_shape, num_classes):
 
 def get_ua():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--batch_size", default=32, type=int)
+    ap.add_argument("--batch-size", default=32, type=int)
     ap.add_argument("--epochs", default=10, type=int)
-    ap.add_argument("--conv_blocks", default=4, type=int)
-    ap.add_argument("--in_train", default="/pine/scr/d/d/ddray/dros_n512.hdf5")
-    ap.add_argument("--in_val", default="/pine/scr/d/d/ddray/dros_n512_val.hdf5")
+    ap.add_argument("--in-train")
+    ap.add_argument("--in-val")
+    ap.add_argument("--out-prefix")
+    ap.add_argument("--net", choices=["1d", "2d"])
 
     return ap.parse_args()
 
@@ -123,18 +192,18 @@ def main():
     train_len = len(train_file[f"{classes[0]}"].keys())
     val_len = len(val_file[f"{classes[0]}"].keys())
 
-    conv = "2dcnn"
-    if "1d" in conv:
-        model = get_CNN((512, 34), 3)
-    elif "2d" in conv:
-        model = get_CNN((512, 34, 1), 3)
+    conv = ua.net
 
-    train_dl = SelGenerator(
-        train_file, range(train_len), network=conv, batch_size=ua.batch_size
-    )
-    val_dl = SelGenerator(
-        val_file, range(val_len), network=conv, batch_size=ua.batch_size
-    )
+    classes = list(train_file.keys())
+    if "1d" in conv:
+        data_shape = train_file[f"{classes[0]}/0/x"].shape[1:][::-1]
+        # flatten channels, e.g. (256, 32, 2) -> (256, 64)
+        data_shape = (data_shape[0], data_shape[1] * data_shape[2])
+    else:
+        data_shape = train_file[f"{classes[0]}/0/x"].shape[1:][::-1]
+
+    train_dl = SelGenerator(train_file, range(train_len), batch_size=ua.batch_size)
+    val_dl = SelGenerator(val_file, range(val_len), batch_size=ua.batch_size)
 
     i = train_dl[0]
 
@@ -143,15 +212,20 @@ def main():
         monitor="val_loss", min_delta=0, patience=3, verbose=0, mode="auto"
     )
     checkpoint = keras.callbacks.ModelCheckpoint(
-        f"intro_{conv}.hdf5",
+        f"{ua.out_prefix}_sel.hdf5",
         monitor="val_accuracy",
         verbose=1,
         save_best_only=True,
     )
     callbacks = [earlystop, checkpoint]
 
+    model = get_CNN(data_shape, len(classes))
     history = model.fit(
-        x=train_dl, validation_data=val_dl, epochs=ua.epochs, callbacks=callbacks
+        x=train_dl,
+        validation_data=val_dl,
+        epochs=ua.epochs,
+        callbacks=callbacks,
+        verbose=2,
     )
 
     trues = []
@@ -182,11 +256,11 @@ def main():
         confusion_matrix(
             true_labs,
             pred_labs,
-            labels=["none", "ba", "ab"],
+            labels=classes,
         ),
-        ["No SelGression", "sech-to-sim", "sim-to-sech"],
+        classes,
         normalize=True,
-        title=f"intro_{conv}_confmat",
+        title=f"sel_{conv}_confmat",
     )
     print(classification_report(true_labs, pred_labs))
 

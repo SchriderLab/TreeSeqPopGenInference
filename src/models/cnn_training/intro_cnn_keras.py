@@ -1,4 +1,5 @@
 import argparse
+import random
 
 import h5py
 import numpy as np
@@ -29,13 +30,21 @@ class IntroGenerator(tf.keras.utils.Sequence):
     "Generates data for Keras"
 
     def __init__(
-        self, data_shape, h5file, np_idxs, network="1d", batch_size=32, shuffle=True
+        self,
+        data_shape,
+        h5file,
+        np_idxs,
+        encoding,
+        network="1d",
+        batch_size=32,
+        shuffle=True,
     ):
         "Initialization"
         self.data_shape = data_shape
         self.h5file = h5file
         self.batch_size = batch_size
         self.np_idxs = np_idxs
+        self.encoding = encoding
         self.shuffle = shuffle
         self.classes = h5file.keys()
         self.network = network
@@ -69,6 +78,13 @@ class IntroGenerator(tf.keras.utils.Sequence):
             x_arr = np.swapaxes(np.concatenate(X), 1, 2).reshape(
                 (len(X) * 4, *self.data_shape)
             )
+
+        if self.encoding == "01":
+            pass
+        elif self.encoding == "0255":
+            x_arr = np.where(x_arr > 0, 255, 0)
+        elif self.encoding == "neg11":
+            x_arr = np.where(x_arr > 0, 1, -1)
 
         return x_arr, np.concatenate(y)
 
@@ -116,11 +132,11 @@ def get_ua():
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch-size", default=32, type=int)
     ap.add_argument("--epochs", default=10, type=int)
-    ap.add_argument("--conv-blocks", default=4, type=int)
     ap.add_argument("--in-train")
     ap.add_argument("--in-val")
     ap.add_argument("--out-prefix")
     ap.add_argument("--net", choices=["1d", "2d"])
+    ap.add_argument("--encoding", choices=["01", "0255", "neg11"], default="01")
 
     return ap.parse_args()
 
@@ -143,8 +159,10 @@ def main():
     print("Data shape:", data_shape)
 
     # They're in batches of 4 but that only matters in the stack
-    train_len = len(train_file[f"{classes[0]}"].keys())
-    val_len = len(val_file[f"{classes[0]}"].keys())
+    train_idxs = list(train_file[f"{classes[0]}"].keys())
+    val_idxs = random.sample(
+        list(val_file[f"{classes[0]}"].keys()), int(6144 / 4)
+    )  # Dylan needed to subset for comp time with GCN
 
     if "1d" in conv:
         model = get_CNN(data_shape, len(classes))
@@ -152,10 +170,10 @@ def main():
         model = get_CNN(data_shape, len(classes))
 
     train_dl = IntroGenerator(
-        data_shape, train_file, range(train_len), network=conv, batch_size=ua.batch_size
+        data_shape, train_file, train_idxs, network=conv, batch_size=ua.batch_size
     )
     val_dl = IntroGenerator(
-        data_shape, val_file, range(val_len), network=conv, batch_size=ua.batch_size
+        data_shape, val_file, val_idxs, network=conv, batch_size=ua.batch_size
     )
 
     i = train_dl[0]
@@ -174,7 +192,11 @@ def main():
     callbacks = [earlystop, checkpoint]
 
     history = model.fit(
-        x=train_dl, validation_data=val_dl, epochs=ua.epochs, callbacks=callbacks
+        x=train_dl,
+        validation_data=val_dl,
+        epochs=ua.epochs,
+        callbacks=callbacks,
+        verbose=2,
     )
 
     trues = []
