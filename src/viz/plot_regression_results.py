@@ -144,7 +144,8 @@ def main():
         
     for ix in range(Y.shape[1]):
         axes[ix].scatter(Y[:,ix], Y_pred[:,ix], alpha = 0.7)
-        axes[ix].plot((np.min(Y[:,ix]), np.min(Y[:,ix])), (np.max(Y[:,ix]), np.max(Y[:,ix])))
+        print([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
+        axes[ix].plot([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
         
     plt.tight_layout()
     plt.savefig('demo_results.png', dpi = 100)
