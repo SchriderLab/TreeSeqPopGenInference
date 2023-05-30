@@ -139,7 +139,7 @@ def main():
 
     print(np.mean((Y - Y_pred)**2, axis = 0))
 
-    fig, axes = plt.subplots(nrows = 5)
+    fig, axes = plt.subplots(ncols = 5)
     
     for ix in range(Y.shape[1]):
         axes[ix].scatter(Y[:,ix], Y_pred[:,ix], alpha = 0.7)
