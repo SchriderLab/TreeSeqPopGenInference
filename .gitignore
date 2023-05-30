@@ -15,3 +15,6 @@ msmove
 *.hdf5
 *out
 *err
+*.png
+*.csv
+*.pdf

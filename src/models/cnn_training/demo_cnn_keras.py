@@ -21,58 +21,9 @@ from keras.layers import (
 )
 from scipy.stats import spearmanr
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 from tqdm import tqdm
-
-
-class DemoDataGenerator(tf.keras.utils.Sequence):
-    "Generates data for Keras"
-
-    def __init__(self, h5file, model, norm_params, log, batch_size=32, shuffle=True):
-        "Initialization"
-        self.h5file = h5file
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.idxs = list(self.h5file.keys())
-        self.log = log
-        self.model = model
-        self.y_mean = norm_params[0]
-        self.y_std = norm_params[1]
-
-        self.on_epoch_end()
-
-    def __len__(self):
-        "Denotes the number of batches per epoch"
-        return int(np.floor(len(self.idxs) / self.batch_size))
-
-    def __getitem__(self, index):
-        indices = self.idxs[index * self.batch_size : (index + 1) * self.batch_size]
-        X = []
-        y = []
-        for i in indices:
-            X.append(np.array(self.h5file[f"{i}/x"]))
-            y.append(np.array(self.h5file[f"{i}/y"]))
-
-        X_arr = np.concatenate(X)
-        y_arr = np.concatenate(y)
-
-        if "2d" in self.model:
-            X_arr = np.expand_dims(X_arr, 3)
-
-        if self.log == "log":
-            y_arr = np.log(y_arr)
-
-        # y_arr = norm(y_arr, self.y_mean, self.y_std)
-
-        X_arr = np.where(X_arr == 0.0, 0.0, 255.0)
-
-        return X_arr, y_arr
-
-    def on_epoch_end(self):
-        "Updates indexes after each epoch"
-        self.indexes = np.arange(len(self.idxs))
-        if self.shuffle == True:
-            np.random.shuffle(self.indexes)
 
 
 def get_DemoNet(
@@ -83,14 +34,14 @@ def get_DemoNet(
     useDropout=True,
     numParams=5,
 ):
-    if convDim == "2dcnn":
+    if convDim == "2d":
         convFunc = Conv2D
         poolFunc = MaxPooling2D
     else:
         convFunc = Conv1D
         poolFunc = AveragePooling1D
 
-    b1 = Input(inputShape)
+    b1 = Input(inputShape[0])
     conv11 = convFunc(128, kernel_size=convSize, activation="relu")(b1)
     pool11 = poolFunc(pool_size=poolSize)(conv11)
     if useDropout:
@@ -109,26 +60,17 @@ def get_DemoNet(
         pool14 = Dropout(0.25)(pool14)
     flat11 = Flatten()(pool14)
 
-    merged = concatenate([flat11])
+    b2 = Input(shape=(inputShape[1],))
+    dense21 = Dense(32, activation="relu")(b2)
+    if useDropout:
+        dense21 = Dropout(0.25)(dense21)
+
+    merged = concatenate([flat11, dense21])
     denseMerged = Dense(256, activation="relu", kernel_initializer="normal")(merged)
     if useDropout:
         denseMerged = Dropout(0.25)(denseMerged)
     denseOutput = Dense(numParams, activation="linear")(denseMerged)
-    model = Model(inputs=[b1], outputs=denseOutput)
-    print(model.summary())
-
-    model.compile(loss="mean_squared_error", optimizer="adam")
-
-    return model
-
-
-def get_Resnet(imgRows, imgCols):
-    base = tf.keras.applications.ResNet50(
-        weights=None, input_shape=(imgRows, imgCols, 1), include_top=False
-    )
-    x = Flatten()(base.output)
-    x = Dense(5, activation="linear")(x)
-    model = Model(inputs=base.inputs, outputs=x)
+    model = Model(inputs=[b1, b2], outputs=denseOutput)
     print(model.summary())
 
     model.compile(loss="mean_squared_error", optimizer="adam")
@@ -142,7 +84,7 @@ def write_preds(true, preds, names, run_name):
         resdict[f"true_{n}"] = true[:, i]
         resdict[f"pred_{n}"] = preds[:, i]
 
-    pd.DataFrame(resdict).to_csv(f"{run_name}/{run_name}_preds.csv", index=False)
+    pd.DataFrame(resdict).to_csv(f"demo/{run_name}/{run_name}_preds.csv", index=False)
 
     plot_preds(resdict, names, run_name)
 
@@ -156,17 +98,22 @@ def plot_preds(preds, names, run_name):
             m * preds[f"pred_{name}"] + b,
             color="black",
             label=f"""Spearmans rho: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[0]:.2f}, 
-                p-value: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[1]:.6f},
-                MSE: {mean_squared_error(preds[f"true_{name}"], preds[f"pred_{name}"]):.2f}""",
+            RMSE: {mean_squared_error(preds[f"true_{name}"], preds[f"pred_{name}"], squared=False):.2f}""",
         )
+        # if "t" in name:
+        #    plt.ylim(-8, 2)
+        #    plt.xlim(-8, 2)
+        # elif "N" in name:
+        #    plt.ylim(4, 10)
+        #    plt.xlim(4, 10)
         plt.legend()
         plt.plot()
         plt.title(name)
-        plt.ylabel("True")
-        plt.xlabel("Pred")
+        plt.xlabel(f"True {name}")
+        plt.ylabel(f"Pred {name}")
         plt.tight_layout()
 
-        plt.savefig(f"{run_name}/{run_name}_{name}_preds.png")
+        plt.savefig(f"demo/{run_name}/{run_name}_{name}_preds.png")
         plt.clf()
 
 
@@ -193,25 +140,39 @@ def r_zscore(data, y_mean, y_std):
     return y_mean + (data * y_std)
 
 
+def getDistancesBetweenSnps(positionVectors):
+    distVectors = []
+    for i in range(len(positionVectors)):
+        currVec = []
+        prevPos = 0.0
+        for j in range(len(positionVectors[i])):
+            currVec.append(positionVectors[i][j] - prevPos)
+            prevPos = positionVectors[i][j]
+        currVec.append(1.0 - prevPos)
+        distVectors.append(currVec)
+    return distVectors
+
+
 def get_data(h5file):
     print("Getting data")
-    X, y = [], []
+    X, p, y = [], [], []
     for i in tqdm(h5file.keys()):
         X.append(h5file[i]["x"])
+        p.append(h5file[i]["p"])
         y.append(h5file[i]["y"])
 
-    return np.concatenate(X), np.concatenate(y)
+    return np.concatenate(X), np.concatenate(p), np.concatenate(y)
 
 
 def get_ua():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--batch_size", default=32, type=int)
+    ap.add_argument("--batch-size", default=32, type=int)
     ap.add_argument("--epochs", default=10, type=int)
-    ap.add_argument("--conv_blocks", default=4, type=int)
-    ap.add_argument("--model", default="2dcnn", choices=["2dcnn", "1dcnn"])
-    ap.add_argument("--nolog", action="store_true")
-    ap.add_argument("--in_train", default="/pine/scr/d/d/ddray/demo_n512_1c.hdf5")
-    ap.add_argument("--in_val", default="/pine/scr/d/d/ddray/demo_n512_1c_val.hdf5")
+    ap.add_argument("--conv-blocks", default=4, type=int)
+    ap.add_argument("--net", default="2d", choices=["2d", "1d"])
+    ap.add_argument("--encoding", choices=["01", "0255", "neg11"], default="01")
+    ap.add_argument("--in-train")
+    ap.add_argument("--in-val")
 
     return ap.parse_args()
 
@@ -221,20 +182,16 @@ def main():
     train_file = h5py.File(ua.in_train, "r")
     val_file = h5py.File(ua.in_val, "r")
 
-    model = ua.model
-    if ua.nolog:
-        log = "nolog"
-    else:
-        log = "log"
+    model = ua.net
 
     run_name = ua.in_train.split("/")[-1].split(".")[0]
-    run_name = f"{run_name}_{model}_{log}_{ua.conv_blocks}blocks"
-    os.makedirs(run_name, exist_ok=True)
+    run_name = f"demo_{ua.encoding}_{run_name}_{model}_{ua.conv_blocks}blocks"
+    os.makedirs(f"demo/{run_name}", exist_ok=True)
 
     print(f"Running {run_name}")
 
-    train_X, train_y = get_data(train_file)
-    val_X, val_y = get_data(val_file)
+    train_X, train_p, train_y = get_data(train_file)
+    val_X, val_p, val_y = get_data(val_file)
 
     train_y = np.log(train_y)
     val_y = np.log(val_y)
@@ -248,10 +205,28 @@ def main():
     train_yz = zscore(train_y, t_mean, t_std)
     val_yz = zscore(val_y, t_mean, t_std)
 
-    if ua.model == "2dcnn":
-        data_shape = (*train_X.shape[1:], 1)
-    elif ua.model == "1dcnn":
-        data_shape = train_X.shape[1:]
+    train_p = np.array(getDistancesBetweenSnps(train_p))
+    val_p = np.array(getDistancesBetweenSnps(val_p))
+
+    if ua.encoding == "01":
+        p_scaler = MinMaxScaler((0.0, 1.0)).fit(train_p)
+        pass
+    elif ua.encoding == "0255":
+        p_scaler = MinMaxScaler((0.0, 255.0)).fit(train_p)
+        train_X = np.where(train_X > 0, 255, 0)
+        val_X = np.where(val_X > 0, 255, 0)
+    elif ua.encoding == "neg11":
+        p_scaler = MinMaxScaler((-1.0, 1.0)).fit(train_p)
+        train_X = np.where(train_X > 0, 1, -1)
+        val_X = np.where(val_X > 0, 1, -1)
+
+    train_p = p_scaler.transform(train_p)
+    val_p = p_scaler.transform(val_p)
+
+    if ua.net == "2d":
+        data_shape = ((*train_X.shape[1:], 1), train_p.shape[1])
+    elif ua.net == "1d":
+        data_shape = (train_X.shape[1:], train_p.shape[1])
 
     cnn = get_DemoNet(model, data_shape, 3)
 
@@ -261,7 +236,7 @@ def main():
         monitor="val_loss", min_delta=0, patience=3, verbose=0, mode="auto"
     )
     checkpoint = keras.callbacks.ModelCheckpoint(
-        f"{run_name}.hdf5",
+        f"demo/{run_name}/{run_name}_model.hdf5",
         monitor="val_loss",
         verbose=1,
         save_best_only=True,
@@ -269,24 +244,27 @@ def main():
     )
     callbacks = [earlystop, checkpoint]
 
-    # train_X, val_X = [np.swapaxes(i, 1, 2) for i in [train_X, val_X]]
-
     cnn.fit(
-        x=train_X,
+        x=[train_X, train_p],
         y=train_yz,
-        validation_data=[val_X, val_yz],
+        validation_data=[[val_X, val_p], val_yz],
         batch_size=ua.batch_size,
         validation_batch_size=ua.batch_size,
         epochs=ua.epochs,
         callbacks=callbacks,
+        verbose=2,  # type: ignore
     )
 
     names = ["N0", "t1", "N1", "t2", "N2"]
 
-    preds = cnn.predict(val_X)
+    preds = cnn.predict((val_X, val_p))
 
-    raw_preds = r_zscore(preds, t_mean, t_std) + np.log(1000)
-    raw_trues = r_zscore(val_yz, t_mean, t_std) + np.log(1000)
+    # Scaled for comparison by Ne
+    raw_preds = r_zscore(preds, t_mean, t_std)
+    raw_trues = r_zscore(val_yz, t_mean, t_std)
+
+    raw_preds[:, [0, 2, 4]] = raw_preds[:, [0, 2, 4]] + np.log(10000)
+    raw_trues[:, [0, 2, 4]] = raw_trues[:, [0, 2, 4]] + np.log(10000)
 
     write_preds(raw_trues, raw_preds, names, run_name)
 
