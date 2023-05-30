@@ -48,7 +48,7 @@ def parse_args():
     
     # data parameter
     parser.add_argument("--in_dim", default = "4")
-    parser.add_argument("--n_classes", default = "3")
+    parser.add_argument("--n_classes", default = "5")
     
     # hyper-parameters
     parser.add_argument("--use_conv", action = "store_true")
@@ -61,6 +61,7 @@ def parse_args():
     parser.add_argument("--chunk_size", default = "4")
 
     parser.add_argument("--means", default = "None")
+    parser.add_argument("--model", default = "gru")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
