@@ -58,6 +58,8 @@ def parse_args():
     parser.add_argument("--gcn_dim", default = "26")
     parser.add_argument("--conv_dim", default = "4")
 
+    parser.add_argument("--means", default = "None")
+
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
 
