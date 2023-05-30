@@ -139,12 +139,14 @@ def main():
 
     print(np.mean((Y - Y_pred)**2, axis = 0))
 
-    fig, axes = plt.subplots(ncols = 5)
-    
+    plot, axes = plt.subplots(1, 5)
+    plot.set_size_inches(25, 5)
+        
     for ix in range(Y.shape[1]):
         axes[ix].scatter(Y[:,ix], Y_pred[:,ix], alpha = 0.7)
         axes[ix].plot((np.min(Y[:,ix]), np.min(Y[:,ix])), (np.max(Y[:,ix]), np.max(Y[:,ix])))
         
+    plt.tight_layout()
     plt.savefig('demo_results.png', dpi = 100)
     plt.close()
 
