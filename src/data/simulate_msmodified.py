@@ -10,6 +10,7 @@ import copy
 import subprocess
 
 MSMOD_PATH = 'msdir/ms'
+MSMOD_PATH_r2 = 'msdir_rand2/ms'
 
 # this function creates an array for writing to text that has the ms parameters
 # from a CSV file produced via bootstrapped DADI runs
@@ -59,7 +60,7 @@ def parse_args():
     parser.add_argument("--direction", default = "ab", help = "directionality of migration. only applicable for the drosophila case; --model dros")
     parser.add_argument("--slurm", action = "store_true")
     
-    parser.add_argument("--window_size", default = "50000", help = "size in base pairs of the region to simulate")
+    parser.add_argument("--window_size", default = "10000", help = "size in base pairs of the region to simulate")
     
     parser.add_argument("--mt_range", default = "None")
     parser.add_argument("--t_range", default = "None")
@@ -160,14 +161,14 @@ def main():
                         elif args.direction == 'ba':
                             cmd = "cd %s; %s %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -es tbs 1 tbs -ej tbs 3 2 -seeds tbs tbs tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
                         elif args.direction == 'none':
-                            cmd = "cd %s; %s %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -seed tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
+                            cmd = "cd %s; %s %d %d -t tbs -r tbs %d -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -seed tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH_r2), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
                     else:
                         if args.direction == 'ab':
                             cmd = "cd %s; %s %d %d -t tbs -r tbs %d -T -L -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -es tbs 2 tbs -ej tbs 3 1 -seeds tbs tbs tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
                         elif args.direction == 'ba':
                             cmd = "cd %s; %s %d %d -t tbs -r tbs %d -T -L -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -es tbs 1 tbs -ej tbs 3 2 -seeds tbs tbs tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
                         elif args.direction == 'none':
-                            cmd = "cd %s; %s %d %d -t tbs -r tbs %d -T -L -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -seed tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
+                            cmd = "cd %s; %s %d %d -t tbs -r tbs %d -T -L -I 2 %d %d -n 1 tbs -n 2 tbs -eg 0 1 tbs -eg 0 2 tbs -ma x tbs tbs x -ej tbs 2 1 -en tbs 1 1 -seed tbs < %s | tee %s" % (odir, os.path.join(os.getcwd(), MSMOD_PATH_r2), SIZE_A + SIZE_B, len(P), L, SIZE_A, SIZE_B, 'mig.tbs', '{}.mig.msOut'.format(args.direction))
                     
                     # example command:
                     # 34 1 -t 58.3288 -r 365.8836 10000 -T -L -I 2 20 14 -n 1 18.8855 -n 2 0.05542 -eg 0 1 6.5160 -eg 0 2 -7.5960 -ma x 0.0 0.0 x -ej 0.66698 2 1 -en 0.66698 1 1 -es 0.02080 2 0.343619 -ej 0.02080 3 1 -seeds 12674 8050 3617
