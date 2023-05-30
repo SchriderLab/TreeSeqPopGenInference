@@ -113,7 +113,7 @@ def main():
     
     classification = False
     
-    for ix in range(len(generator)):
+    for ix in range(100):
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
             
@@ -137,10 +137,11 @@ def main():
     Y = np.array(Y) * generator.y_std + generator.y_mean
     Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
 
-    fig, axes = plt.subplots(nrows = 2, ncols = 3)
+    fig, axes = plt.subplots(nrows = 5)
     
     for ix in range(Y.shape[1]):
-        axes[ix // 3, ix % 3].scatter(Y[:,ix], Y_pred[:,ix])
+        axes[ix].scatter(Y[:,ix], Y_pred[:,ix])
+        axes[ix].plot((np.min(Y[:,ix]), np.min(Y[:,ix])), (np.max(Y[:,ix]), np.max(Y[:,ix])))
         
     plt.savefig('demo_results.png', dpi = 100)
     plt.close()
