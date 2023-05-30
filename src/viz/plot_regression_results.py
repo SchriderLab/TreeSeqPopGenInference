@@ -143,9 +143,10 @@ def main():
     plot.set_size_inches(25, 5)
         
     for ix in range(Y.shape[1]):
+        axes[ix].plot([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
         axes[ix].scatter(Y[:,ix], Y_pred[:,ix], alpha = 0.7)
         print([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
-        axes[ix].plot([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
+        
         
     plt.tight_layout()
     plt.savefig('demo_results.png', dpi = 100)
