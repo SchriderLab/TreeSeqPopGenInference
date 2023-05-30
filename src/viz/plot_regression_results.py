@@ -58,6 +58,8 @@ def parse_args():
     parser.add_argument("--gcn_dim", default = "26")
     parser.add_argument("--conv_dim", default = "4")
 
+    parser.add_argument("--chunk_size", default = "4")
+
     parser.add_argument("--means", default = "None")
 
     parser.add_argument("--odir", default = "None")
@@ -86,7 +88,7 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
+    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = True, 
                                               chunk_size = int(args.chunk_size), models = args.classes)
     
     if args.model == 'gru':
