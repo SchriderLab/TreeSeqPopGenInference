@@ -134,8 +134,8 @@ def main():
             Y.extend(y)
             Y_pred.extend(y_pred)
             
-    Y = np.exp(np.array(Y) * generator.y_std + generator.y_mean)
-    Y_pred = np.exp(np.array(Y_pred) * generator.y_std + generator.y_mean)
+    Y = np.array(Y) * generator.y_std + generator.y_mean
+    Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
 
     fig, axes = plt.subplots(nrows = 2, ncols = 3)
     
