@@ -193,6 +193,8 @@ def main():
     
     s0, s1 = pop_sizes
     
+    ix = 0
+    
     for ii in range(len(ifiles)):
         tag = tags[ii]
         ifile = ifiles[ii]
@@ -211,9 +213,7 @@ def main():
         del y
         
         times = []
-        
-        ix = 0
-        
+                
         logging.info('writing...')
         while True:
             # we're at the beginning of a block
