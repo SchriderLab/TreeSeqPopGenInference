@@ -96,7 +96,7 @@ def main():
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
                                               chunk_size = int(args.chunk_size), models = args.classes)
     
-    classes = generator.classes
+    classes = generator.models
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
