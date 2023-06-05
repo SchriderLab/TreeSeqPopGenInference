@@ -160,7 +160,7 @@ def main():
     df = pd.DataFrame(result)
     df.to_csv(args.ofile, index = False)
     
-    
+    """
     Yh = np.zeros((len(Y), len(classes)))    
     Yh[range(len(Y)),Y] = 1.
     
@@ -172,3 +172,4 @@ def main():
     print('aupr: {}'.format(aupr))
 
     cm_analysis(Y, np.argmax(Y_pred, axis=1), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
+    """
