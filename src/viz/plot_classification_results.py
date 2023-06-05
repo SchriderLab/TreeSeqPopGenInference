@@ -58,6 +58,7 @@ def parse_args():
     parser.add_argument("--n_gcn_iter", default = "6")
     parser.add_argument("--gcn_dim", default = "26")
     parser.add_argument("--conv_dim", default = "4")
+    parser.add_argument("--classes", default = "ab,ba,none")
 
     parser.add_argument("--chunk_size", default = "4")
     
@@ -66,6 +67,7 @@ def parse_args():
     parser.add_argument("--model", default = "gru")
 
     parser.add_argument("--odir", default = "None")
+    parser.add_argument("--ofile", default = "result.csv")
     args = parser.parse_args()
 
     if args.verbose:
@@ -92,7 +94,7 @@ def main():
     L = int(args.L)
 
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
-                                              chunk_size = int(args.chunk_size))
+                                              chunk_size = int(args.chunk_size), models = args.classes)
     
     classes = generator.classes
     
@@ -142,13 +144,26 @@ def main():
             Y.extend(y)
             Y_pred.extend(softmax(y_pred, axis = -1))
     
-    # compute roc and aupr
+    Y = np.array(Y)
+    Y_pred = np.array(Y_pred)
+    
+    result = dict()
+    
+    for c in classes:
+        result[c] = []
+   
+    result['y'] = Y
+    
+    for ix, c in enumerate(classes):    
+        result[c] = Y_pred[:,ix]
+        
+    df = pd.DataFrame(result)
+    df.to_csv(args.ofile, index = False)
+    
     
     Yh = np.zeros((len(Y), len(classes)))    
     Yh[range(len(Y)),Y] = 1.
     
-    Y_pred = np.array(Y_pred)
-
     roc = roc_auc_score(Yh, Y_pred)
     aupr = average_precision_score(Yh, Y_pred)
 
