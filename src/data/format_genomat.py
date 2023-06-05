@@ -169,7 +169,8 @@ def main():
     
     if comm.rank == 0:
         ofile = h5py.File(args.ofile, 'w')
-        ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
+        if float(args.val_prop) > 0:
+            ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
 
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     chunk_size = int(args.chunk_size)
@@ -295,7 +296,8 @@ def main():
                 
     if comm.rank == 0:
         ofile.close()
-        ofile_val.close()
+        if float(args.val_prop) > 0:
+            ofile_val.close()
             
     # ${code_blocks}
 
