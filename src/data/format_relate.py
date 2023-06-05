@@ -217,7 +217,7 @@ def main():
         logging.info('writing...')
         while True:
             line = anc_file.readline()
-            while 'chromosome' in line:
+            while 'chromosome' in line.decode('utf-8'):
                 continue
             
             # we're at the beginning of a block
