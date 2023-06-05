@@ -171,7 +171,7 @@ def main():
 
     train_dl = IntroGenerator(
         data_shape, train_file, train_idxs, network=conv, batch_size=ua.batch_size
-    )
+    )  # type: ignore
     val_dl = IntroGenerator(
         data_shape, val_file, val_idxs, network=conv, batch_size=ua.batch_size
     )

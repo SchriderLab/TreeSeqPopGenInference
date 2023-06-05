@@ -1,73 +1,144 @@
-# Comparing sequence-based pop gen inference methods with tree-based methods
+# The Unreasonable Effectiveness of Graph Convolutional Networks on Population Genetics Inference
 
-### Goals: 
-- Replicate [Flagel et al 2019](https://academic.oup.com/mbe/article/36/2/220/5229930) using both sequence and tree inference methods
-  - [Github link here](https://github.com/flag0010/pop_gen_cnn/tree/master)
-- Use interpretable machine learning approaches to better understand important features to each method type
+This repository contains details and instructions for replicating results in the associated manuscript.
+
+All packages associated with running the CNN sections can be found in the conda environment specified at [src/models/cnn_training/keras_env.yaml](src/models/cnn_training/keras_env.yaml)
+
+Requirements for the GCN sections: [requirements.txt](requirements.txt).
 
 ---
 
-## Types of approaches
+## Table of Contents
+- [The Unreasonable Effectiveness of Graph Convolutional Networks on Population Genetics Inference](#the-unreasonable-effectiveness-of-graph-convolutional-networks-on-population-genetics-inference)
+  - [Table of Contents](#table-of-contents)
+  - [Historical Recombination](#historical-recombination)
+    - [Simulation](#simulation)
+    - [Data Preparation](#data-preparation)
+      - [GCN](#gcn)
+      - [CNN](#cnn)
+    - [Network Training](#network-training)
+      - [GCN](#gcn-1)
+      - [CNN](#cnn-1)
+    - [Plotting and Comparison](#plotting-and-comparison)
+  - [Selection Detection](#selection-detection)
+    - [Simulation](#simulation-1)
+    - [Data Preparation](#data-preparation-1)
+      - [GCN](#gcn-2)
+      - [CNN](#cnn-2)
+    - [Network Training](#network-training-1)
+      - [GCN](#gcn-3)
+      - [CNN](#cnn-3)
+    - [Plotting and Comparison](#plotting-and-comparison-1)
+  - [Introgression Detection](#introgression-detection)
+    - [Simulation](#simulation-2)
+    - [Data Preparation](#data-preparation-2)
+      - [GCN](#gcn-4)
+      - [CNN](#cnn-4)
+    - [Network Training](#network-training-2)
+      - [GCN](#gcn-5)
+      - [CNN](#cnn-5)
+    - [Plotting and Comparison](#plotting-and-comparison-2)
+  - [Demographic Inference](#demographic-inference)
+    - [Simulation](#simulation-3)
+    - [Data Preparation](#data-preparation-3)
+      - [GCN](#gcn-6)
+      - [CNN](#cnn-6)
+    - [Network Training](#network-training-3)
+      - [GCN](#gcn-7)
+      - [CNN](#cnn-7)
+    - [Plotting and Comparison](#plotting-and-comparison-3)
 
-### Sequence-based approaches
-
-- Use multiple sequence alignments as input to CNN
-- Architectures are already built but should be tested to see if we can improve them
-
-### Treeseq-based approaches
-
-- Summary statistic based
-  - Phylogenetic distance measures (RF, NNI; see [RF pilot study here](/pilot/pilot.ipynb))
-  - Branch length distributions
-  
-- Direct learning approach
-  - Using graph convolutional networks (GCNs) to learn directly from trees
-  - Need some method of learning from the entire sequence as well, 1DCNN on extracted features?
-  
 ---
 
-## Problems defined in Flagel et al.
+## Historical Recombination
 
-### 1. Estimate $\theta$ 
+### Simulation
 
-- Sort chromosomes by genetic similarity
-- 1DCNN
+Data for the historical recombination experiments was generated using the [msprime](https://msprime.readthedocs.io/en/stable/) python package. The script used to generate the data can be found at [src/data/simulate_recombination.py](src/data/simulate_recombination.py). The script was run using the following command:
 
-### 2. Detect introgression
-All training and validation should be done with: 
+```bash
+foo
 ```
-/pine/scr/d/d/ddray/intro_trees.hdf5
-/pine/scr/d/d/ddray/intro_trees_val.hdf5
+
+### Data Preparation
+
+#### GCN
+
+#### CNN
+
+Msprime output was seriated using the ORTools package (**TODO**: link). The script used to seriate the data can be found at [foo](foo.py). The script was run using the following command:
+
+```bash
+foo
 ```
-respectively.
 
-Leaderboard:
-|Model   |NLLLoss   |Validation accuracy   |n_gcn_layers   |tree_sequence_length   |n_per_class_batch   |gru_hidden_dim   |n_parameters   |lr, decay, steps_per_epoch   |sampling
-|---|---|---|---|---|---|---|---|---|---|
-|GATConvRNN   |0.327077   |0.86688   |12   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
-|GATConvRNN   |**0.29515**   |0.88429   |16   |54   |16   |128    |1,164,549    |1e-5, 0.98, 1000    |sequential
+### Network Training
 
-|Model   |NLLLoss   |Validation accuracy   |n_cnn_layers   |SNP_length   |n_per_class_batch   |n_parameters   |lr,  steps_per_epoch   |sampling |seriated |metric |data
-|---|---|---|---|---|---|---|---|---|---|---|---|
-|PyTorch CNN |0.311942  |0.875257 |5  |2000  |16  |8,292,611   |1e-6,3000   |sequential |True |cosine |intro_trees
-|ResNet|0.303421 |0.882629 |20 |512 |16  |11,174,915 |1e-5,3000 |sequential |True |cosine |intro_trees
-|Keras CNN |0.2991 |0.8955 |5 |1201 |256 |5,032,067 |1e-3,870 |sequential |False |N/A |big_sim
+#### GCN
 
-- D. simulans and D. sechelia
-- Would we want to still compare to FILET?
+#### CNN
 
-### 3. Rho estimation
+### Plotting and Comparison
 
-- Uses read fraction per site rather than allelic assignments
-- Similarly to above, do we compare to LDHat?
-- Phased vs unphased? 
+CSV files containing the predicted values on the evaluation set for both GCN and CNN models were plotted and compared using the Jupyter notebook at [src/models/cnn_training/plot_rho_preds.ipynb](src/models/cnn_training/plot_rho_preds.ipynb).
 
-### 4. Positive selection
+---
 
-- 5-class problem (hard sweep, hard linked, soft sweep, soft linked, neutral)
-- Read counts here? Or just alignments?
+## Selection Detection
 
-### 5. Demographic inference
+### Simulation
 
-- Infer pop size and timings of a three-pop model
+### Data Preparation
+
+#### GCN
+
+#### CNN
+
+### Network Training
+
+#### GCN
+
+#### CNN
+
+### Plotting and Comparison
+
+---
+
+## Introgression Detection
+
+### Simulation
+
+### Data Preparation
+
+#### GCN
+
+#### CNN
+
+### Network Training
+
+#### GCN
+
+#### CNN
+
+### Plotting and Comparison
+
+---
+
+## Demographic Inference
+
+### Simulation
+
+### Data Preparation
+
+#### GCN
+
+#### CNN
+
+### Network Training
+
+#### GCN
+
+#### CNN
+
+### Plotting and Comparison
 
