@@ -216,8 +216,12 @@ def main():
                 
         logging.info('writing...')
         while True:
+            line = anc_file.readline()
+            while 'chromosome' in line:
+                continue
+            
             # we're at the beginning of a block
-            for k in range(3):
+            for k in range(2):
                 line = anc_file.readline()
             
             if not '(' in line.decode('utf-8'):
