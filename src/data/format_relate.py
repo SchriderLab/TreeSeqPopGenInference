@@ -193,13 +193,18 @@ def main():
     
     s0, s1 = pop_sizes
     
+    ix = 0
+    
     for ii in range(len(ifiles)):
         tag = tags[ii]
         ifile = ifiles[ii]
         print(tag)
+                
+        anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[1] == ifile.split('/')[-1].split('.')[1])])[0]
+        print(anc_file)
         
-        anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz')])[0]
         anc_file = gzip.open(anc_file, 'r')
+        
         
         # load the genotype matrices that correspond to the trees
         logging.info('reading data, {}...'.format(ifile))
@@ -208,13 +213,15 @@ def main():
         del y
         
         times = []
-        
-        ix = 0
-        
+                
         logging.info('writing...')
         while True:
+            line = anc_file.readline()
+            while 'chromosome' in line.decode('utf-8'):
+                continue
+            
             # we're at the beginning of a block
-            for k in range(3):
+            for k in range(2):
                 line = anc_file.readline()
             
             if not '(' in line.decode('utf-8'):
