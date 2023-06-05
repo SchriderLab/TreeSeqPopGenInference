@@ -323,6 +323,9 @@ class AutoGenerator(object):
         return batch, D
 
 
+import time
+import logging
+
 class TreeSeqGeneratorV2(object):
     def __init__(
         self,
@@ -381,6 +384,7 @@ class TreeSeqGeneratorV2(object):
         X2 = []
         batch_ = []
 
+        t0 = time.time()
         for ix in range(self.n_per):
             if self.ix > len(self.keys) - 1:
                 return None, None, None, None
@@ -408,8 +412,6 @@ class TreeSeqGeneratorV2(object):
                 np.array(self.ifile[key]["global_vec"]) - self.global_mean
             ) / self.global_std
 
-
-            print(x.shape)
             
             edge_index_ = []
             # number of graphs in sequence
@@ -458,6 +460,7 @@ class TreeSeqGeneratorV2(object):
             ]
         )
 
+        logging.debug('clocked at {} s'.format(time.time() - t0))
         return batch, X1, X2, y
 
 
