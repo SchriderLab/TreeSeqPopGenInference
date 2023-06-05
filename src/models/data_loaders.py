@@ -408,7 +408,13 @@ class TreeSeqGeneratorV2(object):
                 np.array(self.ifile[key]["global_vec"]) - self.global_mean
             ) / self.global_std
 
+
+            print(x.shape)
+            
             edge_index_ = []
+            # number of graphs in sequence
+            # some graphs are just 0s (we assume it's a padded sequence), but we put them in Batch object
+            # with an empty list of edges
             for k in range(x.shape[0]):
                 _ = []
 
