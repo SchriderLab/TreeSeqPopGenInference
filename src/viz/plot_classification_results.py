@@ -173,3 +173,6 @@ def main():
 
     cm_analysis(Y, np.argmax(Y_pred, axis=1), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
     """
+    
+if __name__ == '__main__':
+    main()
