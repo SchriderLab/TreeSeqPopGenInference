@@ -215,16 +215,17 @@ def main():
         times = []
                 
         logging.info('writing...')
-        while True:
-            line = anc_file.readline()
-            while 'chromosome' in line.decode('utf-8'):
-                continue
-            
+        while True:            
             # we're at the beginning of a block
-            for k in range(2):
+            for k in range(3):
                 line = anc_file.readline()
             
-            if not '(' in line.decode('utf-8'):
+            while not '(' in line.decode('utf-8'):
+                line = anc_file.readline()
+                if line.decode('utf-8') == '':
+                    break
+                
+            if line.decode('utf-8') == '':
                 break
             
             current_day_nodes = list(range(sum(pop_sizes)))
