@@ -87,6 +87,9 @@ def parse_args():
     parser.add_argument("--regression", action = "store_true")
     parser.add_argument("--classes", default = "ab,ba,none")
     
+    parser.add_argument("--y_ix", default = "None")
+    parser.add_argument("--log_y", action = "store_true")
+    
     parser.add_argument("--means", default = "None")
     
     parser.add_argument("--model", default = "gru")
@@ -127,11 +130,15 @@ def main():
     # model = Classifier(config)
 
     L = int(args.L)
+    if args.y_ix == "None":
+        y_ix = None
+    else:
+        y_ix = int(args.y_ix)
 
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
-                                   chunk_size = int(args.chunk_size), models = args.classes)
+                                   chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
     validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
-                                              chunk_size = int(args.chunk_size), models = args.classes)
+                                              chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
@@ -142,9 +149,7 @@ def main():
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              gcn_dim = int(args.gcn_dim), conv_dim = int(args.conv_dim))
     
-    if args.weights != "None":
-        checkpoint = torch.load(args.weights, map_location = device)
-        model.load_state_dict(checkpoint)
+    
     
     classes = generator.models
     
@@ -153,6 +158,10 @@ def main():
     model = model.to(device)
     print(model)
     count_parameters(model)
+    
+    if args.weights != "None":
+        checkpoint = torch.load(args.weights, map_location = device)
+        model.load_state_dict(checkpoint)
     
     # momenta stuff
     save_momenta_every = int(args.save_momenta_every)
@@ -304,8 +313,8 @@ def main():
             if classification:
                 cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
             else:
-                Y = np.exp(np.array(Y)) * generator.y_std + generator.y_mean
-                Y_pred = np.exp(np.array(Y_pred)) * generator.y_std + generator.y_mean
+                Y = np.exp(np.array(Y) * generator.y_std + generator.y_mean)
+                Y_pred = np.exp(np.array(Y_pred) * generator.y_std + generator.y_mean)
                             
                 mses = []
                 rs = []

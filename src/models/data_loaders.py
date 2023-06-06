@@ -335,9 +335,12 @@ class TreeSeqGeneratorV2(object):
         n_samples_per=4,
         chunk_size=1,
         models="none",
-        log_y = True
+        log_y = True,
+        y_ix = None
     ):  # must be in order, see combine_h5s_v2
         self.ifile = ifile
+
+        self.y_ix = y_ix
 
         self.models = models.split(",")
         self.log_y = log_y
@@ -404,6 +407,9 @@ class TreeSeqGeneratorV2(object):
             x[ii[0], ii[1], ii[2], -1] = np.log(x[ii[0], ii[1], ii[2], -1])
 
             y_ = np.array(self.ifile[key]["y"])
+            if self.y_ix is not None:
+                y_ = y_[:,[self.y_ix]]
+            
             x1 = (np.array(self.ifile[key]["x1"]) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]["edge_index"])
 
