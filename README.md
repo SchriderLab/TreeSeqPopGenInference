@@ -157,6 +157,8 @@ python selection_cnn_keras.py \
 
 ### Plotting and Comparison
 
+CSV files containing the predicted values on the evaluation set for both GCN and CNN models were plotted and compared using the Jupyter notebook at [src/models/cnn_training/plot_selection_preds.ipynb](src/models/cnn_training/plot_selection_preds.ipynb).
+
 ---
 
 ## Introgression Detection
@@ -207,6 +209,8 @@ python intro_cnn_keras.py \
 ```
 
 ### Plotting and Comparison
+
+CSV files containing the predicted values on the evaluation set for both GCN and CNN models were plotted and compared using the Jupyter notebook at [src/models/cnn_training/plot_intro_preds.ipynb](src/models/cnn_training/plot_intro_preds.ipynb).
 
 ---
 
@@ -260,3 +264,4 @@ python demo_cnn_keras.py \
 
 ### Plotting and Comparison
 
+CSV files containing the predicted values on the evaluation set for both GCN and CNN models were plotted and compared using the Jupyter notebook at [src/models/cnn_training/plot_demo_preds.ipynb](src/models/cnn_training/plot_demo_preds.ipynb).
