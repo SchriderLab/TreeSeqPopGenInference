@@ -215,7 +215,7 @@ def main():
 
             y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
-            loss = criterion(torch.squeeze(y_pred), y)
+            loss = criterion(y_pred, y)
 
             if classification:
                 y_pred = y_pred.detach().cpu().numpy()
@@ -275,7 +275,7 @@ def main():
 
                 y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
 
-                loss = criterion(torch.squeeze(y_pred), y)
+                loss = criterion(y_pred, y)
                 
                 if classification:
                     y_pred = y_pred.detach().cpu().numpy()
