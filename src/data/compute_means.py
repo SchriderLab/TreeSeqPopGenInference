@@ -21,6 +21,7 @@ def parse_args():
 
     parser.add_argument("--regression", action = "store_true")
     parser.add_argument("--log_y", action = "store_true")
+    parser.add_argument("--y_ix", default = "None")
 
     parser.add_argument("--ofile", default = "intro_means.npz")
     args = parser.parse_args()
@@ -78,7 +79,10 @@ def main():
             _.extend(x_)
             
     if args.regression:
-        ys = np.array(ys)
+        if args.y_ix == "None":
+            ys = np.array(ys)
+        else:
+            ys = np.array(ys)[:,[int(args.y_ix)]]
         y_mean = np.mean(ys, axis = 0)
         y_std = np.std(ys, axis = 0)
             
