@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("--n_samples", default = "2500")
 
     parser.add_argument("--regression", action = "store_true")
+    parser.add_argument("--log_y", action = "store_true")
 
     parser.add_argument("--ofile", default = "intro_means.npz")
     args = parser.parse_args()
@@ -58,8 +59,10 @@ def main():
             mask = np.array(ifile[key]['mask'])
 
             if args.regression:
-                ys.extend(np.log(np.array(ifile[key]['y'])))
-        
+                if args.log_y:
+                    ys.extend(np.log(np.array(ifile[key]['y'])))
+                else:
+                    ys.extend(np.array(ifile[key]['y']))
             ls.append(x.shape[0])
             
             x_ = x[:,:,:,0]
