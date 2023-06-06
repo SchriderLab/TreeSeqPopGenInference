@@ -175,9 +175,9 @@ def get_ua():
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch-size", default=32, type=int)
     ap.add_argument("--epochs", default=10, type=int)
-    ap.add_argument("--in-train")
-    ap.add_argument("--in-val")
-    ap.add_argument("--out-prefix")
+    ap.add_argument("--in-train", help="Path to training data hdf5 file")
+    ap.add_argument("--in-val", help="Path to validation data hdf5 file")
+    ap.add_argument("--out-prefix", help="Prefix for output files")
     ap.add_argument("--net", choices=["1d", "2d"])
 
     return ap.parse_args()

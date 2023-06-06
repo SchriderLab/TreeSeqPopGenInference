@@ -221,9 +221,9 @@ def get_ua():
     ap.add_argument("--batch-size", default=32, type=int)
     ap.add_argument("--epochs", default=10, type=int)
     ap.add_argument("--net", default="2d", choices=["2d", "1d"])
-    ap.add_argument("--nolog", action="store_true")
-    ap.add_argument("--in-train")
-    ap.add_argument("--in-val")
+    ap.add_argument("--nolog", action="store_true", help="Don't log transform data")
+    ap.add_argument("--in-train", help="Path to training data hdf5 file")
+    ap.add_argument("--in-val", help="Path to validation datahdf5 file")
 
     return ap.parse_args()
 

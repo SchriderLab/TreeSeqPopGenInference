@@ -168,11 +168,18 @@ def get_ua():
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch-size", default=32, type=int)
     ap.add_argument("--epochs", default=10, type=int)
-    ap.add_argument("--conv-blocks", default=4, type=int)
+    ap.add_argument(
+        "--conv-blocks", default=4, type=int, help="Number of convolutional blocks"
+    )
     ap.add_argument("--net", default="2d", choices=["2d", "1d"])
-    ap.add_argument("--encoding", choices=["01", "0255", "neg11"], default="01")
-    ap.add_argument("--in-train")
-    ap.add_argument("--in-val")
+    ap.add_argument(
+        "--encoding",
+        choices=["01", "0255", "neg11"],
+        default="01",
+        help="Encoding of the input data",
+    )
+    ap.add_argument("--in-train", help="Path to the training data hdf5 file")
+    ap.add_argument("--in-val", help="Path to the validation data hdf5 file")
 
     return ap.parse_args()
 
