@@ -97,6 +97,8 @@ def parse_args():
     parser.add_argument("--chunk_size", default = "5")
     parser.add_argument("--sampling_mode", default = "sequential")
     
+    parser.add_argument("--val_prop", default = "0.1")
+    
     parser.add_argument("--n_sample", default = "None")
 
     args = parser.parse_args()
@@ -145,7 +147,8 @@ def main():
         data['y'] = deque()
         
     ofile = h5py.File(args.ofile, 'w')
-    ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
+    if float(args.val_prop) > 0:
+        ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
     
     L = int(args.L)
     
@@ -161,7 +164,7 @@ def main():
     n_muts = []
     yl = []
     
-    val_prop = 0.1
+    val_prop = float(args.val_prop)
     chunk_size = int(args.chunk_size)
     
     for ifile in ifiles:
@@ -271,7 +274,10 @@ def main():
 
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
             
-        
+    ofile.close()
+    if val_prop > 0:
+        ofile_val.close()
+    
     """
     mean_bl = np.mean(bls)
     std_bl = np.std(bls)
