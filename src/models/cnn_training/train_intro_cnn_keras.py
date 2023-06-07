@@ -175,10 +175,21 @@ def main():
         model = get_CNN(data_shape, len(classes))
 
     train_dl = IntroGenerator(
-        data_shape, train_file, train_idxs, network=conv, batch_size=ua.batch_size
+        data_shape,
+        train_file,
+        train_idxs,
+        network=conv,
+        batch_size=ua.batch_size,
+        encoding=ua.encoding,
     )  # type: ignore
+
     val_dl = IntroGenerator(
-        data_shape, val_file, val_idxs, network=conv, batch_size=ua.batch_size
+        data_shape,
+        val_file,
+        val_idxs,
+        network=conv,
+        batch_size=ua.batch_size,
+        encoding=ua.encoding,
     )
 
     i = train_dl[0]
