@@ -64,6 +64,7 @@ def parse_args():
     parser.add_argument("--model", default = "gru")
 
     parser.add_argument("--odir", default = "None")
+    parser.add_argument("--ofile", default = "results.npz")
     args = parser.parse_args()
 
     if args.verbose:
