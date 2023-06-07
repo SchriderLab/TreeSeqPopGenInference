@@ -127,7 +127,6 @@ def main():
 
             y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
             
-
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy()
             
@@ -137,6 +136,9 @@ def main():
     Y = np.array(Y) * generator.y_std + generator.y_mean
     Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
 
+    np.savez(args.ofile, y = Y, y_pred = Y_pred)
+
+    """
     print(np.mean((Y - Y_pred)**2, axis = 0))
 
     plot, axes = plt.subplots(1, 5)
@@ -151,7 +153,7 @@ def main():
     plt.tight_layout()
     plt.savefig('demo_results.png', dpi = 100)
     plt.close()
-
+    """
     # ${code_blocks}
 
 if __name__ == '__main__':
