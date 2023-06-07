@@ -267,7 +267,7 @@ def main():
                         
                         count_val += 1
                         
-                    ofile.flush()
+                    ofile_val.flush()
                     
                 else:
                     if not args.regression:
