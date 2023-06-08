@@ -312,18 +312,7 @@ def main():
             # do this for all the examples:
             if classification:
                 cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
-            else:
-                Y = np.exp(np.array(Y) * generator.y_std + generator.y_mean)
-                Y_pred = np.exp(np.array(Y_pred) * generator.y_std + generator.y_mean)
-                            
-                mses = []
-                rs = []
-                
-                for k in range(Y.shape[1]):
-                    mses.append(np.mean((Y[:,k] - Y_pred[:,k])**2))
-                    rs.append(np.corrcoef(Y[:,k], Y_pred[:,k])[0, 1])
-                    
-                print(mses, rs)
+            
             
             early_count = 0
         else:
