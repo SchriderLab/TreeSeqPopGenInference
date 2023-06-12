@@ -145,6 +145,8 @@ def main():
     Y = np.array(Y) * generator.y_std + generator.y_mean
     Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
 
+    print(np.mean((Y - Y_pred)**2, axis = 0))
+
     np.savez(args.ofile, y = Y, y_pred = Y_pred)
 
     """
