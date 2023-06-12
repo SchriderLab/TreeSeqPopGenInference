@@ -65,6 +65,10 @@ def parse_args():
 
     parser.add_argument("--odir", default = "None")
     parser.add_argument("--ofile", default = "results.npz")
+    
+    parser.add_argument("--log_y", action = "store_true")
+    parser.add_argument("--y_ix", default = "None")
+    
     args = parser.parse_args()
 
     if args.verbose:
@@ -89,9 +93,13 @@ def main():
     # model = Classifier(config)
 
     L = int(args.L)
+    if args.y_ix == "None":
+        y_ix = None
+    else:
+        y_ix = int(args.y_ix)
 
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = True, 
-                                              chunk_size = int(args.chunk_size))
+                                              chunk_size = int(args.chunk_size), y_ix = y_ix, log_y = args.log_y)
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
