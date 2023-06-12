@@ -200,7 +200,10 @@ def main():
         ifile = ifiles[ii]
         print(tag)
                 
-        anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[1] == ifile.split('/')[-1].split('.')[1])])[0]
+        if len([u for u in os.listdir(args.idir) if '.anc' in u]) > 1:
+            anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[1] == ifile.split('/')[-1].split('.')[1])])[0]
+        else:
+            anc_file = [u for u in os.listdir(args.idir) if '.anc' in u][0]
         print(anc_file)
         
         anc_file = gzip.open(anc_file, 'r')
