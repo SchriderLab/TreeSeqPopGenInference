@@ -61,7 +61,6 @@ def parse_args():
     parser.add_argument("--classes", default = "ab,ba,none")
 
     parser.add_argument("--chunk_size", default = "4")
-    
 
     parser.add_argument("--means", default = "None")
     parser.add_argument("--model", default = "gru")
@@ -162,6 +161,8 @@ def main():
         
     df = pd.DataFrame(result)
     df.to_csv(args.ofile, index = False)
+    
+    print(np.mean(accs))
     
     """
     Yh = np.zeros((len(Y), len(classes)))    
