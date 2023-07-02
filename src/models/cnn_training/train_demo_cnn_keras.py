@@ -92,20 +92,14 @@ def write_preds(true, preds, names, run_name):
 def plot_preds(preds, names, run_name):
     for i, name in enumerate(names):
         plt.scatter(preds[f"true_{name}"], preds[f"pred_{name}"])
-        m, b = np.polyfit(preds[f"true_{name}"], preds[f"pred_{name}"], 1)
         plt.plot(
-            preds[f"pred_{name}"],
-            m * preds[f"pred_{name}"] + b,
+            np.linspace(min(preds[f"pred_{name}"]), max(preds[f"pred_{name}"])),
+            np.linspace(min(preds[f"pred_{name}"]), max(preds[f"pred_{name}"])),
             color="black",
             label=f"""Spearmans rho: {spearmanr(preds[f"true_{name}"], preds[f"pred_{name}"])[0]:.2f}, 
             RMSE: {mean_squared_error(preds[f"true_{name}"], preds[f"pred_{name}"], squared=False):.2f}""",
         )
-        # if "t" in name:
-        #    plt.ylim(-8, 2)
-        #    plt.xlim(-8, 2)
-        # elif "N" in name:
-        #    plt.ylim(4, 10)
-        #    plt.xlim(4, 10)
+
         plt.legend()
         plt.plot()
         plt.title(name)
@@ -113,7 +107,7 @@ def plot_preds(preds, names, run_name):
         plt.ylabel(f"Pred {name}")
         plt.tight_layout()
 
-        plt.savefig(f"demo/{run_name}/{run_name}_{name}_preds.png")
+        plt.savefig(f"{run_name}_{name}_preds.png")
         plt.clf()
 
 

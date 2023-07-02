@@ -19,6 +19,7 @@ from keras.layers import (
     MaxPooling2D,
 )
 from keras.utils import to_categorical
+from sklearn.utils import class_weight
 from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow import keras
 from tqdm import tqdm
@@ -189,6 +190,19 @@ def main():
     val_file = h5py.File(ua.in_val, "r")
 
     classes = list(train_file.keys())
+    labs = []
+    for c in classes:
+        labs.extend([c] * len(train_file[f"{c}"].keys()))
+
+    class_weights = dict(
+        class_weight.compute_class_weight(
+            "balanced",
+            np.unique(labs),
+            labs,
+        )
+    )
+    print(f"Class weights: {class_weights}")
+
     train_len = len(train_file[f"{classes[0]}"].keys())
     val_len = len(val_file[f"{classes[0]}"].keys())
 
@@ -226,6 +240,7 @@ def main():
         epochs=ua.epochs,
         callbacks=callbacks,
         verbose=2,
+        class_weight=class_weights,
     )
 
     trues = []
