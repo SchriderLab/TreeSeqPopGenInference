@@ -46,10 +46,14 @@ def main():
         idir = os.path.join(args.idir, c)
         ifiles.extend([(c, u) for u in find_files(idir)])
         
+    lengths = []
     for tag, ifile in ifiles:
         x, y, p, params = load_data(ifile)
         
         if any([u is None for u in x]):
+            print(ifile)
+            
+        if any([u.shape[0] != int(args.n_sample) for u in x]):
             print(ifile)
         
 
