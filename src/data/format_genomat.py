@@ -255,7 +255,7 @@ def main():
             else:
                 Xf, p, y = comm.recv(source = MPI.ANY_SOURCE)
             
-            while len(Xf) > chunk_size:
+            while len(Xf) >= chunk_size:
                 if np.random.uniform() < float(args.val_prop):
                     if not args.regression:
                         ofile_val.create_dataset('{}/{}/x'.format(tag, counts_val[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
