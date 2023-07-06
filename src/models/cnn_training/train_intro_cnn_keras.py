@@ -162,12 +162,25 @@ def main():
         data_shape = train_file[f"{classes[0]}/0/x"].shape[1:][::-1]
 
     print("Data shape:", data_shape)
-
+    print("Sampling indices")
     # They're in batches of 4 but that only matters in the stack
-    train_idxs = list(train_file[f"{classes[0]}"].keys())
-    val_idxs = random.sample(
-        list(val_file[f"{classes[0]}"].keys()), int(6144 / 4)
-    )  # Dylan needed to subset for comp time with GCN
+    # Evenly sample from each class
+    train_idxs = range(min([len(train_file[i].keys()) for i in classes]))
+    print("Foo")
+    val_idxs = range(min([len(val_file[i].keys()) for i in classes]))
+
+    if len(train_idxs) > 81460 / 4:
+        print("Subsetting training set")
+        train_idxs = random.sample(list(train_idxs), int(81460 / 4))
+
+    if len(val_idxs) > 6144 / 4:
+        print("Subsetting validation set")
+        val_idxs = random.sample(list(val_idxs), int(6144 / 4))
+    else:
+        pass
+
+    print("Training size:", len(train_idxs) * 4)
+    print("Validation size:", len(val_idxs) * 4)
 
     if "1d" in conv:
         model = get_CNN(data_shape, len(classes))
@@ -212,7 +225,7 @@ def main():
         validation_data=val_dl,
         epochs=ua.epochs,
         callbacks=callbacks,
-        verbose=2,
+        verbose=1,
     )
 
     trues = []
@@ -231,12 +244,12 @@ def main():
     true_labs = [lab_dict[i] for i in true_classes]
     pred_labs = [lab_dict[i] for i in pred_classes]
 
-    pd.DataFrame(
-        {
-            "true": true_labs,
-            "pred": pred_labs,
-        }
-    ).to_csv(f"{ua.out_prefix}_{conv}_results.csv", index=False, sep="\t")
+    res_dict = {c: preds_arr[:, i] for i, c in enumerate(classes)}
+    res_dict["true"] = true_labs
+    res_dict["pred"] = pred_labs
+    pd.DataFrame(res_dict).to_csv(
+        f"{ua.out_prefix}_{conv}_results.csv", index=False, sep="\t"
+    )
 
     pu.plot_confusion_matrix(
         ".",
