@@ -213,7 +213,7 @@ def main():
             logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
             X, Y, P, params = load_data(ifile)
-            logging.info('have {} matrices...'.format(len(X)))
+            #logging.info('have {} matrices...'.format(len(X)))
             
             X_ = []
             P_ = []
@@ -230,12 +230,15 @@ def main():
                     pass
                 
                 x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
-                
+                                
                 if x is not None:
+
                     X_.append(x)
                     P_.append(p)
                     params_.append(params[ix])
-                
+            
+            logging.info('sending {} matrices from {}...'.format(len(X), ifile))    
+            
             if not args.regression:
                 comm.send([X_, P_, tag], dest = 0)
             else:
