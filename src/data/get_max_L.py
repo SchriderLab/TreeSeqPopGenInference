@@ -18,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    # ${args}
+    parser.add_argument("--idir", default = "None")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -43,8 +43,6 @@ def main():
     ifiles = []
     
     classes = sorted(os.listdir(args.idir))
-    pop_sizes = list(map(int, args.pop_sizes.split(',')))
-    chunk_size = int(args.chunk_size)
     
     for c in classes:
         idir = os.path.join(args.idir, c)
