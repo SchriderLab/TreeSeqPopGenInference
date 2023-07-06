@@ -212,7 +212,8 @@ def main():
             logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
             X, Y, P, params = load_data(ifile)
-
+            logging.info('have {} matrices...'.format(len(X)))
+            
             X_ = []
             P_ = []
             params_ = []
@@ -227,10 +228,7 @@ def main():
                 except:
                     pass
                 
-                #logging.info('have shape of {}...'.format(x.shape))
                 x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
-                
-                
                 
                 if x is not None:
                     X_.append(x)
@@ -266,7 +264,7 @@ def main():
                         ofile_val.create_dataset('{}/y'.format(count_val), data = np.array(y[-chunk_size:], dtype = np.float32), compression = 'lzf')
                         
                         count_val += 1
-                        
+                          
                     ofile_val.flush()
                     
                 else:
