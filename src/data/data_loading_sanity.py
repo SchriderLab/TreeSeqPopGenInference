@@ -63,7 +63,7 @@ def main():
             print(ifile)
             
         for ix, x in enumerate(X):
-            x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
+            x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = 'seriate_match')
         
             if x is None:
                 print(ix, ifile)
