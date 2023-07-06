@@ -49,7 +49,7 @@ def main():
     for tag, ifile in ifiles:
         x, y, p, params = load_data(ifile)
         
-        if any([u == None for u in x]):
+        if any([u is None for u in x]):
             print(ifile)
         
 
