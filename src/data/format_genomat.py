@@ -4,7 +4,6 @@ import os
 import argparse
 import logging
 
-from mpi4py import MPI
 import h5py
 
 import glob
@@ -162,6 +161,8 @@ def parse_args():
     return args
 
 def main():
+    from mpi4py import MPI
+    
     args = parse_args()
     
     # configure MPI
