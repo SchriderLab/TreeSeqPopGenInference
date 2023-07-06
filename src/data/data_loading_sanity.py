@@ -49,8 +49,7 @@ def main():
     for tag, ifile in ifiles:
         x, y, p, params = load_data(ifile)
         
-        if None in x:
-            print(ifile)
+        print(type(x))
         
 
     # ${code_blocks}
