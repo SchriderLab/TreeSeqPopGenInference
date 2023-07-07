@@ -52,6 +52,7 @@ def main():
     for tag, ifile in ifiles:
         X, y, P, params = load_data(ifile)
         
+        X = [u for u in X if u is not None]
         ls = [u.shape[1] for u in X]
         
         lengths.append(np.max(ls))
