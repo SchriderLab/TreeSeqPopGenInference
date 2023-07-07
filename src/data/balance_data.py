@@ -54,7 +54,7 @@ def main():
         n_del = l_ - l
 
         if n_del > 0:
-            to_del = np.random.choice(ifiles_, n_del)        
+            to_del = np.random.choice(ifiles_, n_del, replace = False)        
             
             cmd = 'rm {}'.format(' '.join(to_del))
             
