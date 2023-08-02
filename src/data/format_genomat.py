@@ -255,6 +255,7 @@ def main():
             else:
                 Xf, p, y = comm.recv(source = MPI.ANY_SOURCE)
             
+            logging.info('have len {}'.format(len(Xf)))
             while len(Xf) >= chunk_size:
                 if np.random.uniform() < float(args.val_prop):
                     if not args.regression:
