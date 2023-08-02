@@ -273,7 +273,6 @@ def main():
                     ofile_val.flush()
                     
                 else:
-                    logging.info('here...: count {}'.format(count))
                     if not args.regression:
                         ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
                         ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
