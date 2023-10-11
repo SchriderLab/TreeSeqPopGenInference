@@ -13,8 +13,8 @@ collections.Mapping = collections.abc.Mapping
 collections.MutableSet = collections.abc.MutableSet
 collections.MutableMapping = collections.abc.MutableMapping
 
-from keras import Model
-from keras.layers import (
+from tensorflow.keras import Model
+from tensroflow.keras.layers import (
     AveragePooling1D,
     AveragePooling2D,
     Conv1D,
