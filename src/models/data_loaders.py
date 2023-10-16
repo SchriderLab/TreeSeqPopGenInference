@@ -990,7 +990,7 @@ class GenomatClassGenerator(object):
                 x = np.array(self.ifile[c][key]['x'])
                 
                 X.extend(x)
-                y.extend([ix for u in x.shape[0]])
+                y.extend([ix for u in range(x.shape[0])])
                 
             self.ix += 1
             
