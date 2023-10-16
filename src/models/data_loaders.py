@@ -962,12 +962,10 @@ class GenomatClassGenerator(object):
         
         for c in self.classes:
             keys[c] = list(self.ifile[c].keys())
-            print(len(keys[c]))
             
         self.keys = keys
         
-        self.l = min([len(u) for u in keys.items()]) // batch_size
-        print(self.l)
+        self.l = min([len(self.keys[u]) for u in self.classes]) // batch_size
         
         self.batch_size = batch_size        
         
