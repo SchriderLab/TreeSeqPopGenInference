@@ -94,6 +94,8 @@ def main():
     else:
         generator = GenomatClassGenerator(args.ifile)
         generator_val = GenomatClassGenerator(args.ifile_val)
+        
+        classes = generator.classes
     
     logging.info('making model...')
     model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
