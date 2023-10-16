@@ -967,6 +967,8 @@ class GenomatClassGenerator(object):
         self.keys = keys
         
         self.l = min([len(u) for u in keys.items()]) // batch_size
+        print(self.l)
+        
         self.batch_size = batch_size        
         
         self.on_epoch_end()
