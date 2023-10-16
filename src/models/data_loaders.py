@@ -962,6 +962,7 @@ class GenomatClassGenerator(object):
         
         for c in self.classes:
             keys[c] = list(self.ifile[c].keys())
+            print(len(keys[c]))
             
         self.keys = keys
         
