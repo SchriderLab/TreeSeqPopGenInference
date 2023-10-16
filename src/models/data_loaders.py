@@ -921,6 +921,7 @@ class GenotypeMatrixGenerator(object):
         X = np.concatenate(X)
         X = torch.FloatTensor(X)
         y = torch.LongTensor(y)
+        
 
         return X, y
 
@@ -940,12 +941,112 @@ class DemoGenotypeMatrixGenerator(object):
             X.append(x_arr)
             y.extend([idx] * x_arr.shape[0])
 
+        y = np.array(y)
+        if self.y_ix is not None:
+            y = y[:,[self.y_ix]]
+
         X = np.concatenate(X)
         X = torch.FloatTensor(X)
         y = torch.LongTensor(y)
 
         return X, y
 
+import h5py
+
+class GenomatClassGenerator(object):
+    def __init__(self, ifile, batch_size = 2):
+        self.ifile = h5py.File(ifile, 'r')
+        self.classes = sorted(list(self.ifile.keys()))
+        
+        keys = dict()
+        
+        for c in self.classes:
+            keys[c] = list(self.ifile[c].keys())
+            
+        self.keys = keys
+        
+        self.l = min([len(u) for u in keys.items()]) // batch_size
+        self.batch_size = batch_size        
+        
+        self.on_epoch_end()
+        
+    def on_epoch_end(self):
+        for c in self.classes:
+            random.shuffle(self.keys[c])
+            
+        self.ix = 0
+        
+    def __len__(self):
+        return self.l
+    
+    def __getitem__(self, index):
+        X = []
+        y = []
+        
+        for k in range(self.batch_size):
+            for ix, c in enumerate(self.classes):
+                key = self.keys[c][self.ix]
+                
+                x = np.array(self.ifile[c][key]['x'])
+                
+                X.extend(x)
+                y.extend([ix for u in x.shape[0]])
+                
+            self.ix += 1
+            
+        X = torch.FloatTensor(np.array(X))
+        y = torch.LongTensor(np.array(y))
+            
+        return X, y
+
+class GenomatGenerator(object):
+    def __init__(self, ifile, means, y_ix = None, batch_size = 4, classification = False, log_y = False):
+        self.ifile = h5py.File(ifile, 'r')
+        self.keys = list(self.ifile.keys())
+        
+        self.batch_size = batch_size
+        self.y_ix = y_ix
+
+        means = np.load(means)
+        self.y_mean = means['y_mean'].reshape(1, -1)
+        self.y_std = means['y_std'].reshape(1, -1)
+        
+        self.log_y = log_y
+        
+        self.on_epoch_end()
+        
+    def __len__(self):
+        return len(self.keys) // self.batch_size
+        
+    def __getitem__(self, index):
+        X = []
+        y = []
+        
+        for ix in range(index * self.batch_size, (index + 1) * self.batch_size):
+            key = self.keys[ix]
+            X.extend(np.array(self.ifile[key]['x']))
+            y.extend(np.array(self.ifile[key]['y']))
+            
+        y = np.array(y)
+        if self.log_y:
+            y = np.log(y)
+            
+        X = np.array(X)
+        if self.y_ix is not None:
+            y = (np.array(y)[:,[self.y_ix]] - self.y_mean) / self.y_std
+            
+        # expand for the channel dimension
+        if len(X.shape) == 3:
+            X = np.expand_dims(X, 1)
+            
+        X = torch.FloatTensor(X)
+        y = torch.FloatTensor(y)
+        
+        return X, y
+
+    def on_epoch_end(self):
+        random.shuffle(self.keys)
+        
 
 class TreeGenerator(object):
     def __init__(self, ifile, models=None, n_samples_per=5):
