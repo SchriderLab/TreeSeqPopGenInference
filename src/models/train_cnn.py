@@ -206,6 +206,8 @@ def main():
 
                 val_losses.append(loss.detach().item())
                 
+        generator_val.on_epoch_end()        
+        
         val_loss = np.mean(val_losses)
         val_acc = np.mean(val_accs)
         
