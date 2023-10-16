@@ -996,6 +996,9 @@ class GenomatClassGenerator(object):
             self.ix += 1
             
         X = torch.FloatTensor(np.array(X))
+        if len(X.shape) == 3:
+            X = torch.unsqueeze(X, 1)
+        
         y = torch.LongTensor(np.array(y))
             
         return X, y
