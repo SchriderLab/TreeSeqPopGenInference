@@ -127,7 +127,7 @@ def main():
     if args.n_steps != "None":
         n_steps = min([len(generator), int(args.n_steps)])
     else:
-        n_steps = int(args.n_steps)
+        n_steps = len(generator)
     
     for epoch in range(int(args.n_epochs)):
         model.train()
