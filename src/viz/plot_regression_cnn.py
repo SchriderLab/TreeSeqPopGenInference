@@ -126,16 +126,15 @@ def main():
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
-            y_pred = y_pred.detach().cpu().numpy().flatten()
-            y = y.detach().cpu().numpy().flatten()
+            y_pred = y_pred.detach().cpu().numpy()
+            y = y.detach().cpu().numpy()
         
     
             Y.extend(y)
             Y_pred.extend(y_pred)
-            
-    
-    Y = np.array(Y).T * generator.y_std + generator.y_mean
-    Y_pred = np.array(Y_pred).T * generator.y_std + generator.y_mean
+
+    Y = np.array(Y) * generator.y_std + generator.y_mean
+    Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
     print(Y.shape, Y_pred.shape)
 
     print(np.mean((Y - Y_pred)**2, axis = 0))
