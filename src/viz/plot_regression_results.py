@@ -146,7 +146,9 @@ def main():
     Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
 
     print(Y.shape, Y_pred.shape)
-    print(np.sqrt(np.mean((Y - Y_pred)**2, axis = 0)))
+    rmse = np.sqrt(np.mean((Y - Y_pred)**2, axis = 0))
+    print(rmse)
+    print(np.median(rmse))
 
     np.savez(args.ofile, y = Y, y_pred = Y_pred)
 
