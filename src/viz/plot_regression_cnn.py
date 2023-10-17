@@ -134,8 +134,8 @@ def main():
             Y_pred.extend(y_pred)
             
     
-    Y = np.array(Y) * generator.y_std + generator.y_mean
-    Y_pred = np.array(Y_pred) * generator.y_std + generator.y_mean
+    Y = np.array(Y).T * generator.y_std + generator.y_mean
+    Y_pred = np.array(Y_pred).T * generator.y_std + generator.y_mean
     print(Y.shape, Y_pred.shape)
 
     print(np.mean((Y - Y_pred)**2, axis = 0))
