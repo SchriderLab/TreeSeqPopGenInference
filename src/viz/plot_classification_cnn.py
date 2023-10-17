@@ -148,7 +148,8 @@ def main():
     
     print(np.mean(accs))
     
-
+if __name__ == '__main__':
+    main()
         
     
     
