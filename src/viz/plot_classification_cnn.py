@@ -52,6 +52,8 @@ def parse_args():
     parser.add_argument("--in_dim", default = "4")
     parser.add_argument("--n_classes", default = "5")
     
+    parser.add_argument("--in_channels", default = "1")
+    
     # hyper-parameters
     parser.add_argument("--use_conv", action = "store_true")
     parser.add_argument("--hidden_dim", default = "128")
