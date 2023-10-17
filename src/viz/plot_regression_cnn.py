@@ -126,7 +126,7 @@ def main():
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
-            y_pred = y_pred.detach().cpu().numpy()
+            y_pred = y_pred.detach().cpu().numpy().flatten()
             y = y.detach().cpu().numpy().flatten()
         
     
