@@ -133,11 +133,11 @@ def main():
             Y.extend(y)
             Y_pred.extend(y_pred)
 
-    Y = (np.array(Y) * generator.y_std + generator.y_mean) / 20000
-    Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean) / 20000
+    Y = (np.array(Y) * generator.y_std + generator.y_mean)
+    Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
     print(Y.shape, Y_pred.shape)
 
-    print(np.mean((Y - Y_pred)**2, axis = 0))
+    print(np.sqrt(np.mean((Y - Y_pred)**2, axis = 0)))
 
     np.savez(args.ofile, y = Y, y_pred = Y_pred)
     
