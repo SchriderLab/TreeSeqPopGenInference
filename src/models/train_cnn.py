@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import time
 
 from train_gcn import LabelSmoothing
-from torchvision_mod_layers import resnet34
+from torchvision_mod_layers import resnet34, LexStyleNet
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -51,6 +51,7 @@ def parse_args():
     parser.add_argument("--n_steps", default = "None")
     parser.add_argument("--n_early", default = "10")
     
+    parser.add_argument("--model", default = "res")
     
     parser.add_argument("--batch_size", default = "32")
     
@@ -96,9 +97,19 @@ def main():
         generator_val = GenomatClassGenerator(args.ifile_val)
         
         classes = generator.classes
+        
+    x, y = generator[0]
+        
     
     logging.info('making model...')
-    model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+    if args.model == "res":
+        model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+    elif args.model == "lex":
+        _, c, n_pop, n_sites = x.shape
+        model = LexStyleNet(h = c * n_pop).to(device)
+    
+    print(model)
+    count_parameters(model)
     
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)

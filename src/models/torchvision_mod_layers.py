@@ -6,6 +6,65 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+import copy
+
+class LexStyleNet(nn.Module):
+    def __init__(self, h = 34, n_layers = 3):
+        super(LexStyleNet, self).__init__()
+
+        self.convs = nn.ModuleList()
+        
+        self.down = nn.AvgPool1d(2)
+        
+        in_channels = h
+        out_channels = [128, 128, 128]
+        for ix in range(n_layers):
+            self.convs.append(nn.Sequential(nn.Conv1d(in_channels, out_channels[ix], 2), nn.BatchNorm1d(out_channels[ix]), nn.ReLU()))
+            
+            in_channels = copy.copy(out_channels[ix])
+            
+        self.out_pool = nn.AdaptiveAvgPool1d(1)
+        self.out = nn.Sequential(nn.Linear(128, 128), nn.LayerNorm((128,)), nn.ReLU(),
+                                 nn.Linear(128, 3))
+    def forward(self, x):
+        x = x.flatten(1, 2)
+        
+        for ix in range(len(self.convs)):
+            x = self.convs[ix](x)
+            x = self.down(x)
+        
+        x = self.out_pool(x).squeeze()
+
+        return self.out(x)
+    
+class LexStyleNet2D(nn.Module):
+    def __init__(self, h = 34, w = 508, n_layers = 3):
+        super(LexStyleNet, self).__init__()
+
+        self.convs = nn.ModuleList()
+        
+        self.down = nn.AvgPool1d(2)
+        
+        in_channels = h
+        out_channels = [128, 128, 128]
+        for ix in range(n_layers):
+            self.convs.append(nn.Sequential(nn.Conv1d(in_channels, out_channels[ix], 2), nn.BatchNorm1d(out_channels[ix]), nn.ReLU()))
+            
+            in_channels = copy.copy(out_channels[ix])
+            
+        self.out_pool = nn.AdaptiveAvgPool1d(1)
+        self.out = nn.Sequential(nn.Linear(128, 128), nn.LayerNorm((128,)), nn.ReLU(),
+                                 nn.Linear(128, 3), nn.Softmax(dim = -1))
+    def forward(self, x):
+        for ix in range(len(self.convs)):
+            x = self.convs[ix](x)
+            x = self.down(x)
+        
+        x = self.out_pool(x)
+        print(x.shape)
+
+        return self.out(x)
+
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
     """3x3 convolution with padding"""
     return nn.Conv2d(
@@ -245,7 +304,9 @@ class ResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.avgpool(x)
+
         x = torch.flatten(x, 1)
+
         x = self.fc(x)
 
         return x
