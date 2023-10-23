@@ -106,7 +106,7 @@ def main():
         model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
     elif args.model == "lex":
         _, c, n_pop, n_sites = x.shape
-        model = LexStyleNet(h = c * n_pop).to(device)
+        model = LexStyleNet(h = c * n_pop, n_classes = int(args.n_classes)).to(device)
     
     print(model)
     count_parameters(model)

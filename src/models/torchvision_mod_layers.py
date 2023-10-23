@@ -9,7 +9,7 @@ from torch import Tensor
 import copy
 
 class LexStyleNet(nn.Module):
-    def __init__(self, h = 34, n_layers = 3):
+    def __init__(self, h = 34, n_layers = 3, n_classes = 3):
         super(LexStyleNet, self).__init__()
 
         self.convs = nn.ModuleList()
@@ -25,7 +25,7 @@ class LexStyleNet(nn.Module):
             
         self.out_pool = nn.AdaptiveAvgPool1d(1)
         self.out = nn.Sequential(nn.Linear(128, 128), nn.LayerNorm((128,)), nn.ReLU(),
-                                 nn.Linear(128, 3))
+                                 nn.Linear(128, n_classes))
     def forward(self, x):
         x = x.flatten(1, 2)
         
