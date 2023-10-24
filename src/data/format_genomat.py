@@ -212,7 +212,12 @@ def main():
             tag, ifile = ifiles[ij]
             logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
-            X, Y, P, params = load_data(ifile)
+            try:
+                X, Y, P, params = load_data(ifile)
+            except:
+                logging.info('could not read {}!'.format(ifile))
+                comm.send([None, None, None], dest = 0)
+                continue
             #logging.info('have {} matrices...'.format(len(X)))
             
             X_ = []
@@ -254,6 +259,10 @@ def main():
                 Xf, p, tag = comm.recv(source = MPI.ANY_SOURCE)
             else:
                 Xf, p, y = comm.recv(source = MPI.ANY_SOURCE)
+                
+            if Xf is None:
+                n_received += 1
+                continue
             
             logging.info('have len {}'.format(len(Xf)))
             while len(Xf) >= chunk_size:
