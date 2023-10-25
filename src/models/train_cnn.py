@@ -93,8 +93,8 @@ def main():
         generator = GenomatGenerator(args.ifile, args.means, y_ix = y_ix, batch_size = int(args.batch_size) // 4, log_y = args.log_y)
         generator_val = GenomatGenerator(args.ifile_val, args.means, y_ix = y_ix, batch_size = int(args.batch_size) // 4, log_y = args.log_y)
     else:
-        generator = GenomatClassGenerator(args.ifile)
-        generator_val = GenomatClassGenerator(args.ifile_val)
+        generator = GenomatClassGenerator(args.ifile, batch_size = int(args.batch_size))
+        generator_val = GenomatClassGenerator(args.ifile_val, batch_size = int(args.batch_size))
         
         classes = generator.classes
         
