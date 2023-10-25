@@ -986,7 +986,6 @@ class GenomatClassGenerator(object):
         X = []
         y = []
         
-        print(self.batch_size, len(self.classes))
         for k in range(self.batch_size):
             for ix, c in enumerate(self.classes):
                 key = self.keys[c][self.ix]
