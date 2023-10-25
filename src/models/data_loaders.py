@@ -990,13 +990,15 @@ class GenomatClassGenerator(object):
                 
                 x = np.array(self.ifile[c][key]['x'])
                 
+                print(x.shape)
+                
                 X.extend(x)
                 y.extend([ix for u in range(x.shape[0])])
                 
             self.ix += 1
             
         X = torch.FloatTensor(np.array(X))
-        print(X.shape)
+        
         
         if len(X.shape) == 3:
             X = torch.unsqueeze(X, 1)
