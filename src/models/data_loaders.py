@@ -958,6 +958,8 @@ class GenomatClassGenerator(object):
         self.ifile = h5py.File(ifile, 'r')
         self.classes = sorted(list(self.ifile.keys()))
         
+        print(self.classes)
+        
         keys = dict()
         
         for c in self.classes:
