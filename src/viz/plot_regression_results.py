@@ -125,6 +125,8 @@ def main():
     
     classification = False
     
+    
+    ix = 0
     while True:
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
@@ -144,6 +146,8 @@ def main():
             
             Y.extend(y)
             Y_pred.extend(y_pred)
+            
+        ix += 1
             
     Y = (np.array(Y) * generator.y_std + generator.y_mean)
     Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
