@@ -125,7 +125,7 @@ def main():
     
     classification = False
     
-    for ix in range(len(generator)):
+    while True:
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
             
