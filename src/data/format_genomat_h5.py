@@ -181,10 +181,18 @@ def main():
         ifiles = []
         
         classes = sorted(os.listdir(args.idir))
-        
+
         for c in classes:
-            idir = os.path.join(args.idir, c)
-            ifiles.extend([(c, u) for u in find_files(idir)])
+            h5_files = glob.glob(os.path.join(os.path.join(args.idir, c), '*.hdf5'))
+            
+            for ifile in h5_files:
+                ifile_ = h5py.File(ifile, 'r')
+                
+                key0 = list(ifile_.keys())[0]
+                
+                keys = ifile_[key0].keys()
+                
+                ifiles.extend([(ifile, key0 + '/' + u, c) for u in keys])
             
         if comm.rank == 0:
             logging.info('have {} files to parse...'.format(len(ifiles)))
