@@ -390,7 +390,7 @@ class TreeSeqGeneratorV2(object):
         t0 = time.time()
         for ix in range(self.n_per):
             if self.ix > len(self.keys) - 1:
-                return None, None, None, None
+                break
             
             key = self.keys[self.ix]
             self.ix += 1
@@ -444,7 +444,9 @@ class TreeSeqGeneratorV2(object):
             X2.extend(list(global_vec))
             indices.extend(edge_index_)
 
-
+        if len(X) == 0:
+            return None, None, None, None
+        
         if self.regression:
             if self.log_y:
                 y = np.log(np.array(y).astype(np.float32))
