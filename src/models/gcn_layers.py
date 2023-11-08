@@ -1090,7 +1090,8 @@ class GATSeqClassifier(nn.Module):
 
         
     def forward(self, x0, edge_index, batch, x1, x2):
-        n_batch = x0.shape[0]
+        print(x0.shape, batch.num_graphs)
+        n_batch = self.batch_size
         
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
