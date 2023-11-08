@@ -784,11 +784,12 @@ class GATConvClassifier(nn.Module):
             self.norms.append(nn.LayerNorm((gcn_dim, )))
             self.gcns.append(GATv2Conv(gcn_dim, gcn_dim // n_heads, heads = n_heads, dropout = gcn_dropout, name = 'gcn_layer_{}'.format(ix), share_weights = True))
         
-        self.global_transform = MLP((in_dim + gcn_dim) * (n_nodes // 2 // 2), hidden_size, hidden_size)
+        
+        self.global_transform = MLP(256, hidden_size, hidden_size)
         
         # 1d convolution over graph features to cat to MLP layer
-        self.graph_conv = nn.Sequential(*[Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, 3, pooling = 'max'), nn.InstanceNorm1d(in_dim + gcn_dim), nn.ReLU(),
-                                         Res1dBlock(in_dim + gcn_dim, in_dim + gcn_dim, 3, pooling = 'max')])
+        self.graph_conv = nn.Sequential(*[Res1dBlock(in_dim + gcn_dim, 128, 3, pooling = 'max'), nn.InstanceNorm1d(128), nn.ReLU(),
+                                         Res1dBlock(128, 256, 3, pooling = 'max'), nn.AdaptiveAvgPool1d(1)])
         self.conv = Res1dBlock(hidden_size + info_dim, conv_dim, 3)
             
         """
@@ -821,9 +822,11 @@ class GATConvClassifier(nn.Module):
 
         
     def forward(self, x0, edge_index, batch, x1, x2):
+        # embed the node features and cat them to the originals
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         bs = x2.shape[0]
         
+        # forward
         for ix in range(self.n_gcn_iter):
             x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
             x = self.act(x)
@@ -834,7 +837,8 @@ class GATConvClassifier(nn.Module):
         x = to_dense_batch(x, batch)[0]
         _, n_nodes, _ = x.shape
         
-        x = self.graph_conv(x.transpose(1, 2)).flatten(1, 2)
+        x = self.graph_conv(x.transpose(1, 2))
+        x = x.flatten(1, 2)
         
         x = self.global_transform(x)
         x = torch.cat([x.view(bs, self.L, x.shape[-1]), x1], dim = -1)
@@ -1086,6 +1090,8 @@ class GATSeqClassifier(nn.Module):
 
         
     def forward(self, x0, edge_index, batch, x1, x2):
+        n_batch = x0.shape[0]
+        
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
         
@@ -1098,9 +1104,7 @@ class GATSeqClassifier(nn.Module):
         x = to_dense_batch(x, batch)[0]
         _, h = self.graph_gru(x)
         x = torch.flatten(h.transpose(0, 1), 1, 2)
-        
-        n_batch = self.batch_size
-        
+
         x = x.view((n_batch, self.L, x.shape[-1]))
         x = torch.cat([x, x1], dim = -1)
         
