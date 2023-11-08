@@ -1034,7 +1034,7 @@ class GenomatGenerator(object):
         y = []
         
         for ix in range(index * self.batch_size, (index + 1) * self.batch_size):
-            if ix >= len(self.keys[ix]):
+            if ix >= len(self.keys):
                 break
             
             key = self.keys[ix]
