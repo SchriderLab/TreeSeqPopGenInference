@@ -332,7 +332,9 @@ def main():
                 if args.regression:
                     del y[-chunk_size:]
                     
-                logging.info('wrote chunk {}...'.format(count))
+                    logging.info('wrote chunk {}...'.format(count))
+                else:
+                    logging.info('wrote chunk {} for class {}...'.format(counts[tag], tag))
             
             n_received += 1
             if n_received % 10 == 0:
