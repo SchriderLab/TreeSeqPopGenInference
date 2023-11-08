@@ -1034,9 +1034,15 @@ class GenomatGenerator(object):
         y = []
         
         for ix in range(index * self.batch_size, (index + 1) * self.batch_size):
+            if ix >= len(self.keys[ix]):
+                break
+            
             key = self.keys[ix]
             X.extend(np.array(self.ifile[key]['x']))
             y.extend(np.array(self.ifile[key]['y']))
+
+        if len(X) == 0:
+            return None, None
             
         y = np.array(y)
         y = np.squeeze(y)
