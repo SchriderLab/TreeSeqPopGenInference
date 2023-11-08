@@ -455,6 +455,7 @@ class TreeSeqGeneratorV2(object):
             )
         else:
             y = torch.LongTensor(np.array(y))
+        
         X1 = torch.FloatTensor(np.array(X1))
         X2 = torch.FloatTensor(np.array(X2))
 
@@ -1036,6 +1037,7 @@ class GenomatGenerator(object):
             y.extend(np.array(self.ifile[key]['y']))
             
         y = np.array(y)
+        y = np.squeeze(y)
         if self.log_y:
             y = np.log(y)
             
