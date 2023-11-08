@@ -180,7 +180,7 @@ def main():
     if not args.regression:
         ifiles = []
 
-        h5_files = find_files(args.idir, '.hdf5')
+        h5_files = find_files(args.idir, '.hdf5') + glob.glob(os.path.join(args.idir, '*.hdf5'))
         
         for ifile in h5_files:
             ifile_ = h5py.File(ifile, 'r')
