@@ -114,10 +114,14 @@ def main():
     Y = []
     Y_pred = []
     
-    for ix in range(len(generator)):
+    ix = 0
+    while True:
         with torch.no_grad():
             t0 = time.time()
             x, y = generator[ix]
+            
+            if x is None:
+                break
             
             x = x.to(device)
             y = y.to(device)
@@ -132,6 +136,8 @@ def main():
     
             Y.extend(y)
             Y_pred.extend(y_pred)
+        
+        ix += 1
 
     Y = (np.array(Y) * generator.y_std + generator.y_mean)
     Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
