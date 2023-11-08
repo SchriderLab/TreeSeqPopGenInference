@@ -44,6 +44,7 @@ def parse_args():
 
     parser.add_argument("--n_per_batch", default = "16")
     parser.add_argument("--L", default = "128", help = "tree sequence length")
+    parser.add_argument("--n_samples", default = "50", help = "number of present day individuals")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
     
     # data parameter
@@ -93,6 +94,8 @@ def main():
     # model = Classifier(config)
 
     L = int(args.L)
+    n_nodes = int(args.n_samples) * 2 - 1
+    
     if args.y_ix == "None":
         y_ix = None
     else:
@@ -102,11 +105,11 @@ def main():
                                               chunk_size = int(args.chunk_size), y_ix = y_ix, log_y = args.log_y)
     
     if args.model == 'gru':
-        model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+        model = GATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     elif args.model == 'conv':
-        model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+        model = GATConvClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              gcn_dim = int(args.gcn_dim), conv_dim = int(args.conv_dim))
     
