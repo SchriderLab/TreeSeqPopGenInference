@@ -16,7 +16,7 @@ from scipy.optimize import linear_sum_assignment
 
 from collections import deque
 
-def find_files(idir):
+def find_files(idir, match = '.msOut.gz'):
     matches = []
     
     if not os.path.isdir(idir):
@@ -179,23 +179,22 @@ def main():
     
     if not args.regression:
         ifiles = []
-        
-        classes = sorted(os.listdir(args.idir))
 
-        for c in classes:
-            h5_files = glob.glob(os.path.join(os.path.join(args.idir, c), '*.hdf5'))
+        h5_files = find_files(args.idir, '.hdf5')
+        
+        for ifile in h5_files:
+            ifile_ = h5py.File(ifile, 'r')
             
-            for ifile in h5_files:
-                ifile_ = h5py.File(ifile, 'r')
-                
-                key0 = list(ifile_.keys())[0]
-                
-                keys = ifile_[key0].keys()
-                
-                ifiles.extend([(ifile, key0 + '/' + u, c) for u in keys])
+            key0 = list(ifile_.keys())[0]
+            
+            keys = ifile_[key0].keys()
+            
+            ifiles.extend([(ifile, key0 + '/' + u, key0) for u in keys])
             
         if comm.rank == 0:
             logging.info('have {} files to parse...'.format(len(ifiles)))
+    
+        classes = sorted(list(set([u[-1] for u in ifiles])))
     
         counts = dict()
         counts_val = dict()
