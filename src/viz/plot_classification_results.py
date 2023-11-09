@@ -50,6 +50,7 @@ def parse_args():
     # data parameter
     parser.add_argument("--in_dim", default = "4")
     parser.add_argument("--n_classes", default = "5")
+    parser.add_argument("--n_samples", default = "34")
     
     # hyper-parameters
     parser.add_argument("--use_conv", action = "store_true")
@@ -95,15 +96,17 @@ def main():
     generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
                                               chunk_size = int(args.chunk_size), models = args.classes)
     
+    n_nodes = int(args.n_samples) * 2 - 1
+    
     classes = generator.models
     args.n_classes = len(classes)
     
     if args.model == 'gru':
-        model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+        model = GATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     elif args.model == 'conv':
-        model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+        model = GATConvClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              gcn_dim = int(args.gcn_dim), conv_dim = int(args.conv_dim))
     
