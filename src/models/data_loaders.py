@@ -990,6 +990,9 @@ class GenomatClassGenerator(object):
         y = []
         
         for k in range(self.batch_size):
+            if any([self.ix >= len(self.keys[c]) for c in self.classes]):
+                break
+            
             for ix, c in enumerate(self.classes):
                 key = self.keys[c][self.ix]
                 
@@ -999,6 +1002,8 @@ class GenomatClassGenerator(object):
                 y.extend([ix for u in range(x.shape[0])])
                 
             self.ix += 1
+        if len(X) == 0:
+            return None, None
             
         X = torch.FloatTensor(np.array(X))
         

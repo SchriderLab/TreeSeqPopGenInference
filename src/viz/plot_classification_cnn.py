@@ -96,6 +96,7 @@ def main():
     generator = GenomatClassGenerator(args.ifile)
     
     classes = generator.classes
+    args.n_classes = len(classes)
     
     model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
         
@@ -153,6 +154,7 @@ def main():
     df = pd.DataFrame(result)
     df.to_csv(args.ofile, index = False)
     
+    print(Y.shape, Y_pred.shape)
     print(np.mean(accs))
     
 if __name__ == '__main__':
