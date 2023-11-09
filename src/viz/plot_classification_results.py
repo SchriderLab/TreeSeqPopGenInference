@@ -43,7 +43,7 @@ def parse_args():
     parser.add_argument("--ifile", default = "None")
     parser.add_argument("--weights", default = "None")
 
-    parser.add_argument("--n_per_batch", default = "16")
+    parser.add_argument("--n_per_batch", default = "4")
     parser.add_argument("--L", default = "128", help = "tree sequence length")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
     
@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument("--n_gcn_iter", default = "6")
     parser.add_argument("--gcn_dim", default = "26")
     parser.add_argument("--conv_dim", default = "4")
-    parser.add_argument("--classes", default = "ab,ba,none")
+    parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
 
     parser.add_argument("--chunk_size", default = "4")
 
@@ -121,7 +121,8 @@ def main():
     
     accs = []
     
-    for ix in range(len(generator)):
+    ix = 0
+    while True:
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
             
@@ -146,6 +147,8 @@ def main():
             Y_pred.extend(softmax(y_pred, axis = -1))
             
     
+        ix += 1
+    
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
     
@@ -162,6 +165,7 @@ def main():
     df = pd.DataFrame(result)
     df.to_csv(args.ofile, index = False)
     
+    print(Y.shape, Y_pred.shape)
     print(np.mean(accs))
     
     """
