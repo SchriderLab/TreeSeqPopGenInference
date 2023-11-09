@@ -96,6 +96,7 @@ def main():
                                               chunk_size = int(args.chunk_size), models = args.classes)
     
     classes = generator.models
+    args.n_classes = len(classes)
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
@@ -116,9 +117,7 @@ def main():
     
     Y = []
     Y_pred = []
-    
-    classification = False
-    
+
     accs = []
     
     ix = 0
