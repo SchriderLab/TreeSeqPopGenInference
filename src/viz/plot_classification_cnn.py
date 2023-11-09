@@ -111,10 +111,14 @@ def main():
     
     accs = []
     
-    for ix in range(len(generator)):
+    ix = 0
+    while True:
         with torch.no_grad():
             t0 = time.time()
             x, y = generator[ix]
+            
+            if x is None:
+                break
             
             x = x.to(device)
             y = y.to(device)
@@ -131,7 +135,8 @@ def main():
             Y.extend(y)
             Y_pred.extend(softmax(y_pred, axis = -1))
             
-    
+        ix += 1
+                
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
     
