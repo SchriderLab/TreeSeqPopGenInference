@@ -143,12 +143,12 @@ def main():
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy().flatten()
         
+            Y.extend(y)
+            Y_pred.extend(softmax(y_pred, axis = -1))    
+        
             accs.append(accuracy_score(y, np.argmax(y_pred, axis=1)))
     
-            Y.extend(y)
-            Y_pred.extend(softmax(y_pred, axis = -1))
             
-    
         ix += 1
     
     Y = np.array(Y)
