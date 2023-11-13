@@ -298,12 +298,12 @@ def main():
                     data['P'].extend(P)
                     data['Y'].extend(Y)
                 
-                    cond = (len(data['X']) > chunk_size)
+                    cond = (len(data['X']) >= chunk_size)
                 else:
                     data[tag]['X'].extend(X)
                     data[tag]['P'].extend(P)
                 
-                    cond = all([len(data[u]['X']) > chunk_size for u in classes])
+                    cond = all([len(data[u]['X']) >= chunk_size for u in classes])
             
             while cond:
                 if not args.regression:
