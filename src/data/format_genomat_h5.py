@@ -171,8 +171,6 @@ def main():
     
     if comm.rank == 0:
         ofile = h5py.File(args.ofile, 'w')
-        if float(args.val_prop) > 0:
-            ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
 
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     chunk_size = int(args.chunk_size)
@@ -272,9 +270,18 @@ def main():
     else:
         n_received = 0
         
-        Xf = []
-        p = []
-        y = []
+        data = dict()
+        
+        if not args.regression:
+            for c in classes:
+                data[c] = dict()
+                data[c]['X'] = []
+                data[c]['P'] = []
+        else:
+            data = dict()
+            data['X'] = []
+            data['P'] = []
+            data['Y'] = []
         
         while n_received < len(ifiles):
             if not args.regression:
@@ -286,51 +293,40 @@ def main():
                 n_received += 1
                 continue
             else:
-                Xf.extend(X)
-                p.extend(P)
-                
                 if args.regression:
-                    y.extend(Y)
+                    data['X'].extend(X)
+                    data['P'].extend(P)
+                    data['Y'].extend(Y)
                 
-            
-            logging.info('have len {}'.format(len(Xf)))
-            while len(Xf) >= chunk_size:
-                if np.random.uniform() < float(args.val_prop):
-                    if not args.regression:
-                        ofile_val.create_dataset('{}/{}/x'.format(tag, counts_val[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
-                        ofile_val.create_dataset('{}/{}/p'.format(tag, counts_val[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
-                        
-                        counts_val[tag] += 1
-                    else:
-                        ofile_val.create_dataset('{}/x'.format(count_val), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
-                        ofile_val.create_dataset('{}/p'.format(count_val), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
-                        ofile_val.create_dataset('{}/y'.format(count_val), data = np.array(y[-chunk_size:], dtype = np.float32), compression = 'lzf')
-                        
-                        count_val += 1
-                          
-                    ofile_val.flush()
-                    
+                    cond = (len(data['X']) > chunk_size)
                 else:
-                    if not args.regression:
-                        ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
-                        ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
-                        
-                        counts[tag] += 1
-                    else:
-                        ofile.create_dataset('{}/x'.format(count), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
-                        ofile.create_dataset('{}/p'.format(count), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
-                        ofile.create_dataset('{}/y'.format(count), data = np.array(y[-chunk_size:], dtype = np.float32), compression = 'lzf')
-                        
-                        count += 1    
-                    
-                    ofile.flush()
-            
-                del Xf[-chunk_size:]
-                del p[-chunk_size:]
+                    data[tag]['X'].extend(X)
+                    data[tag]['P'].extend(P)
                 
-                if args.regression:
-                    del y[-chunk_size:]
+                    cond = all([len(data[u]['X']) > chunk_size for u in classes])
+            
+            while cond:
+                
+                if not args.regression:
+                    for tag in classes:
+                        ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(data[tag]['X'][-chunk_size:], dtype = np.uint8), compression = 'lzf')
+                                                
+                        counts[tag] += 1
+                        
+                        del data[tag]['X'][-chunk_size:]
+                        del data[tag]['P'][-chunk_size:]
+                else:
+                    ofile.create_dataset('{}/x'.format(count), data = np.array(data['X'][-chunk_size:], dtype = np.uint8), compression = 'lzf')
+                    ofile.create_dataset('{}/y'.format(count), data = np.array(data['Y'][-chunk_size:], dtype = np.float32), compression = 'lzf')
                     
+                    del data['X'][-chunk_size:]
+                    del data['Y'][-chunk_size:]
+                    
+                    count += 1    
+                
+                ofile.flush()
+            
+                if args.regression:
                     logging.info('wrote chunk {}...'.format(count))
                 else:
                     logging.info('wrote chunk {} for class {}...'.format(counts[tag], tag))
@@ -338,17 +334,11 @@ def main():
             n_received += 1
             if n_received % 10 == 0:
                 logging.info('received {} files thus far...'.format(n_received))
-                     
-        if len(Xf) > 0:
-            if not args.regression:
-                ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf, dtype = np.uint8), compression = 'lzf')
-                ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p, dtype = np.float32), compression = 'lzf')
-                
-                counts[tag] += 1
-            else:
-                ofile.create_dataset('{}/x'.format(count), data = np.array(Xf, dtype = np.uint8), compression = 'lzf')
-                ofile.create_dataset('{}/p'.format(count), data = np.array(p, dtype = np.float32), compression = 'lzf')
-                ofile.create_dataset('{}/y'.format(count), data = np.array(y, dtype = np.float32), compression = 'lzf')
+   
+        if args.regression:
+            if len(data['X']) > 0:
+                ofile.create_dataset('{}/x'.format(count), data = np.array(data['X'], dtype = np.uint8), compression = 'lzf')
+                ofile.create_dataset('{}/y'.format(count), data = np.array(data['Y'], dtype = np.float32), compression = 'lzf')
                 
                 count += 1    
         
@@ -356,8 +346,7 @@ def main():
                 
     if comm.rank == 0:
         ofile.close()
-        if float(args.val_prop) > 0:
-            ofile_val.close()
+
             
     # ${code_blocks}
 
