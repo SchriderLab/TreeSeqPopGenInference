@@ -306,7 +306,6 @@ def main():
                     cond = all([len(data[u]['X']) > chunk_size for u in classes])
             
             while cond:
-                
                 if not args.regression:
                     for tag in classes:
                         ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(data[tag]['X'][-chunk_size:], dtype = np.uint8), compression = 'lzf')
@@ -328,8 +327,11 @@ def main():
             
                 if args.regression:
                     logging.info('wrote chunk {}...'.format(count))
+                    cond = (len(data['X']) > chunk_size)
                 else:
                     logging.info('wrote chunk {} for class {}...'.format(counts[tag], tag))
+                    cond = all([len(data[u]['X']) > chunk_size for u in classes])
+                    
             
             n_received += 1
             if n_received % 10 == 0:
