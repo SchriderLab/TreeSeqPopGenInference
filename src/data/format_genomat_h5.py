@@ -23,7 +23,7 @@ def find_files(idir, match = '.msOut.gz'):
         return matches
         
     for root, dirnames, filenames in os.walk(idir):
-        filenames = [ f for f in filenames if os.path.splitext(f)[1] in ('.msOut.gz') ]
+        filenames = [ f for f in filenames if os.path.splitext(f)[1] in (match) ]
         for filename in filenames:
             matches.append(os.path.join(root, filename))
             
