@@ -418,7 +418,6 @@ class TreeSeqGeneratorV2(object):
                 np.array(self.ifile[key]["global_vec"]) - self.global_mean
             ) / self.global_std
 
-            
             edge_index_ = []
             # number of graphs in sequence
             # some graphs are just 0s (we assume it's a padded sequence), but we put them in Batch object
@@ -471,7 +470,6 @@ class TreeSeqGeneratorV2(object):
 
         logging.debug('clocked at {} s'.format(time.time() - t0))
         return batch, X1, X2, y
-
 
 class TreeSeqGenerator(object):
     def __init__(
@@ -994,6 +992,7 @@ class GenomatClassGenerator(object):
                 break
             
             for ix, c in enumerate(self.classes):
+                
                 key = self.keys[c][self.ix]
                 
                 x = np.array(self.ifile[c][key]['x'])
@@ -1002,11 +1001,11 @@ class GenomatClassGenerator(object):
                 y.extend([ix for u in range(x.shape[0])])
                 
             self.ix += 1
+        
         if len(X) == 0:
             return None, None
             
         X = torch.FloatTensor(np.array(X))
-        
         
         if len(X.shape) == 3:
             X = torch.unsqueeze(X, 1)
@@ -1056,7 +1055,9 @@ class GenomatGenerator(object):
             
         X = np.array(X)
         if self.y_ix is not None:
-            y = (np.array(y)[:,[self.y_ix]] - self.y_mean) / self.y_std
+            y = np.array(y)[:,[self.y_ix]]
+            
+        y = (y - self.y_mean) / self.y_std
             
         # expand for the channel dimension
         if len(X.shape) == 3:
