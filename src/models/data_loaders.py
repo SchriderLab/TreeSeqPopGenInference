@@ -385,6 +385,9 @@ class TreeSeqGeneratorV3(object):
         indices = []
         y = []
         X2 = []
+        
+        lengths = []
+        
         batch_ = []
         mask_indices = []
         
@@ -455,21 +458,48 @@ class TreeSeqGeneratorV3(object):
                     
                         _.append(torch.LongTensor(e[j][:, ii]))
 
-                edge_index_.extend(_)
                 
-            x = x[np.where(mask == 1)[0], np.where(mask == 1)[1]]
-
-            y.extend(y_)
-            X.extend(list(x))
-
-            X1.extend(list(x1))
-            X2.extend(list(global_vec))
-            indices.extend(edge_index_)
-
-        mask_indices = np.array(mask_indices).T
+                x_ = x[k][np.where(mask[k] == 1)[0]]
+                
+                lengths.append(x_.shape[0])
+                
+                X.append(x_)
+                y.append(np.expand_dims(y_[k], 0))
+            
+                X1.append(x1[k][np.where(mask[k] == 1)[0]])
+                X2.append(np.expand_dims(global_vec[k], 0))
+                
+                indices.append(torch.cat([torch.unsqueeze(u,0) for u in _]))
 
         if len(X) == 0:
             return None, None, None, None
+
+        ii = np.argsort(lengths)[::-1]
+        
+        X = [X[u] for u in ii]
+        y = [y[u] for u in ii]
+        
+        X1 = [X1[u] for u in ii]
+        X2 = [X2[u] for u in ii]
+        
+        indices = [indices[u] for u in ii]
+        
+        X = np.concatenate(X, 0)
+        y = np.concatenate(y, 0)
+        
+        X1 = np.concatenate(X1, 0)
+        X2 = np.concatenate(X2, 0)
+        
+        indices = torch.cat(indices, 0)
+
+        ii = 0
+        
+        batch_indices = []
+        for l in sorted(lengths, reverse = True):
+            batch_indices.append(torch.LongTensor(np.array(range(ii, ii + l))))
+            ii += l
+            
+        
         
         if self.regression:
             if self.log_y:
@@ -495,6 +525,8 @@ class TreeSeqGeneratorV3(object):
         
         batch.rep_indices = torch.LongTensor(np.array(batch_))
         batch.mask_indices = torch.LongTensor(mask_indices)
+        
+        batch.batch_indices = batch_indices
 
         logging.debug('clocked at {} s'.format(time.time() - t0))
         return batch, X1, X2, y
