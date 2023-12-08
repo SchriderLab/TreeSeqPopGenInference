@@ -1012,7 +1012,7 @@ class GATVAE(nn.Module):
         return x
     
 class GATSeqClassifier(nn.Module):
-    def __init__(self, n_nodes, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
+    def __init__(self, n_nodes, n_classes = 3, in_dim = 4, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
                              num_gru_layers = 2, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 6,
                              use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8): 
         super(GATSeqClassifier, self).__init__()
@@ -1090,7 +1090,8 @@ class GATSeqClassifier(nn.Module):
 
         
     def forward(self, x0, edge_index, batch, x1, x2):
-        n_batch = x0.shape[0] // self.L // self.n_nodes
+        #n_batch = x0.shape[0] // self.L // self.n_nodes
+        n_batch = x1.shape[0]
         
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
@@ -1101,12 +1102,16 @@ class GATSeqClassifier(nn.Module):
             
         x = torch.cat([x0, x], dim = -1)
        
-        x = to_dense_batch(x, batch)[0]
+        x = to_dense_batch(x, batch.batch)[0]
         _, h = self.graph_gru(x)
         x = torch.flatten(h.transpose(0, 1), 1, 2)
 
-        x = x.view((n_batch, self.L, x.shape[-1]))
-        x = torch.cat([x, x1], dim = -1)
+        z = torch.zeros((n_batch, self.L, x.shape[-1])).to(x.device)
+        z[batch.mask_indices[0,:],batch.mask_indices[1,:]] = x
+
+        #print(z.shape, x.shape, x1.shape)
+        
+        x = torch.cat([z, x1], dim = -1)
         
         _, h = self.gru(x)
         h = torch.flatten(h.transpose(0, 1), 1, 2)

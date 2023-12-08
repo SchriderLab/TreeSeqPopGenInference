@@ -326,6 +326,179 @@ class AutoGenerator(object):
 import time
 import logging
 
+class TreeSeqGeneratorV3(object):
+    def __init__(
+        self,
+        ifile,
+        means="demography_means.npz",
+        regression=False,
+        n_samples_per=4,
+        chunk_size=1,
+        models="none",
+        log_y = True,
+        y_ix = None
+    ):  # must be in order, see combine_h5s_v2
+        self.ifile = ifile
+
+        self.y_ix = y_ix
+
+        self.models = models.split(",")
+        self.log_y = log_y
+
+        means = np.load(means)
+
+        self.info_mean = means["v_mean"].reshape(1, 1, -1)
+        self.info_std = means["v_std"].reshape(1, 1, -1)
+
+        self.global_mean = means["v2_mean"].reshape(1, -1)
+        self.global_std = means["v2_std"].reshape(1, -1)
+
+        self.regression = regression
+
+        if self.regression:
+            self.y_mean = means["y_mean"].reshape(1, -1)
+            self.y_std = means["y_std"].reshape(1, -1)
+
+        self.info_std[np.where(self.info_std == 0.0)] = 1.0
+        self.global_std[np.where(self.global_std == 0.0)] = 1.0
+        self.t_mean, self.t_std = tuple(means["times"])
+
+        self.n_per = n_samples_per
+        self.batch_size = chunk_size * self.n_per
+
+        self.on_epoch_end()
+
+    def on_epoch_end(self, shuffle=True):
+        self.keys = sorted(list(self.ifile.keys()))
+        if shuffle:
+            random.shuffle(self.keys)
+
+        self.ix = 0
+
+    def __len__(self):
+        return len(self.keys) // self.n_per
+
+    def __getitem__(self, index):
+        # features, edge_indices, and label, what sequence the graphs belong to
+        X = []
+        X1 = []  # tree-level features (same size as batch_)
+        indices = []
+        y = []
+        X2 = []
+        batch_ = []
+        mask_indices = []
+        
+        batch_ii = 0
+
+        t0 = time.time()
+        for ix in range(self.n_per):
+            if self.ix > len(self.keys) - 1:
+                break
+            
+            key = self.keys[self.ix]
+            self.ix += 1
+
+            # log scale and normalize times
+            x = np.array(self.ifile[key]["x"])
+            ii = np.where(x[:, :, :, 0] > 0)
+            x[ii[0], ii[1], ii[2], 0] = (
+                np.log(x[ii[0], ii[1], ii[2], 0]) - self.t_mean
+            ) / self.t_std
+
+            # log scale n_mutations
+            ii = np.where(x[:, :, :, -1] > 0)
+            x[ii[0], ii[1], ii[2], -1] = np.log(x[ii[0], ii[1], ii[2], -1])
+
+            y_ = np.array(self.ifile[key]["y"])
+            if self.y_ix is not None:
+                y_ = y_[:,[self.y_ix]]
+            
+            x1 = (np.array(self.ifile[key]["x1"]) - self.info_mean) / self.info_std
+            edge_index = np.array(self.ifile[key]["edge_index"])
+
+            mask = np.array(self.ifile[key]["mask"])
+            mask_indices.extend(np.concatenate([np.expand_dims(u, 0) for u in np.where(mask == 1)]).T + np.array([[batch_ii, 0]]))
+            
+            global_vec = (
+                np.array(self.ifile[key]["global_vec"]) - self.global_mean
+            ) / self.global_std
+
+            edge_index_ = []
+            
+            # write down the indices of which graph belongs to which 
+            # example
+            ii = 0
+            for k in range(mask.shape[0]):
+                n_graphs = np.sum(mask[k])
+                
+                batch_.extend(np.ones(n_graphs, dtype = np.int32) * batch_ii)
+                batch_ii += 1
+            
+            # 128 graphs
+            # number of graphs in sequence
+            # some graphs are just 0s (we assume it's a padded sequence), but we put them in Batch object
+            # with an empty list of edges
+            
+            # for each graph sequence
+            for k in range(x.shape[0]):
+                _ = []
+
+                e = edge_index[k]
+
+                # for each graph
+                for j in range(e.shape[0]):
+                    # is it masked?
+                    if mask[k][j] == 1:
+                        # remove the root node
+                        e_ = np.prod(e[j], axis=0)
+                        ii = np.where(e_ >= 0)[0]
+                    
+                        _.append(torch.LongTensor(e[j][:, ii]))
+
+                edge_index_.extend(_)
+                
+            x = x[np.where(mask == 1)[0], np.where(mask == 1)[1]]
+
+            y.extend(y_)
+            X.extend(list(x))
+
+            X1.extend(list(x1))
+            X2.extend(list(global_vec))
+            indices.extend(edge_index_)
+
+        mask_indices = np.array(mask_indices).T
+
+        if len(X) == 0:
+            return None, None, None, None
+        
+        if self.regression:
+            if self.log_y:
+                y = np.log(np.array(y).astype(np.float32))
+            else:
+                y = np.array(y, dtype = np.float32)
+            y = torch.FloatTensor(
+                (y - self.y_mean) / self.y_std
+            )
+        else:
+            y = torch.LongTensor(np.array(y))
+        
+        X1 = torch.FloatTensor(np.array(X1))
+        X2 = torch.FloatTensor(np.array(X2))
+
+        # use PyTorch Geometrics batch object to make one big graph
+        batch = Batch.from_data_list(
+            [
+                Data(x=torch.FloatTensor(X[k]), edge_index=indices[k])
+                for k in range(len(indices))
+            ]
+        )
+        
+        batch.rep_indices = torch.LongTensor(np.array(batch_))
+        batch.mask_indices = torch.LongTensor(mask_indices)
+
+        logging.debug('clocked at {} s'.format(time.time() - t0))
+        return batch, X1, X2, y
+
 class TreeSeqGeneratorV2(object):
     def __init__(
         self,

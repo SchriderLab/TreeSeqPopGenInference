@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import h5py
 import configparser
-from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2
+from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2, TreeSeqGeneratorV3
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
 from gcn_layers import GATSeqClassifier, GATConvClassifier
@@ -22,6 +22,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import time
+from torch_geometric.utils import to_dense_batch
 
 class LabelSmoothing(nn.Module):
     """NLL loss with label smoothing.
@@ -61,7 +62,7 @@ def parse_args():
     parser.add_argument("--n_early", default = "10")
     parser.add_argument("--lr_decay", default = "None")
     
-    parser.add_argument("--n_per_batch", default = "16")
+    parser.add_argument("--n_per_batch", default = "4")
     parser.add_argument("--L", default = "128", help = "tree sequence length")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
     
@@ -135,17 +136,25 @@ def main():
     else:
         y_ix = int(args.y_ix)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
+    logging.info(args)
+    generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
                                    chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
-    validation_generator = TreeSeqGeneratorV2(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
+    validation_generator = TreeSeqGeneratorV3(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
                                               chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
+    
+    batch, x1, x2, y = generator[0]
+    generator.on_epoch_end()
+    
+    bs, n_nodes, n_features = to_dense_batch(batch.x, batch.batch)[0].shape
+    
+    print(generator.batch_size)
     
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     elif args.model == 'conv':
-        model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
+        model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, n_nodes = n_nodes,
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              gcn_dim = int(args.gcn_dim), conv_dim = int(args.conv_dim))
     
@@ -153,10 +162,11 @@ def main():
     
     classes = generator.models
     
-    print(classes)
+    if not args.regression:
+        logging.info('have classes: {}'.format(classes))
     
     model = model.to(device)
-    print(model)
+    logging.info(model)
     count_parameters(model)
     
     if args.weights != "None":
@@ -176,6 +186,7 @@ def main():
     result['acc'] = []
     result['val_loss'] = []
     result['val_acc'] = []
+    result['time'] = []
 
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
@@ -196,6 +207,8 @@ def main():
     min_val_loss = np.inf
     
     for epoch in range(int(args.n_epochs)):
+        t0 = time.time()
+        
         model.train()
         
         n_steps = min([int(args.n_steps), len(generator)])
@@ -213,7 +226,7 @@ def main():
 
             optimizer.zero_grad()
 
-            y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
+            y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
 
             loss = criterion(y_pred, y)
 
@@ -273,7 +286,7 @@ def main():
                 x1 = x1.to(device)
                 x2 = x2.to(device)
 
-                y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
+                y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
 
                 loss = criterion(y_pred, y)
                 
@@ -301,6 +314,7 @@ def main():
         result['val_acc'].append(val_acc)
         result['loss'].append(train_loss)
         result['acc'].append(train_acc)
+        result['time'].append(time.time() - t0)
         
         logging.info('root: Epoch {}, Val Loss: {:.3f}, Val Acc: {:.3f}'.format(epoch + 1, val_loss, val_acc))
         
