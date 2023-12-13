@@ -139,7 +139,7 @@ def main():
             x1 = x1.to(device)
             x2 = x2.to(device)
 
-            y_pred = model(batch.x, batch.edge_index, batch.batch, x1, x2)
+            y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
             y_pred = y_pred.detach().cpu().numpy()
