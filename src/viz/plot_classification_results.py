@@ -12,7 +12,7 @@ import torch
 import torch.nn.functional as F
 import h5py
 import configparser
-from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2
+from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2, TreeSeqGeneratorV3
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
 from gcn_layers import GATSeqClassifier, GATConvClassifier
@@ -93,7 +93,7 @@ def main():
 
     L = int(args.L)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
+    generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
                                               chunk_size = int(args.chunk_size), models = args.classes)
     
     n_nodes = int(args.n_samples) * 2 - 1
@@ -128,6 +128,8 @@ def main():
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
             
+            print(batch.x.shape)
+            
             if batch is None:
                 break
             
@@ -143,12 +145,12 @@ def main():
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy().flatten()
         
-            Y.extend(y)
-            Y_pred.extend(softmax(y_pred, axis = -1))    
-        
             accs.append(accuracy_score(y, np.argmax(y_pred, axis=1)))
     
+            Y.extend(y)
+            Y_pred.extend(softmax(y_pred, axis = -1))
             
+    
         ix += 1
     
     Y = np.array(Y)

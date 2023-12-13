@@ -12,7 +12,7 @@ import torch
 import torch.nn.functional as F
 import h5py
 import configparser
-from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2
+from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2, TreeSeqGeneratorV3
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
 from gcn_layers import GATSeqClassifier, GATConvClassifier
@@ -101,7 +101,7 @@ def main():
     else:
         y_ix = int(args.y_ix)
 
-    generator = TreeSeqGeneratorV2(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = True, 
+    generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = True, 
                                               chunk_size = int(args.chunk_size), y_ix = y_ix, log_y = args.log_y)
     
     if args.model == 'gru':
