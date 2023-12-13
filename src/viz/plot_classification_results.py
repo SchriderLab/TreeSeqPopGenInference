@@ -128,8 +128,6 @@ def main():
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
             
-            print(batch.x.shape)
-            
             if batch is None:
                 break
             
