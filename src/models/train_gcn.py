@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 import time
 from torch_geometric.utils import to_dense_batch
+from datetime import datetime
 
 class LabelSmoothing(nn.Module):
     """NLL loss with label smoothing.
@@ -137,6 +138,13 @@ def main():
         y_ix = int(args.y_ix)
 
     logging.info(args)
+    
+    # write the training setting etc to a txt file
+    io_file = open(os.path.join(args.odir, 'info.txt'), 'w')
+    io_file.write("Starting training at: {:%B %d, %Y}\n".format(datetime.now()))
+    io_file.write(str(args) + '\n')
+    
+    
     generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
                                    chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
     validation_generator = TreeSeqGeneratorV3(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
@@ -147,8 +155,6 @@ def main():
     
     bs, n_nodes, n_features = to_dense_batch(batch.x, batch.batch)[0].shape
     
-    print(generator.batch_size)
-    
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
@@ -158,8 +164,7 @@ def main():
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              gcn_dim = int(args.gcn_dim), conv_dim = int(args.conv_dim))
     
-    
-    
+
     classes = generator.models
     
     if not args.regression:
@@ -167,7 +172,10 @@ def main():
     
     model = model.to(device)
     logging.info(model)
-    count_parameters(model)
+    io_file.write(str(model))
+    
+    io_file.write(str(count_parameters(model)))
+    io_file.close()
     
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
@@ -275,7 +283,7 @@ def main():
         Y = []
         Y_pred = []
         with torch.no_grad():
-            for j in range(min([int(args.n_val_steps), len(validation_generator)])):
+            for j in range(len(validation_generator)):
                 batch, x1, x2, y = validation_generator[j]
                 
                 if batch is None:

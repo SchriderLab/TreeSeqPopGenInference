@@ -26,6 +26,8 @@ import time
 from train_gcn import LabelSmoothing
 from torchvision_mod_layers import resnet34, LexStyleNet
 
+from datetime import datetime
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -79,6 +81,11 @@ def parse_args():
 def main():
     args = parse_args()
     
+    # write the training setting etc to a txt file
+    io_file = open(os.path.join(args.odir, 'info.txt'), 'w')
+    io_file.write("Starting training at: {:%B %d, %Y}\n".format(datetime.now()))
+    io_file.write(str(args) + '\n')
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using " + str(device) + " as device")
     # model = Classifier(config)
@@ -99,8 +106,7 @@ def main():
         classes = generator.classes
         
     x, y = generator[0]
-        
-    
+            
     logging.info('making model...')
     if args.model == "res":
         model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
@@ -108,9 +114,12 @@ def main():
         _, c, n_pop, n_sites = x.shape
         model = LexStyleNet(h = c * n_pop, n_classes = int(args.n_classes)).to(device)
     
-    print(model)
-    count_parameters(model)
+    logging.info(model)
+    io_file.write(str(model))
     
+    io_file.write(str(count_parameters(model)))
+    io_file.close()
+
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
         model.load_state_dict(checkpoint)
@@ -124,6 +133,7 @@ def main():
     result['acc'] = []
     result['val_loss'] = []
     result['val_acc'] = []
+    result['time'] = []
 
     losses = deque(maxlen=500)
     accuracies = deque(maxlen=500)
@@ -143,6 +153,8 @@ def main():
         n_steps = len(generator)
     
     for epoch in range(int(args.n_epochs)):
+        t0 = time.time()
+        
         model.train()
 
         for j in range(n_steps):
@@ -227,6 +239,7 @@ def main():
         result['val_acc'].append(val_acc)
         result['loss'].append(train_loss)
         result['acc'].append(train_acc)
+        result['time'].append(time.time() - t0)
         
         logging.info('root: Epoch {}, Val Loss: {:.3f}, Val Acc: {:.3f}'.format(epoch + 1, val_loss, val_acc))
         
