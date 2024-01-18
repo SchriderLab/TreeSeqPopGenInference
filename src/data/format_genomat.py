@@ -16,6 +16,10 @@ from scipy.optimize import linear_sum_assignment
 
 from collections import deque
 
+"""
+
+"""
+
 def find_files(idir):
     matches = []
     
@@ -36,6 +40,7 @@ def format_matrix(x, pos, pop_sizes = (20, 14), out_shape = (2, 32, 128), metric
     pos = np.array(pos)
     
     if x.shape[0] != s0 + s1:
+        logging.debug('have x with incorrect shape!: {} vs expected {}'.format(x.shape[0], s0 + s1))
         return None, None
     
     if mode == 'seriate_match':
@@ -160,6 +165,8 @@ def parse_args():
 
     return args
 
+import time
+
 def main():
     from mpi4py import MPI
     
@@ -218,13 +225,13 @@ def main():
                 logging.info('could not read {}!'.format(ifile))
                 comm.send([None, None, None], dest = 0)
                 continue
-            #logging.info('have {} matrices...'.format(len(X)))
             
             X_ = []
             P_ = []
             params_ = []
             ls = []
             
+            t0 = time.time()
             for ix, x in enumerate(X):
                 if x is None:
                     continue
@@ -242,7 +249,8 @@ def main():
                     P_.append(p)
                     params_.append(params[ix])
             
-            logging.info('sending {} matrices from {}...'.format(len(X), ifile))    
+            logging.info('sending {} matrices from {}...'.format(len(X_), ifile))    
+            logging.info('took {} seconds to format matrices...'.format(time.time() - t0))
             
             if not args.regression:
                 comm.send([X_, P_, tag], dest = 0)
@@ -305,6 +313,21 @@ def main():
             n_received += 1
             if n_received % 10 == 0:
                 logging.info('received {} files thus far...'.format(n_received))
+                     
+        if len(Xf) > 0:
+            if not args.regression:
+                ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf, dtype = np.uint8), compression = 'lzf')
+                ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p, dtype = np.float32), compression = 'lzf')
+                
+                counts[tag] += 1
+            else:
+                ofile.create_dataset('{}/x'.format(count), data = np.array(Xf, dtype = np.uint8), compression = 'lzf')
+                ofile.create_dataset('{}/p'.format(count), data = np.array(p, dtype = np.float32), compression = 'lzf')
+                ofile.create_dataset('{}/y'.format(count), data = np.array(y, dtype = np.float32), compression = 'lzf')
+                
+                count += 1    
+        
+        ofile.flush()
                 
     if comm.rank == 0:
         ofile.close()
