@@ -219,6 +219,8 @@ def main():
             tag, ifile = ifiles[ij]
             logging.info('{}: working on {}...'.format(comm.rank, ifile))
             
+            t0 = time.time()
+            
             try:
                 X, Y, P, params = load_data(ifile)
             except:
@@ -231,7 +233,6 @@ def main():
             params_ = []
             ls = []
             
-            t0 = time.time()
             for ix, x in enumerate(X):
                 if x is None:
                     continue
