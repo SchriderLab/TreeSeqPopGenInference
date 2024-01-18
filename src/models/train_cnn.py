@@ -168,6 +168,9 @@ def main():
         for j in range(n_steps):
             x, y = generator[j]
             
+            if x is None:
+                break
+            
             x = x.to(device)
             y = y.to(device)
             
@@ -214,6 +217,9 @@ def main():
         with torch.no_grad():
             for j in range(len(generator_val)):
                 x, y = generator_val[j]
+                
+                if x is None:
+                    break
                 
                 x = x.to(device)
                 y = y.to(device)
