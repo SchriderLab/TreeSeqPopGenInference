@@ -250,7 +250,8 @@ def main():
                     params_.append(params[ix])
             
             logging.info('sending {} matrices from {}...'.format(len(X_), ifile))    
-            logging.info('took {} seconds to format matrices...'.format(time.time() - t0))
+            print('time: {}'.format(time.time() - t0))
+            
             
             if not args.regression:
                 comm.send([X_, P_, tag], dest = 0)
