@@ -32,24 +32,31 @@ from datetime import datetime
 # where to insert certain parts of the script
 # ${imports}
 
+"""
+Trains a CNN on either a regression or classification task with data already formatted as an h5 file.
+ 
+"""
+
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--ifile", default = "None")
-    parser.add_argument("--ifile_val", default = "None")
+    parser.add_argument("--ifile", default = "None", help = "data from src/data/format_genomat.  has the genotype matrices for loading during training")
+    parser.add_argument("--ifile_val", default = "None", help = "same as ifile but for validation")
     
-    parser.add_argument("--in_channels", default = "1")
-    parser.add_argument("--n_classes", default = "1")
+    parser.add_argument("--in_channels", default = "1", help = "number of population channels in the image")
+    parser.add_argument("--n_classes", default = "1", help = "number of classes to predict or the dimension of the y variable")
     parser.add_argument("--y_ix", default = "None")
-    parser.add_argument("--log_y", action = "store_true")
+    parser.add_argument("--log_y", action = "store_true", help = "whether the y variables should be in log space.  only applicable to regression tasks")
+    parser.add_argument("--means", default = "None", help = "y means and stds for normalization.  only applicable to regression tasks")
+    
     
     parser.add_argument("--n_epochs", default = "100")
     parser.add_argument("--lr", default = "0.001")
     parser.add_argument("--weight_decay", default = "0.0")
     parser.add_argument("--label_smoothing", default = "0.0")
-    parser.add_argument("--means", default = "None")
+    
     parser.add_argument("--n_steps", default = "None")
     parser.add_argument("--n_early", default = "10")
     
@@ -106,6 +113,7 @@ def main():
         classes = generator.classes
         
     x, y = generator[0]
+    logging.info('input shape {}...'.format(x.shape))
             
     logging.info('making model...')
     if args.model == "res":
