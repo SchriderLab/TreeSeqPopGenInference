@@ -46,10 +46,10 @@ def main():
     keys = list(ifile.keys())
     if args.classi:
         for key in keys:
-            keys = ifile[key].keys()
+            keys_ = ifile[key].keys()
             
-            for key in keys:
-                x = ifile[key]['x']
+            for key_ in keys_:
+                x = ifile[key][key_]['x']
            
                 count += x.shape[0]
     
