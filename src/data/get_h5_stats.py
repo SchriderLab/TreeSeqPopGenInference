@@ -16,6 +16,8 @@ def parse_args():
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--ifile", default = "None")
+    
+    parser.add_argument("--classi", action = "store_true")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -39,8 +41,20 @@ def main():
     
     ifile = h5py.File(args.ifile, 'r')
     
-    keys = list(ifile.keys())
     count = 0
+    
+    keys = list(ifile.keys())
+    if args.classi:
+        for key in keys:
+            keys = ifile[key].keys()
+            
+            for key in keys:
+                x = ifile[key]['x']
+           
+                count += x.shape[0]
+    
+        logging.info('have {} replicates in file'.format(count))
+        return
     
     if len(keys) == 1:
         keys = [keys[0] + '/' + u for u in list(ifile[keys[0]].keys())]
