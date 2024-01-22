@@ -44,7 +44,7 @@ def main():
 
     N_trees = []
     for key in keys:
-        mask = ifile[key]['mask']
+        mask = np.array(ifile[key]['mask'])
         
         n_trees = mask.sum(-1)
         N_trees.extend(n_trees)
