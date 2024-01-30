@@ -16,6 +16,7 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--ifile", default = "None")
 
+    parser.add_argument("--idir", default = "None")
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
 
@@ -34,24 +35,44 @@ def parse_args():
     return args
 
 import numpy as np
+import glob
 
 def main():
     args = parse_args()
     
-    ifile = h5py.File(args.ifile, 'r')
+    if args.idir == "None":
+        ifile = h5py.File(args.ifile, 'r')
+        
+        keys = list(ifile.keys())
     
-    keys = list(ifile.keys())
-
-    N_trees = []
-    for key in keys:
-        mask = np.array(ifile[key]['mask'])
+        N_trees = []
+        for key in keys:
+            mask = np.array(ifile[key]['mask'])
+            
+            n_trees = mask.sum(-1)
+            N_trees.extend(n_trees)
+            
+        print(np.median(N_trees))
+        print(np.std(N_trees))
+    else:
+        ifiles = glob.glob(os.path.join(args.idir, '*.hdf5'))
         
-        n_trees = mask.sum(-1)
-        N_trees.extend(n_trees)
-        
-    print(np.median(N_trees))
-    print(np.std(N_trees))
-        
+        N_trees = []
+        for ifile in ifiles:
+            ifile = h5py.File(ifile, 'r')
+            
+            keys = list(ifile.keys())
+            
+            for key in keys:
+                skeys = ifile[key].keys()
+                
+                for skey in skeys:
+                    e = np.array(ifile[key][skey]['edge_index'])
+                    
+                    N_trees.append(e.shape[0])
+                    
+        print(np.median(N_trees))
+        print(np.std(N_trees))
 
     # ${code_blocks}
 
