@@ -2,9 +2,7 @@
 
 This repository contains details and instructions for replicating results in the associated manuscript.
 
-All packages associated with running the CNN sections can be found in the conda environment specified at [src/models/cnn_training/keras_env.yaml](src/models/cnn_training/keras_env.yaml)
-
-Requirements for the GCN sections: [requirements.txt](requirements.txt).
+To install required packages: `pip install -r requirements.txt`
 
 ---
 
