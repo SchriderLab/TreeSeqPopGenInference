@@ -1,4 +1,0 @@
-Building DAG of jobs...
-MissingInputException in line 14 of /work/users/l/s/lswhiteh/SeqOrSwim/src/models/cnn_training/Snakefile:
-Missing input files for rule process:
-data/input/Q2_2_input.npy

@@ -1,3 +1,0 @@
-Building DAG of jobs...
-CyclicGraphException in line 14 of /work/users/l/s/lswhiteh/SeqOrSwim/src/models/cnn_training/Snakefile:
-Cyclic dependency on rule process.
