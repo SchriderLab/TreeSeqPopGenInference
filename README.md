@@ -62,13 +62,11 @@ foo
 
 #### GCN
 
+*Dylan
+
 #### CNN
 
-Msprime output was seriated using the ORTools package (**TODO**: link). The script used to seriate the data can be found at [foo](foo.py). The script was run using the following command:
-
-```bash
-foo
-```
+Msprime output was seriated using the [ORTools package](https://developers.google.com/optimization).
 
 ### Network Training
 
