@@ -1,4 +1,4 @@
-# The Unreasonable Effectiveness of Graph Convolutional Networks on Population Genetics Inference
+# Tree sequences as a general-purpose tool for population genetic inference
 
 This repository contains details and instructions for replicating results in the associated manuscript.
 
