@@ -2,7 +2,6 @@
 
 import gzip
 import numpy as np
-import networkx as nx
 import itertools
 
 from io import StringIO
@@ -118,42 +117,6 @@ def read_ms_tree(ifile, n = 34, L = 10000):
 def split(word):
     return [char for char in word]
 
-def get_nx_distance_matrices(G):
-    nodes = list(range(0, len(G.nodes())))
-    indices = list(itertools.combinations(nodes, 2))
-    
-    paths = nx.shortest_path(G)
-    D = np.array([len(paths[i][j]) for (i,j) in indices]) / 2.
-    
-    D_mut = []
-    for i,j in indices:
-        path = paths[i][j]
-        
-        _ = [G.edges[path[k], path[k + 1]]['n_mutations'] for k in range(len(path) - 1)]
-
-        D_mut.append(sum(_))
-            
-    D_branch = []
-    for i,j in indices:
-        path = paths[i][j]
-        
-        _ = [G.edges[path[k], path[k + 1]]['weight'] for k in range(len(path) - 1)]
-
-        D_branch.append(sum(_))
-
-    D_r = []
-    for i,j in indices:
-        path = paths[i][j]
-        
-        _ = [G.edges[path[k], path[k + 1]]['r'] for k in range(len(path) - 1)]
-
-        D_r.append(np.mean(_))
-
-    # hops, mutations, branch lengths, and mean region size along shortest paths
-    D = np.array([D, D_mut, D_branch, D_r], dtype = np.float32)
-
-
-
 ######
 # generic function for msmodified
 # ----------------
@@ -163,7 +126,6 @@ def load_data(msFile, ancFile = None, n = None, leave_out_last = False):
     # no migration case
     if ancFile is not None:
         ancFile = gzip.open(ancFile, 'r')
-
 
     ms_lines = [u.decode('utf-8') for u in msFile.readlines()]
 

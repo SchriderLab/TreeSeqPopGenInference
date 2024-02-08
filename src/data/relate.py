@@ -50,12 +50,12 @@ def parse_args():
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
     parser.add_argument("--idir", default = "None")
     parser.add_argument("--L", default = "10000")
-    parser.add_argument("--mu", default = "1.1e-8")
-    parser.add_argument("--r", default = "1.2e-8")
-    parser.add_argument("--N", default = "1000")
+    parser.add_argument("--mu", default = "5e-8")
+    parser.add_argument("--r", default = "2e-8")
+    parser.add_argument("--N", default = "233863")
     
     parser.add_argument("--n_samples", default = "34")
-    parser.add_argument("--relate_path", default = "/nas/longleaf/home/ddray/SeqOrSwim/relate/bin/Relate")
+    parser.add_argument("--relate_path", default = "relate/bin/Relate")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -87,17 +87,21 @@ def main():
     ### get haplotype and sample files
     logging.info('uncompressing data...')
     ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
+    print(ifiles)
     for ix in range(len(ifiles)):
         ifile = ifiles[ix]
-        
+
         if '.gz' in ifile:
             os.system('gzip -d {}'.format(ifile))
             
             ifile = ifile.replace('.gz', '')
             
-        ifiles[ix] = ifile
+        ifiles[ix] = os.path.abspath(ifile)
     
-    rcmd = 'cd {3} && Rscript /nas/longleaf/home/ddray/SeqOrSwim/src/data/ms2haps.R {0} {1} {2}'
+    rscript_path = os.path.join(os.getcwd(), 'src/data/ms2haps.R')
+    args.relate_path = os.path.join(os.getcwd(), args.relate_path)
+    
+    rcmd = 'cd {3} && Rscript ' + rscript_path + ' {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
     for ifile in ifiles:
@@ -132,8 +136,8 @@ def main():
         """
 
         
-        haps = sorted(glob.glob(os.path.join(odir, '*.haps')))
-        samples = [u.replace('.haps', '.sample') for u in haps if os.path.exists(u.replace('.haps', '.sample'))]
+        haps = list(map(os.path.abspath, sorted(glob.glob(os.path.join(odir, '*.haps')))))
+        samples = list(map(os.path.abspath, [u.replace('.haps', '.sample') for u in haps if os.path.exists(u.replace('.haps', '.sample'))]))
         
         # we need to rewrite the haps files (for haploid organisms)
         for sample in samples:

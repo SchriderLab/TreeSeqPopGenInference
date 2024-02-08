@@ -62,7 +62,7 @@ def parse_args():
     
     parser.add_argument("--window_size", default = "10000", help = "size in base pairs of the region to simulate")
     
-    parser.add_argument("--mt_range", default = "None")
+    parser.add_argument("--mt_range", default = "0.3,0.5")
     parser.add_argument("--t_range", default = "None")
     
     parser.add_argument("--trees", action = "store_true")
