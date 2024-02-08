@@ -1,0 +1,3 @@
+[submodule "relate"]
+	path = relate
+	url = https://github.com/MyersGroup/relate.git
