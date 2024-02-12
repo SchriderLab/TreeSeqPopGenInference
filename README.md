@@ -42,6 +42,14 @@ gcc -O3 -o ms ms.c streec.c rand2.c -lm
 ```
 This is done as our simulation commands for ms that include no introgression between populations produce a SegFault when ms is built with rand1.c for whatever reason.
 
+For the selection sims, you'll need `discoal`: 
+
+```
+git clone https://github.com/kr-colab/discoal.git
+cd discoal
+make discoal
+```
+
 Relate is included as a submodule in this repo and should be built like:
 ```
 cd relate/build
@@ -50,7 +58,7 @@ make all
 ```
 
 ---
-## Simulations
+## Simulations and inference with Relate
 
 ### Recombination
 
@@ -101,7 +109,7 @@ python3 src/data/simulate_msmodified.py --ifile params.txt --odir data/dros/ba -
 python3 src/data/simulate_msmodified.py --ifile params.txt --odir data/dros/bi --direction bi
 ```
 
-This will generate 1000 replicates for each of the 42 parameters that we include from the params.txt file (we throw our parameters that have a log-likelihood > -2000).
+This will generate 1000 replicates for each of the 42 parameters that we include from the params.txt file (we throw out parameters that have a log-likelihood > -2000).
 
 Then we can infer the tree sequences using Relate:
 
@@ -112,6 +120,27 @@ python3 src/SLURM/relate_distributed.py --idir data/dros/ba --odir data/dros_rel
           --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
 python3 src/SLURM/relate_distributed.py --idir data/dros/bi --odir data/dros_relate/bi \
           --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
+```
+
+### Selection
+
+We simulated five different scenarios involving selection as detailed in the paper.  The current routine is only compatible with SLURM:
+
+```
+# simulates 100k of each category by submitting 10000 jobs with 10 replicates each
+python3 src/data/simulate_selection.py --odir /work/users/d/d/ddray/selection_sims
+```
+
+It's helpful for this case to chunk the data for pre-processing.  This script splits and copies the ms files in selection_sims to some number of individual folders in `--odir`:
+
+```
+python3 src/data/chunk_data.py --idir /work/users/d/d/ddray/selection_sims --odir /work/users/d/d/ddray/selection_sims_chunked --n_per 250 # the number of ms files per folder
+```
+
+Finally, we can infer with relate via:
+
+```
+python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_sims_chunked --L 110000 --mu 1.5e-8 --r 1e-8 --slurm
 ```
 
 Simulations were done using the relevant files in `src/data/`, named with the task being simulated (i.e. `simulate_recombination.py`). These scripts were launched using the `src/SLURM/simulate_demography_data.py` and `src/SLURM/simulate_grids.py` scripts on a SLURM cluster.
