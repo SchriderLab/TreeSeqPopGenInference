@@ -93,8 +93,10 @@ python3 src/SLURM/simulate_demography_data.py --odir data/demography --slurm # i
 To run Relate on each of the output folders:
 
 ```
-python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000 --n_samples 50 --idir data/demography --odir data/demography_relate
-python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000 --n_samples 50 --idir data/demography --odir data/demography_relate --slurm # if on a cluster
+python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000 --n_samples 50 \
+                    --idir data/demography --odir data/demography_relate
+python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000 --n_samples 50 \
+                    --idir data/demography --odir data/demography_relate --slurm # if on a cluster
 ```
 
 Here we used the src/SLURM script which calls the src/data/relate.py routine that we used in the recombination case. `simulate_demography_data.py` writes the ms files to individual folders which allows for the work of Relate to be spread over many cpus via sbatch if available.
@@ -134,13 +136,15 @@ python3 src/data/simulate_selection.py --odir /work/users/d/d/ddray/selection_si
 It's helpful for this case to chunk the data for pre-processing.  This script splits and copies the ms files in selection_sims to some number of individual folders in `--odir`:
 
 ```
-python3 src/data/chunk_data.py --idir /work/users/d/d/ddray/selection_sims --odir /work/users/d/d/ddray/selection_sims_chunked --n_per 250 # the number of ms files per folder
+python3 src/data/chunk_data.py --idir /work/users/d/d/ddray/selection_sims \
+           --odir /work/users/d/d/ddray/selection_sims_chunked --n_per 250 # the number of ms files per folder
 ```
 
 Finally, we can infer with relate via:
 
 ```
-python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_sims_chunked --L 110000 --mu 1.5e-8 --r 1e-8 --slurm
+python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_sims_chunked \
+                    --L 110000 --mu 1.5e-8 --r 1e-8 --N 10000 --slurm
 ```
 
 ## Processing
