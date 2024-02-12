@@ -93,10 +93,22 @@ Here we used the src/SLURM script which calls the src/data/relate.py routine tha
 
 ### Introgression
 
-We simulated a demographic model of introgression between Drosophila Sechellia and D. Simulans.  To simulate:
+We simulated a demographic model of introgression between Drosophila Sechellia and D. Simulans using the same routine as in https://github.com/SchriderLab/introNets.  The demographic model parameters were estimated using DADI (https://github.com/SchriderLab/introNets/tree/main/dadiBootstrapCode).  We include the resulting parameters in `params.txt`.  To simulate (with ms):
 
 ```
+python3 src/data/simulate_msmodified.py --ifile params.txt --odir data/dros/ab --direction ab # use --slurm with this script as well if you have sbatch
+python3 src/data/simulate_msmodified.py --ifile params.txt --odir data/dros/ba --direction ba
+python3 src/data/simulate_msmodified.py --ifile params.txt --odir data/dros/bi --direction bi
+```
 
+This will generate 1000 replicates for each of the 42 parameters that we include from the params.txt file (we throw our parameters that have a log-likelihood > -2000).
+
+Then we can infer the tree sequences using Relate:
+
+```
+python3 src/SLURM/relate_distributed.py --idir data/dros/ab --odir data/dros_relate/ab --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34 # use --slurm with this script as well if you have sbatch
+python3 src/SLURM/relate_distributed.py --idir data/dros/ba --odir data/dros_relate/ba --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
+python3 src/SLURM/relate_distributed.py --idir data/dros/bi --odir data/dros_relate/bi --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
 ```
 
 Simulations were done using the relevant files in `src/data/`, named with the task being simulated (i.e. `simulate_recombination.py`). These scripts were launched using the `src/SLURM/simulate_demography_data.py` and `src/SLURM/simulate_grids.py` scripts on a SLURM cluster.
