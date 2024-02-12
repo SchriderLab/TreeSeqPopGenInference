@@ -21,8 +21,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--ifile", default = "None")
-    parser.add_argument("--chunk_size", default = "1000")
+    parser.add_argument("--ifile", default = "recom.runms.sh", help = "file of ms commands for running recombination rate estimation simulations")
+    parser.add_argument("--chunk_size", default = "1000", help = "relevant for SLURM. how many simulation replicates to give each job submission")
+    parser.add_argument("--slurm", action = "store_true", help = "are we using SLURM i.e. sbatch?")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -44,7 +45,11 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms 50 {2} -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}"'
+    if args.slurm:
+        cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms 50 {2} -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}"'
+    else:
+        cmd = 'msdir/ms 50 {2} -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}'
+        
     lines = open(args.ifile, 'r').readlines()
     
     c = chunks(lines, int(args.chunk_size))
