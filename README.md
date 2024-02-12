@@ -32,8 +32,24 @@ git clone https://github.com/pyg-team/pytorch_geometric.git
 cd pytorch_geometric
 python3 setup.py install
 ```
----
+We use various genetic simulators to accomplish the experiments.  We include the source for ms twice in two different folders as it is meant to be built two different ways: 
+```
+cd msdir/
+gcc -O3 -o ms ms.c streec.c rand1.c -lm
 
+cd ../msdir_rand2/
+gcc -O3 -o ms ms.c streec.c rand2.c -lm
+```
+This is done as our simulation commands for ms that include no introgression between populations produce a SegFault when ms is built with rand1.c for whatever reason.
+
+Relate is included as a submodule in this repo and should be built like:
+```
+cd relate/build
+cmake ..
+make all
+```
+
+---
 ## Simulations
 
 Simulations were done using the relevant files in `src/data/`, named with the task being simulated (i.e. `simulate_recombination.py`). These scripts were launched using the `src/SLURM/simulate_demography_data.py` and `src/SLURM/simulate_grids.py` scripts on a SLURM cluster.
