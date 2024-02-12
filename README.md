@@ -143,8 +143,6 @@ Finally, we can infer with relate via:
 python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_sims_chunked --L 110000 --mu 1.5e-8 --r 1e-8 --slurm
 ```
 
-Simulations were done using the relevant files in `src/data/`, named with the task being simulated (i.e. `simulate_recombination.py`). These scripts were launched using the `src/SLURM/simulate_demography_data.py` and `src/SLURM/simulate_grids.py` scripts on a SLURM cluster.
-
 ## Processing
 
 ### GCN
