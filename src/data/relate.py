@@ -127,15 +127,6 @@ def main():
         ofile.write('{0} {1} {2}\n'.format(L, r * L, r * 10**8))
         ofile.close()
         
-        """
-        ofile = open(ifile.split('.')[0] + '.poplabels', 'w')
-        ofile.write('sample population group sex\n')
-        for k in range(1, 26):
-            ofile.write('UNR{} POP POP 1\n'.format(k))
-        ofile.close()
-        """
-
-        
         haps = list(map(os.path.abspath, sorted(glob.glob(os.path.join(odir, '*.haps')))))
         samples = list(map(os.path.abspath, [u.replace('.haps', '.sample') for u in haps if os.path.exists(u.replace('.haps', '.sample'))]))
         
