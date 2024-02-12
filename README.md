@@ -75,10 +75,28 @@ python3 src/data/relate.py --L 20000 --mu 1.5e-8 --r 1e-7 --N 14714 --idir data/
 
 ### Demography
 
-For demography the sample size is again 50 and we simulate over 5 different demographic parameters detailed in the manuscript.  To generate locally:
+For demography the sample size is again 50 and we simulate over 5 different demographic parameters detailed in the manuscript.  To generate (100k replicates):
 
 ```
-python3 src/
+python3 src/SLURM/simulate_demography_data.py --odir data/demography
+python3 src/SLURM/simulate_demography_data.py --odir data/demography --slurm # if on a cluster
+```
+
+To run Relate on each of the output folders:
+
+```
+python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000 --n_samples 50 --idir data/demography --odir data/demography_relate
+python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000 --n_samples 50 --idir data/demography --odir data/demography_relate --slurm # if on a cluster
+```
+
+Here we used the src/SLURM script which calls the src/data/relate.py routine that we used in the recombination case. `simulate_demography_data.py` writes the ms files to individual folders which allows for the work of Relate to be spread over many cpus via sbatch if available.
+
+### Introgression
+
+We simulated a demographic model of introgression between Drosophila Sechellia and D. Simulans.  To simulate:
+
+```
+
 ```
 
 Simulations were done using the relevant files in `src/data/`, named with the task being simulated (i.e. `simulate_recombination.py`). These scripts were launched using the `src/SLURM/simulate_demography_data.py` and `src/SLURM/simulate_grids.py` scripts on a SLURM cluster.
