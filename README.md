@@ -106,9 +106,12 @@ This will generate 1000 replicates for each of the 42 parameters that we include
 Then we can infer the tree sequences using Relate:
 
 ```
-python3 src/SLURM/relate_distributed.py --idir data/dros/ab --odir data/dros_relate/ab --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34 # use --slurm with this script as well if you have sbatch
-python3 src/SLURM/relate_distributed.py --idir data/dros/ba --odir data/dros_relate/ba --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
-python3 src/SLURM/relate_distributed.py --idir data/dros/bi --odir data/dros_relate/bi --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
+python3 src/SLURM/relate_distributed.py --idir data/dros/ab --odir data/dros_relate/ab \
+          --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34 # use --slurm with this script as well if you have sbatch
+python3 src/SLURM/relate_distributed.py --idir data/dros/ba --odir data/dros_relate/ba \
+          --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
+python3 src/SLURM/relate_distributed.py --idir data/dros/bi --odir data/dros_relate/bi \
+          --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
 ```
 
 Simulations were done using the relevant files in `src/data/`, named with the task being simulated (i.e. `simulate_recombination.py`). These scripts were launched using the `src/SLURM/simulate_demography_data.py` and `src/SLURM/simulate_grids.py` scripts on a SLURM cluster.
