@@ -94,7 +94,7 @@ positions: 0.0014 0.0161 0.0231 0.0525 0.0580 ...
 ...
 ```
 
-This is the format of the genotype data our routines expect if you wish to use this with other simulation results or real data.
+This is the format of the genotype data our routines expect if you wish to use this with other simulation results or real data.  In the formatting step, we take the parameters to predict from the line with `\\` or ignore them in the case that we are doing classification.  
 
 We can now infer the tree sequences for each replicate by calling Relate via Python like:
 
