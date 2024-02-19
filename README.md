@@ -1,6 +1,8 @@
 # Tree sequences as a general-purpose tool for population genetic inference
 
-This repository contains details and instructions for replicating results in the associated manuscript.
+This repo and docs are still a work in progress, but hopefully should be finished soon.  If you are trying to run this code now or have other questions about it please contact ddray@email.unc.edu.
+
+This repository contains details and instructions for replicating results in the associated manuscript, i.e. using GCN networks and inferred tree sequences from Relate (https://myersgroup.github.io/relate/) to predict demographic parameters or do model classification etc.
 The code relies mostly on torch and torch-geometric.  We used torch==2.1.1+cu121 but any version compatible with the current torch-geometric should work. 
 
 Other python pre-requisites:
