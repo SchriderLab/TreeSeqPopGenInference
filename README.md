@@ -166,8 +166,8 @@ python3 src/data/chunk_data.py --idir /work/users/d/d/ddray/selection_sims \
 Finally, we can infer with relate via:
 
 ```
-python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_sims_chunked \
-                    --L 110000 --mu 1.5e-8 --r 1e-8 --N 10000 --slurm
+python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_sims_chunked --odir some_dir \
+                    --L 110000 --mu 1.5e-8 --r 1e-8 --N 10000 --n_samples 104 --slurm
 ```
 
 ## Processing
