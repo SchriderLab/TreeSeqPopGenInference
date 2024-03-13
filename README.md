@@ -180,10 +180,10 @@ First we convert the tree sequences output via our Relate routines (which are ou
 python3 src/data/format_relate.py --idir data/recom_relate --ms_dir data/recom/ --pop_sizes 50,0 --ofile recom.hdf5
 ```
 
-Next we split the data into a training and validation set, and trim sequences longer than 128 trees:
+Next we split the data into a training and validation set, and trim sequences longer than 128 trees (make sure to specify the full path for the output file and `--classes none` in the case of regression):
 
 ```
-
+python3 src/data/combine_h5s.py --i recom.hdf5 --ofile ./recom_combined.hdf5 --classes none
 ```
 
 ### CNN
