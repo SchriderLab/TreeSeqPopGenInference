@@ -185,8 +185,15 @@ Next we split the data into a training and validation set, and trim sequences lo
 ```
 python3 src/data/combine_h5s.py --i recom.hdf5 --ofile ./recom_combined.hdf5 --classes none
 ```
+By default the validation proportion is 0.1, but can be changed with the `--val_prop` argument.  The validation data is written to a separate hdf5 file with the same name but the suffix `_val.hdf5`.
 
 ### CNN
+
+We can work directly with the ms files since we're only using genotype matrices for the CNN.  Because we use seriation to sort the individuals in the genotype matrix (and potentially linear matching if there are two populations) which is somewhat costly, we parallize the operation over some number of CPU cores to make it faster. For the recombination example the formatting command would be:
+
+```
+mpirun -n 4 python3 src/data/format_genomat.py --idir data/recom/ --ofile ./recom_512.hdf5 --out_shape 1,50,512 --mode seriate --regression --pop_sizes 50,0
+```
 
 ## Training
 
