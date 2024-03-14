@@ -23,20 +23,11 @@ from ete3 import Tree
 import itertools
 from scipy.spatial.distance import squareform
 import time
-from simulate_msprime_grid import make_distance_matrix
 
-"""
-notes:
-training_results/seln_rnn_i2/ --n_steps 1000 --lr 0.00001 --L 128 --n_gcn_iter 16 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4
-training_results/seln_rnn_i3/ --n_steps 1000 --lr 0.00001 --L 92 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4
-training_results/seln_rnn_i4/ --n_steps 1000 --lr 0.00001 --L 128 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4"
-training_results/seln_rnn_i5/ --n_steps 1000 --lr 0.0001 --L 128 --n_gcn_iter 32 --lr_decay 0.98 --pad_l --in_dim 3 --n_classes 5 --n_per_batch 4"
-
-"""
 
 import gzip
 
-def parse_line(line, s0, s1, ):
+def parse_line(line, s0, s1):
     nodes = []
     parents = []
     lengths = []
@@ -157,18 +148,12 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--ms_dir", default = "None")
-    parser.add_argument("--idir", default = "None")
+    parser.add_argument("--ms_dir", default = "None", help = "directory with compressed ms simulations (needs to be *.msOut.gz)")
+    parser.add_argument("--idir", default = "None", help = "directory with compressed Relate output (needs to be *.anc.gz)")
     
-    parser.add_argument("--n_samples", default = "None")
-    parser.add_argument("--val_prop", default = "0.1")
-    parser.add_argument("--pop_sizes", default = "20,14")
-    
-    parser.add_argument("--n_sample", default = "None")
-    
-    parser.add_argument("--topological_order", action = "store_true")
-    parser.add_argument("--bidirectional", action = "store_true")
+    parser.add_argument("--pop_sizes", default = "20,14", help = "population sizes (for single populations pass in N,0) doesn't support more than two at current")
 
+    parser.add_argument("--bidirectional", action = "store_true", help = "saves the edges twice, once in each direction")
     parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
 
@@ -198,13 +183,20 @@ def main():
     for ii in range(len(ifiles)):
         tag = tags[ii]
         ifile = ifiles[ii]
-        print(tag)
-                
+        
         if len([u for u in os.listdir(args.idir) if '.anc' in u]) > 1:
-            anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[1] == ifile.split('/')[-1].split('.')[1])])[0]
+            anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[1] == ifile.split('/')[-1].split('.')[1])])
+            if len(anc_file) == 1:
+                anc_file = anc_file[0]
+            else:
+                anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[0] == ifile.split('/')[-1].split('.')[0])])
+        
+                if len(anc_file) == 1:
+                    anc_file = anc_file[0]
+                else:
+                    print('couldnt match ms and anc files!...exiting')
         else:
             anc_file = os.path.join(args.idir, [u for u in os.listdir(args.idir) if '.anc' in u][0])
-        print(anc_file)
         
         anc_file = gzip.open(anc_file, 'r')
         
@@ -297,7 +289,7 @@ def main():
                 Edges.append(edges)
                 infos.append(info_vec)
             
-            logging.info('iteration took {} seconds...'.format(time.time() - t0))
+            #logging.info('iteration took {} seconds...'.format(time.time() - t0))
             infos = np.array(infos)
             global_vec = np.array(list(np.mean(infos, axis = 0)) + list(np.std(infos, axis = 0)) + list(np.median(infos, axis = 0)) + [infos.shape[0]], dtype = np.float32)
             

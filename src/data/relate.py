@@ -18,7 +18,7 @@ import string
 # L = 110000
 # mu = 1.2e-8
 # r = 1e-8
-# 
+# N = 10000
 
 # for recombination experiments
 # L = 20000

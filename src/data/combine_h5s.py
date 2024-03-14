@@ -10,74 +10,16 @@ import sys
 sys.path.insert(0, './src/models')
 
 from data_loaders import TreeSeqGenerator
-from torch_geometric.utils import to_dense_batch
 from typing import List
 
 import torch
 from torch import Tensor
 
-from torch_geometric.utils import degree
-import matplotlib
-matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from collections import deque
 import glob
 import random
-
-def unbatch(src: Tensor, batch: Tensor, dim: int = 0) -> List[Tensor]:
-    r"""Splits :obj:`src` according to a :obj:`batch` vector along dimension
-    :obj:`dim`.
-
-    Args:
-        src (Tensor): The source tensor.
-        batch (LongTensor): The batch vector
-            :math:`\mathbf{b} \in {\{ 0, \ldots, B-1\}}^N`, which assigns each
-            entry in :obj:`src` to a specific example. Must be ordered.
-        dim (int, optional): The dimension along which to split the :obj:`src`
-            tensor. (default: :obj:`0`)
-
-    :rtype: :class:`List[Tensor]`
-
-    Example:
-
-        >>> src = torch.arange(7)
-        >>> batch = torch.tensor([0, 0, 0, 1, 1, 2, 2])
-        >>> unbatch(src, batch)
-        (tensor([0, 1, 2]), tensor([3, 4]), tensor([5, 6]))
-    """
-    sizes = degree(batch, dtype=torch.long).tolist()
-    return src.split(sizes, dim)
-
-def unbatch_edge_index(edge_index: Tensor, batch: Tensor) -> List[Tensor]:
-    r"""Splits the :obj:`edge_index` according to a :obj:`batch` vector.
-
-    Args:
-        edge_index (Tensor): The edge_index tensor. Must be ordered.
-        batch (LongTensor): The batch vector
-            :math:`\mathbf{b} \in {\{ 0, \ldots, B-1\}}^N`, which assigns each
-            node to a specific example. Must be ordered.
-
-    :rtype: :class:`List[Tensor]`
-
-    Example:
-
-        >>> edge_index = torch.tensor([[0, 1, 1, 2, 2, 3, 4, 5, 5, 6],
-        ...                            [1, 0, 2, 1, 3, 2, 5, 4, 6, 5]])
-        >>> batch = torch.tensor([0, 0, 0, 0, 1, 1, 1])
-        >>> unbatch_edge_index(edge_index, batch)
-        (tensor([[0, 1, 1, 2, 2, 3],
-                [1, 0, 2, 1, 3, 2]]),
-        tensor([[0, 1, 1, 2],
-                [1, 0, 2, 1]]))
-    """
-    deg = degree(batch, dtype=torch.int64)
-    ptr = torch.cat([deg.new_zeros(1), deg.cumsum(dim=0)[:-1]], dim=0)
-
-    edge_batch = batch[edge_index[0]]
-    edge_index = edge_index - ptr[edge_batch]
-    sizes = degree(edge_batch, dtype=torch.int64).cpu().tolist()
-    return edge_index.split(sizes, dim=1)
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -88,19 +30,17 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--idir", default = "None")
-    parser.add_argument("--ofile", default = "seln_means.npz")
+    parser.add_argument("--i", default = "None", help = "input file or directory of h5 files to process")
+    parser.add_argument("--ofile", default = "None", help = "h5 file to output the results to")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
     
-    parser.add_argument("--L", default = "128")
-    parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
-    parser.add_argument("--chunk_size", default = "5")
-    parser.add_argument("--sampling_mode", default = "sequential")
+    parser.add_argument("--L", default = "128", help = "max length of tree sequence")
+    #parser.add_argument("--n_sample_iter", default = "3") # number of times to sample sequences > L
+    parser.add_argument("--chunk_size", default = "5", help = "write replicates to chunks, drastically speeds up read time (only applies to the regression case as chunk size in the classification case is always set to the number of classes)")
+    parser.add_argument("--sampling_mode", default = "sequential", help = "sequential | equi, if equi sample trees with replacement based on how much of the chrom they take up")
     
-    parser.add_argument("--val_prop", default = "0.1")
+    parser.add_argument("--val_prop", default = "0.1", help = "proportion of data to put in val file which is saved with the suffix _val.hdf5")
     
-    parser.add_argument("--n_sample", default = "None")
-
     args = parser.parse_args()
 
     if args.verbose:
@@ -114,10 +54,12 @@ def parse_args():
 def main():
     args = parse_args()
     
-    ifiles = glob.glob(os.path.join(args.idir, '*/*.hdf5')) + glob.glob(os.path.join(args.idir, '*.hdf5'))
+    if '.hdf5' in args.i:
+        ifiles = [args.i]
+    else:
+        ifiles = glob.glob(os.path.join(args.i, '*/*.hdf5')) + glob.glob(os.path.join(args.i, '*.hdf5'))
+    
     random.shuffle(ifiles)
-
-    #ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
     counts = dict()
     
     # classification
@@ -275,44 +217,13 @@ def main():
                     cond = (len(data['x']) > 0)
                     
             
-            
-            
-
         logging.info('have {} training, {} validation chunks...'.format(counter, val_counter))
             
     ofile.close()
     if val_prop > 0:
         ofile_val.close()
     
-    """
-    mean_bl = np.mean(bls)
-    std_bl = np.std(bls)
-    m_x1 = np.mean(np.array(x1_means), axis = 0)
-    s_x1 = np.std(np.array(x1_means), axis = 0)
-    
-    if not classification:
-        m_y = np.mean(np.array(yl), axis = 0)
-        s_y = np.std(np.array(yl), axis = 0)
-    
-        np.savez(args.ofile.replace('hdf5', 'npz'), bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1, m_y = m_y, s_y = s_y)
-    else:
-        np.savez(args.ofile.replace('hdf5', 'npz'), bl = np.array([mean_bl, std_bl]), m_x1 = m_x1, s_x1 = s_x1)
-        
-    
-    logging.info('closing files and plotting hist...')
-    ofile.close()
-    ofile_val.close()
-        
-    plt.hist(lengths, bins = 35)
-    plt.savefig('seql_hist.png', dpi = 100)
-    plt.close()
-        
-    plt.hist(n_muts, bins = 35)
-    plt.savefig('nmut_hist.png', dpi = 100)
-    plt.close()
-    """
-    
-        
+
         
     # ${code_blocks}
 
