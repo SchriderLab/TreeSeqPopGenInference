@@ -19,6 +19,10 @@ import logging, os
 
 import numpy as np
 import pandas as pd
+import matplotlib
+# cluster safe
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 
 import time
@@ -56,48 +60,42 @@ def parse_args():
     parser.add_argument("--verbose", action="store_true", help="display messages")
     parser.add_argument("--ifile", default="None", help = "training h5 file")
     parser.add_argument("--ifile_val", default="None", help = "validation h5 file")
-    parser.add_argument("--odir", default="None")
+    parser.add_argument("--odir", default="None", help = "output directory where we save weights and logs of training progress")
     
-    parser.add_argument("--n_epochs", default="100")
-    parser.add_argument("--lr", default="0.00001")
-    parser.add_argument("--n_early", default = "10")
-    parser.add_argument("--lr_decay", default = "None")
+    parser.add_argument("--n_epochs", default="100", help = "number of training epochs to perform")
+    parser.add_argument("--lr", default="0.00001", help = "learning rate for Adam optimizer")
+    parser.add_argument("--n_early", default = "10", help = "number of epochs to early stop if validation loss hasn't gone down")
+    parser.add_argument("--lr_decay", default = "None", help = "if specified as a float will apply exponential learning rate decay (not recommended).  other learning schedules could help in theory, but arent currently implemented")
     
-    parser.add_argument("--n_per_batch", default = "4")
-    parser.add_argument("--L", default = "128", help = "tree sequence length")
+    parser.add_argument("--n_per_batch", default = "4", help = "number of h5 chunks per batch.  batch size will be chunk_size * n_per")
+    parser.add_argument("--L", default = "128", help = "deprecated...")
     parser.add_argument("--n_steps", default = "3000", help = "number of steps per epoch (if -1 all training examples are run each epoch)")
+    parser.add_argument("--label_smoothing", default = "0.0", help = "whether to use label smoothing in classification tasks.  if non zero")
     
     # data parameter
-    parser.add_argument("--in_dim", default = "4")
-    parser.add_argument("--n_classes", default = "3")
+    parser.add_argument("--in_dim", default = "4", help = "number of input dimensions")
+    parser.add_argument("--n_classes", default = "3", help = "number of output dimensions of the network")
+    parser.add_argument("--regression", action = "store_true", help = "specifies that were doing regression of a vector or scalar rather than logistic scores.  important for specifying the right loss function")
+    parser.add_argument("--classes", default = "ab,ba,none", help = "class labels if doing classification")
+    parser.add_argument("--y_ix", default = "None", help = "for regression.  if predicting a single scalar, its the desired index of the y vectors saved to the h5 file")
+    parser.add_argument("--log_y", action = "store_true", help = "for regression. whether the dataloader should return log scaled values of the y variables")
     
     # hyper-parameters
-    parser.add_argument("--use_conv", action = "store_true")
-    parser.add_argument("--hidden_dim", default = "128")
-    parser.add_argument("--n_gru_layers", default = "1")
-    parser.add_argument("--n_gcn_iter", default = "6")
-    parser.add_argument("--gcn_dim", default = "26")
-    parser.add_argument("--conv_dim", default = "4")
+    parser.add_argument("--model", default = "gru", help = "gru | conv. Type of architecture to use, specifying the type of sequential downsampling or processing employed (gated recurrent or convolutional). we recommend the GRU")
+    parser.add_argument("--hidden_dim", default = "128", help = "for gru.")
+    parser.add_argument("--n_gru_layers", default = "1", help = "for gru.  the number of gru layers to use")
+    parser.add_argument("--n_gcn_iter", default = "6", help = "the number of gcn convolutional layers used")
+    parser.add_argument("--gcn_dim", default = "26", help = "the output dimension of the gcn layers")
+    parser.add_argument("--n_conv", default = "4", help = "for conv. number of 1d convolution layers in each block")
     
-    parser.add_argument("--pad_l", action = "store_true")
-    
-    parser.add_argument("--weights", default = "None")
-    parser.add_argument("--weight_decay", default = "0.0")
-    parser.add_argument("--momenta_dir", default = "None")
-    parser.add_argument("--save_momenta_every", default = "250")
-    parser.add_argument("--label_smoothing", default = "0.0")
-    parser.add_argument("--regression", action = "store_true")
-    parser.add_argument("--classes", default = "ab,ba,none")
-    
-    parser.add_argument("--y_ix", default = "None")
-    parser.add_argument("--log_y", action = "store_true")
-    
-    parser.add_argument("--means", default = "None")
-    
-    parser.add_argument("--model", default = "gru")
-    parser.add_argument("--chunk_size", default = "3")
-    
-    parser.add_argument("--n_val_steps", default = "128")
+    parser.add_argument("--weights", default = "None", help = "pre-trained weights to load to resume training or fine tune a model")
+    parser.add_argument("--weight_decay", default = "0.0", help = "weight decay for Adam optimizer")
+    parser.add_argument("--momenta_dir", default = "None", help = "deprecated...")
+    parser.add_argument("--save_momenta_every", default = "250", help = "deprecated...")
+
+
+    parser.add_argument("--means", default = "None", help = "prewritten mean-std values for the inputs and ouputs (in the case of regression)")
+    parser.add_argument("--n_val_steps", default = "-1", help = "in the case you want to validate on a smaller set than the one written")
 
     args = parser.parse_args()
 
@@ -111,15 +109,6 @@ def parse_args():
         if not os.path.exists(args.odir):
             os.system('mkdir -p {}'.format(args.odir))
             logging.info('root: made output directory {0}'.format(args.odir))
-        else:
-            os.system('rm -rf {0}'.format(os.path.join(args.odir, '*')))
-            
-    if args.momenta_dir != "None":
-        if not os.path.exists(args.momenta_dir):
-            os.system('mkdir -p {}'.format(args.momenta_dir))
-            logging.info('root: made output directory {0}'.format(args.momenta_dir))
-        else:
-            os.system('rm -rf {0}'.format(os.path.join(args.momenta_dir, '*')))
 
     return args
 
@@ -146,9 +135,9 @@ def main():
     
     
     generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
-                                   chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
+                                   models = args.classes, y_ix = y_ix, log_y = args.log_y)
     validation_generator = TreeSeqGeneratorV3(h5py.File(args.ifile_val, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = args.regression, 
-                                              chunk_size = int(args.chunk_size), models = args.classes, y_ix = y_ix, log_y = args.log_y)
+                                               models = args.classes, y_ix = y_ix, log_y = args.log_y)
     
     batch, x1, x2, y = generator[0]
     generator.on_epoch_end()
@@ -158,7 +147,7 @@ def main():
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
-                             use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
+                             use_conv = False, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     elif args.model == 'conv':
         model = GATConvClassifier(generator.batch_size, n_classes = int(args.n_classes), L = L, n_nodes = n_nodes,
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
@@ -200,9 +189,11 @@ def main():
     accuracies = deque(maxlen=500)
     
     if int(args.n_classes) > 1 and not args.regression:
+        loss_str = 'nll loss'
         criterion = LabelSmoothing(float(args.label_smoothing))
         classification = True
     else:
+        loss_str = 'l1 loss'
         criterion = nn.SmoothL1Loss()
         classification = False
         
@@ -214,12 +205,16 @@ def main():
         
     min_val_loss = np.inf
     
+    if int(args.n_steps) > 0:
+        n_steps = min([int(args.n_steps), len(generator)])
+    else:
+        n_steps = len(generator)
+    
     for epoch in range(int(args.n_epochs)):
         t0 = time.time()
         
         model.train()
         
-        n_steps = min([int(args.n_steps), len(generator)])
         for j in range(int(args.n_steps)):
             batch, x1, x2, y = generator[j]
             
@@ -335,7 +330,6 @@ def main():
             if classification:
                 cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
             
-            
             early_count = 0
         else:
             early_count += 1
@@ -344,6 +338,7 @@ def main():
             if early_count > int(args.n_early):
                 break
         
+        # re-set the index of the generator without shuffling
         validation_generator.on_epoch_end(False)
     
         df = pd.DataFrame(result)
@@ -354,18 +349,22 @@ def main():
             lr_scheduler.step()
         
         
-    """
-    plt.rc('font', family = 'Helvetica', size = 12)
-    plt.rcParams.update({'figure.autolayout': True})
-    fig = plt.figure(figsize=(12, 8), dpi=100)
-    
-    ax = fig.add_subplot(1, 1, 1)
-    ax.set_xlabel('epoch')
-    ax.set_ylabel('negative ll loss')
-    ax.set_title('training loss history')
-    
-    ax
-    """  
+        plt.rc('font', family = 'Helvetica', size = 12)
+        plt.rcParams.update({'figure.autolayout': True})
+        fig = plt.figure(figsize=(12, 8), dpi=100)
+        
+        ax = fig.add_subplot(1, 1, 1)
+        ax.set_xlabel('epoch')
+
+        ax.set_ylabel(loss_str)
+        ax.set_title('training loss history')
+        
+        ax.plot(result['epoch'], result['loss'], label = 'training')
+        ax.plot(result['epoch'], result['val_loss'], label = 'validation')
+        ax.legend()
+        plt.savefig(os.path.join(args.odir, 'training_loss.png'), dpi = 100)
+        plt.close()
+        
 
 if __name__ == "__main__":
     main()
