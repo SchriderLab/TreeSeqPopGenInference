@@ -197,7 +197,58 @@ mpirun -n 4 python3 src/data/format_genomat.py --idir data/recom/ --ofile ./reco
 
 ## Training
 
-Models were trained using the `src/models/train_cnn.py` and `src/models/train_gcn.py` scripts, with relevant layers and functions imported from the `src/models` directory.
+### GCN
+
+The GCN training script has various options:
+```
+--verbose             display messages
+  --ifile IFILE         training h5 file
+  --ifile_val IFILE_VAL
+                        validation h5 file
+  --odir ODIR           output directory where we save weights and logs of training progress
+  --n_epochs N_EPOCHS   number of training epochs to perform
+  --lr LR               learning rate for Adam optimizer
+  --n_early N_EARLY     number of epochs to early stop if validation loss hasn't gone down
+  --lr_decay LR_DECAY   if specified as a float will apply exponential learning rate decay (not recommended). other learning schedules could help in theory, but arent currently implemented
+  --n_per_batch N_PER_BATCH
+                        number of h5 chunks per batch. batch size will be chunk_size * n_per
+  --L L                 deprecated...
+  --n_steps N_STEPS     number of steps per epoch (if -1 all training examples are run each epoch)
+  --label_smoothing LABEL_SMOOTHING
+                        whether to use label smoothing in classification tasks. if non zero
+  --in_dim IN_DIM       number of input dimensions
+  --n_classes N_CLASSES
+                        number of output dimensions of the network
+  --regression          specifies that were doing regression of a vector or scalar rather than logistic scores. important for specifying the right loss function
+  --classes CLASSES     class labels if doing classification
+  --y_ix Y_IX           for regression. if predicting a single scalar, its the desired index of the y vectors saved to the h5 file
+  --log_y               for regression. whether the dataloader should return log scaled values of the y variables
+  --model MODEL         gru | conv. Type of architecture to use, specifying the type of sequential downsampling or processing employed (gated recurrent or convolutional). we recommend the GRU
+  --hidden_dim HIDDEN_DIM
+                        for gru.
+  --n_gru_layers N_GRU_LAYERS
+                        for gru. the number of gru layers to use
+  --n_gcn_iter N_GCN_ITER
+                        the number of gcn convolutional layers used
+  --gcn_dim GCN_DIM     the output dimension of the gcn layers
+  --n_conv N_CONV       for conv. number of 1d convolution layers in each block
+  --weights WEIGHTS     pre-trained weights to load to resume training or fine tune a model
+  --weight_decay WEIGHT_DECAY
+                        weight decay for Adam optimizer
+  --momenta_dir MOMENTA_DIR
+                        deprecated...
+  --save_momenta_every SAVE_MOMENTA_EVERY
+                        deprecated...
+  --means MEANS         prewritten mean-std values for the inputs and ouputs (in the case of regression)
+  --n_val_steps N_VAL_STEPS
+                        in the case you want to validate on a smaller set than the one written
+```
+
+Training a GCN network to predict recombination:
+
+```
+python3 src/models/train_gcn.py --ifile recom_combined.hdf5 --ifile_val recom_combined_val.hdf5 --means recom_means.npz --odir test_recom_training --y_ix 1 --regression --n_classes 1
+```
 
 ## Testing
 
