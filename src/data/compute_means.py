@@ -85,7 +85,9 @@ def main():
             ys = np.array(ys)[:,[int(args.y_ix)]]
         y_mean = np.mean(ys, axis = 0)
         y_std = np.std(ys, axis = 0)
-            
+    else:
+        y_mean = None
+        
     vs = np.concatenate(vs)
     v2s = np.array(v2s)
         
@@ -102,10 +104,10 @@ def main():
         np.savez(args.ofile, v_mean = v_mean, v_std = v_std, v2_mean = v2_mean, v2_std = v2_std, 
                      times = np.array([np.mean(_), np.std(_)]))
     
-    print(v_mean, v_std)
-    print(v2_mean, v2_std)
-    print(np.mean(_), np.std(_), np.max(_), np.min(_), np.mean(ls), np.min(ls), np.max(ls))
-    print(y_mean, y_std)
+    if y_mean is not None:
+        logging.info('have mean y:  {}, std y: {}'.format(y_mean, y_std))
+    
+    logging.info('done!')
     # ${code_blocks}
 
 if __name__ == '__main__':
