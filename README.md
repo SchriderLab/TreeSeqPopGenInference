@@ -199,6 +199,12 @@ mpirun -n 4 python3 src/data/format_genomat.py --idir data/recom/ --ofile ./reco
 
 ### GCN
 
+Before running the training routines for the GCN it is required to compute the mean and standard deviation of the node features (and the y-variable in the case of regression) with the training set:
+
+```
+python3 src/data/compute_means.py --ifile recom_combined.hdf5 --regression --y_ix 1 --ofile recom_means.npz 
+```
+
 The GCN training script has various options:
 ```
 --verbose             display messages
@@ -244,7 +250,7 @@ The GCN training script has various options:
                         in the case you want to validate on a smaller set than the one written
 ```
 
-Training a GCN network to predict recombination:
+Training a GCN network to predict the recombination rate:
 
 ```
 python3 src/models/train_gcn.py --ifile recom_combined.hdf5 --ifile_val recom_combined_val.hdf5 --means recom_means.npz --odir test_recom_training --y_ix 1 --regression --n_classes 1
