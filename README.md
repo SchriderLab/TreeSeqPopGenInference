@@ -283,6 +283,10 @@ Training a GCN network to predict the recombination rate:
 python3 src/models/train_gcn.py --ifile recom_combined.hdf5 --ifile_val recom_combined_val.hdf5 --means recom_means.npz --odir test_recom_training --y_ix 1 --regression --n_classes 1
 ```
 
+We'll find a plot of the training and validation loss, a log file, and a CSV containing the metrics and training times per epoch.
+
+![image](assets/training_loss.png)
+
 ### CNN
 
 The CNN training script has similar options:
@@ -326,10 +330,6 @@ Training a CNN to predict the recombination rate with the default ResNet34 archi
 ```
 python3 src/models/train_cnn.py --ifile recom_512.hdf5 --ifile_val recom_512_val.hdf5 --regression --in_channels 1 --n_classes 1 --y_ix 1 --means recom_means.npz --odir test_recom_cnn 
 ```
-
-We'll find a plot of the training and validation loss, a log file, and a CSV containing the metrics and training times per epoch.
-
-![image](assets/training_loss.png)
 
 ## Testing
 
