@@ -2,7 +2,7 @@
 
 This repo and docs are still a work in progress, but hopefully should be finished soon.  If you are trying to run this code now or have other questions about it please contact ddray@email.unc.edu.
 
-This repository contains details and instructions for replicating results in the associated manuscript, i.e. using GCN networks and inferred tree sequences from Relate (https://myersgroup.github.io/relate/) to predict demographic parameters or do model classification etc.
+This repository contains details and instructions for replicating results in the associated manuscript (https://www.biorxiv.org/content/10.1101/2024.02.20.581288v1), i.e. using GCN networks and inferred tree sequences from Relate (https://myersgroup.github.io/relate/) to predict demographic parameters or do model classification etc.  We also include the code we used to train a CNN on sorted genotype matrices for comparison.
 
 # Table of contents
 * [Installation](#installation)
@@ -25,8 +25,9 @@ The code relies mostly on torch and torch-geometric.  We used torch==2.1.1+cu121
 
 Other python pre-requisites:
 ```
-pip install h5py matplotlib scipy numpy mpi4py
+pip install h5py matplotlib scipy numpy tqdm scikit-bio scikit-learn
 ```
+
 mpi4py and MPI are needed to run the parallel formatting routines for training CNN models that run on sorted (and matched) genotype matrices.  If you only want to use the GCN part of this repo, you won't need them.
 
 After installing torch (https://pytorch.org/get-started/locally/), we recommend installing torch-geometric (and its pre-requisities) from source:
