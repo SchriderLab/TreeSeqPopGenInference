@@ -8,10 +8,13 @@ import gzip
 from data_functions import load_data
 from format_genomat import find_files, format_matrix
 import numpy as np
+import glob
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
+
+from tqdm import tqdm
 
 def parse_args():
     # Argument Parser
@@ -47,9 +50,13 @@ def main():
     for c in classes:
         idir = os.path.join(args.idir, c)
         ifiles.extend([(c, u) for u in find_files(idir)])
+    
+    if len(ifiles) == 0:
+        ifiles = glob.glob(os.path.join(args.idir, '*.msOut.gz'))
+        ifiles = list(zip([None for u in ifiles], ifiles))
         
     lengths = []
-    for tag, ifile in ifiles:
+    for tag, ifile in tqdm(ifiles):
         X, y, P, params = load_data(ifile)
         
         X = [u for u in X if u is not None]
@@ -57,9 +64,7 @@ def main():
         
         lengths.append(np.max(ls))
     
-    print(np.max(lengths))
-
-    # ${code_blocks}
+    logging.info('have max number of sites: {}'.format(max(lengths)))
 
 if __name__ == '__main__':
     main()
