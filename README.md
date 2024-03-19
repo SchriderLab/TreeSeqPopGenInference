@@ -23,42 +23,29 @@ This repository contains details and instructions for replicating results in the
 ## Installation <a name="installation"></a>
 The code relies mostly on torch and torch-geometric.  We used torch==2.1.1+cu121 but any version compatible with the current torch-geometric should work. 
 
-Other python pre-requisites:
+Installing pre-requisites and torch and torch-geometric via conda:
 ```
-pip install h5py matplotlib scipy numpy tqdm scikit-bio scikit-learn
+# make a new conda environment (optional)
+conda create -n "tree_inf" python=3.9
+conda activate tree_inf
+
+# pre-requisites
+pip install h5py matplotlib scipy numpy tqdm scikit-bio scikit-learn seaborn prettytable
+
+# install torch
+conda install pytorch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+
+# install pytorch-geometric
+conda install pyg -c pyg
 ```
 
 mpi4py and MPI are needed to run the parallel formatting routines for training CNN models that run on sorted (and matched) genotype matrices.  If you only want to use the GCN part of this repo, you won't need them.
-
-After installing torch (https://pytorch.org/get-started/locally/), we recommend installing torch-geometric (and its pre-requisities) from source:
+To install via conda:
 
 ```
-# install the pre-reqs (pyg-lib, torch-cluster, torch-scatter, torch-sparse, and torch-spline-conv)
-git clone https://github.com/pyg-team/pyg-lib.git
-cd pyg-lib
-python3 setup.py install && cd ..
-
-git clone https://github.com/rusty1s/pytorch_cluster.git
-cd pytorch_cluster
-python3 setup.py install && cd ..
-
-git clone https://github.com/rusty1s/pytorch_scatter.git
-cd pytorch_scatter
-python3 setup.py install && cd ..
-
-git clone https://github.com/rusty1s/pytorch_sparse.git
-cd pytorch_sparse
-python3 setup.py install && cd ..
-
-git clone https://github.com/rusty1s/pytorch_spline_conv.git
-cd pytorch_spline_conv
-python3 setup.py install && cd ..
-
-# finally install torch geometric
-git clone https://github.com/pyg-team/pytorch_geometric.git
-cd pytorch_geometric
-python3 setup.py install
+conda install -c conda-forge mpi4py openmpi
 ```
+
 We use various genetic simulators to accomplish the experiments.  We include the source for ms twice in two different folders as it is meant to be built two different ways: 
 ```
 cd msdir/
