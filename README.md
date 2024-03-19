@@ -187,12 +187,39 @@ python3 src/data/combine_h5s.py --i recom.hdf5 --ofile ./recom_combined.hdf5 --c
 ```
 By default the validation proportion is 0.1, but can be changed with the `--val_prop` argument.  The validation data is written to a separate hdf5 file with the same name but the suffix `_val.hdf5`.
 
+The h5 file's structure can be seen here:
+```
+>>> import h5py
+>>> ifile = h5py.File('recom_combined.hdf5','r')
+>>> ifile['000000'].keys() # each key points to a 'chunk' of data which has 5 replicates in it in this case
+<KeysViewHDF5 ['edge_index', 'global_vec', 'mask', 'x', 'x1', 'y']>
+>>> ifile['000000/edge_index'] # topology of the trees
+<HDF5 dataset "edge_index": shape (5, 128, 2, 99), type "<i4">
+>>> ifile['000000/global_vec'] # tree sequence summary statistics
+<HDF5 dataset "global_vec": shape (5, 37), type "<f4">
+>>> ifile['000000/x'] # node features [age (zero if leaf node), number of mutations of the branch to parent, one hot encoded population label with ancestral population]
+<HDF5 dataset "x": shape (5, 128, 99, 4), type "<f4">
+>>> ifile['000000/x1'] # tree summary statistics
+<HDF5 dataset "x1": shape (5, 128, 12), type "<f8">
+>>> ifile['000000/y'] # y-vector (only a key for regression problems)
+<HDF5 dataset "y": shape (5, 2), type "<f4">
+```
+
 ### CNN
 
-We can work directly with the ms files since we're only using genotype matrices for the CNN.  Because we use seriation to sort the individuals in the genotype matrix (and potentially linear matching if there are two populations) which is somewhat costly, we parallize the operation over some number of CPU cores to make it faster. For the recombination example the formatting command would be:
+We can work directly with the ms files since we're only using genotype matrices for the CNN.  Before formatting, you can find the max observed number of sites in your data:
 
 ```
-mpirun -n 4 python3 src/data/format_genomat.py --idir data/recom/ --ofile ./recom_512.hdf5 --out_shape 1,50,512 --mode seriate --regression --pop_sizes 50,0
+python3 src/data/get_max_L.py --idir data/recom/
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 210/210 [04:12<00:00,  1.20s/it]
+INFO:root:have max number of sites: 413
+```
+
+Because we use seriation to sort the individuals in the genotype matrix (and potentially linear matching if there are two populations) which is costly, we parallize the operation over some number of CPU cores to make it faster. For the recombination example the formatting command would be:
+
+```
+# 1 population with 50 individuals with a zero padded size of 413 segregating sites
+mpirun -n 4 python3 src/data/format_genomat.py --idir data/recom/ --ofile ./recom_413.hdf5 --out_shape 1,50,413 --mode seriate --regression --pop_sizes 50,0
 ```
 
 ## Training
@@ -255,6 +282,54 @@ Training a GCN network to predict the recombination rate:
 ```
 python3 src/models/train_gcn.py --ifile recom_combined.hdf5 --ifile_val recom_combined_val.hdf5 --means recom_means.npz --odir test_recom_training --y_ix 1 --regression --n_classes 1
 ```
+
+### CNN
+
+The CNN training script has similar options:
+
+```
+usage: train_cnn.py [-h] [--verbose] [--ifile IFILE] [--ifile_val IFILE_VAL] [--in_channels IN_CHANNELS] [--n_classes N_CLASSES] [--y_ix Y_IX] [--log_y] [--means MEANS] [--n_epochs N_EPOCHS]
+                    [--n_steps N_STEPS] [--lr LR] [--weight_decay WEIGHT_DECAY] [--label_smoothing LABEL_SMOOTHING] [--n_early N_EARLY] [--model MODEL] [--batch_size BATCH_SIZE] [--weights WEIGHTS]
+                    [--regression] [--odir ODIR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --verbose             display messages
+  --ifile IFILE         data from src/data/format_genomat. has the genotype matrices for loading during training
+  --ifile_val IFILE_VAL
+                        same as ifile but for validation
+  --in_channels IN_CHANNELS
+                        number of population channels in the image
+  --n_classes N_CLASSES
+                        number of classes to predict or the dimension of the y variable
+  --y_ix Y_IX           for regression. if predicting a single scalar, its the desired index of the y vectors in the h5 file
+  --log_y               whether the y variables should be in log space. only applicable to regression tasks
+  --means MEANS         y means and stds for normalization. only applicable to regression tasks
+  --n_epochs N_EPOCHS   number of training epochs to perform
+  --n_steps N_STEPS     the number of optimizer steps to take each epoch. -1 for all the training examples.
+  --lr LR               learning rate for the Adam optimizer
+  --weight_decay WEIGHT_DECAY
+                        weight decay for Adam optimizer. see https://pytorch.org/docs/stable/generated/torch.optim.Adam.html
+  --label_smoothing LABEL_SMOOTHING
+                        whether to use label smoothing in classification tasks if non zero. see the module in src/models/train_gcn.py
+  --n_early N_EARLY     number of epochs to early stop if validation loss hasn't gone down
+  --model MODEL         res | lex. 'res' for resnet34 architecture or 'lex' for a architecture similiar to the one used inhttps://academic.oup.com/mbe/article/36/2/220/5229930?login=false
+  --batch_size BATCH_SIZE
+                        batch sized used each gradient step
+  --weights WEIGHTS     pre-trained weights to load to resume training or fine tune a model
+  --regression          pre-trained weights to load to resume training or fine tune a model
+  --odir ODIR           output directory where we save weights and logs of training progress
+```
+
+Training a CNN to predict the recombination rate with the default ResNet34 architecture (https://pytorch.org/vision/main/models/generated/torchvision.models.resnet34.html):
+
+```
+python3 src/models/train_cnn.py --ifile recom_512.hdf5 --ifile_val recom_512_val.hdf5 --regression --in_channels 1 --n_classes 1 --y_ix 1 --means recom_means.npz --odir test_recom_cnn 
+```
+
+We'll find a plot of the training and validation loss, a log file, and a CSV containing the metrics and training times per epoch.
+
+![image](assets/training_loss.png)
 
 ## Testing
 
