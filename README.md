@@ -351,4 +351,17 @@ python3 src/models/train_cnn.py --ifile recom_512.hdf5 --ifile_val recom_512_val
 
 ## Evaluation / testing
 
-Models were run on testing data using the relevant scripts in `/src/viz` and resulting final plots for the manuscript are located in `/plots`.
+### GCN
+
+Here we evaluate our trained weights for predicting recombination for the valiation set:
+
+```
+python3 src/viz/eval_gcn_regression.py --weights test_recom_training/best.weights --ifile recom_combined_val.hdf5 --means recom_means.npz --y_ix 1 --n_classes 1 --ofile gcn_results_recom.npz
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 255/255 [01:19<00:00,  3.22it/s]
+INFO:root:have 20355 predictions of shape 1
+INFO:root:RMSE: [129.51805]
+INFO:root:median RMSE: 129.51805114746094
+```
+
+![image](assets/gcn_results_recom.png)
