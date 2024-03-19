@@ -5,22 +5,22 @@ This repo and docs are still a work in progress, but hopefully should be finishe
 This repository contains details and instructions for replicating results in the associated manuscript, i.e. using GCN networks and inferred tree sequences from Relate (https://myersgroup.github.io/relate/) to predict demographic parameters or do model classification etc.
 
 # Table of contents
-[Installation](#installation)
-[Simulation and inference with Relate](#sims)
-    [Recombination](#sims_recom)
-    [Demography](#sims_demography)
-    [Introgression](#sims_intro)
-    [Selection](#sims_selection)
-[Formatting / pre-proccessing](#formatting)
-    [GCN](#formatting_gcn)
-    [CNN](#formatting_cnn)
-[Training](#training)
-    [GCN](#training_gcn)
-    [CNN](#training_cnn)
-[Evaluation](#eval)
+1. [Installation](#installation)
+2. [Simulation and inference with Relate](#sims)
+    a. [Recombination](#sims_recom)
+    b. [Demography](#sims_demography)
+    c. [Introgression](#sims_intro)
+    d. [Selection](#sims_selection)
+3. [Formatting / pre-proccessing](#formatting)
+    a. [GCN](#formatting_gcn)
+    b. [CNN](#formatting_cnn)
+4. [Training](#training)
+    a. [GCN](#training_gcn)
+    b. [CNN](#training_cnn)
+5. [Evaluation](#eval)
 
 
-## Installation
+## Installation <a name="installation"></a>
 The code relies mostly on torch and torch-geometric.  We used torch==2.1.1+cu121 but any version compatible with the current torch-geometric should work. 
 
 Other python pre-requisites:
@@ -84,9 +84,9 @@ make all
 ```
 
 ---
-## Simulations and inference with Relate
+## Simulations and inference with Relate <a name="sims"></a>
 
-### Recombination
+### Recombination <a name="sims_recombination"></a>
 
 We simulate replicates with a present day sample size of 50 and with N (the effective population size) = 14714, mu (mutation rate) 1.5e-8, and a variable recombination rate to predict from inferred trees or the binary genotype matrix.  The ms simulation commands we used are included in the repo as `recom.runms.sh`.  To run them all (~225k replicates) locally:
 
@@ -122,7 +122,7 @@ We can now infer the tree sequences for each replicate by calling Relate via Pyt
 python3 src/data/relate.py --L 20000 --mu 1.5e-8 --r 1e-7 --N 14714 --idir data/recom/ --odir data/recom_relate --n_samples 50
 ```
 
-### Demography
+### Demography <a name="sims_demography"></a>
 
 For demography the sample size is again 50 and we simulate over 5 different demographic parameters detailed in the manuscript.  To generate (100k replicates):
 
@@ -142,7 +142,7 @@ python3 src/SLURM/relate_distributed.py --L 150000 --mu 1.2e-9 --r 1e-8 --N 1000
 
 Here we used the src/SLURM script which calls the src/data/relate.py routine that we used in the recombination case. `simulate_demography_data.py` writes the ms files to individual folders which allows for the work of Relate to be spread over many cpus via sbatch if available.
 
-### Introgression
+### Introgression <a name="sims_intro"></a>
 
 We simulated a demographic model of introgression between Drosophila Sechellia and D. Simulans using the same routine as in https://github.com/SchriderLab/introNets.  The demographic model parameters were estimated using DADI (https://github.com/SchriderLab/introNets/tree/main/dadiBootstrapCode).  We include the resulting parameters in `params.txt`.  To simulate (with ms):
 
@@ -165,7 +165,7 @@ python3 src/SLURM/relate_distributed.py --idir data/dros/bi --odir data/dros_rel
           --L 10000 --N 266863 --r 2e-8 --mu 5e-9 --n_samples 34
 ```
 
-### Selection
+### Selection <a name="sims_selection"></a>
 
 We simulated five different scenarios involving selection as detailed in the paper.  The current routine is only compatible with SLURM:
 
@@ -188,9 +188,9 @@ python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_s
                     --L 110000 --mu 1.5e-8 --r 1e-8 --N 10000 --n_samples 104 --slurm
 ```
 
-## Formatting / pre-proccessing
+## Formatting / pre-proccessing <a name="formatting"></a>
 
-### GCN
+### GCN <a name="formatting_gcn"></a>
 
 First we convert the tree sequences output via our Relate routines (which are output as compressed Newick test to *.anc.gz files) to arrays of node features and edge indices and save them to a an hdf5 file.  For recombination: 
 
@@ -223,7 +223,7 @@ The h5 file's structure can be seen here:
 <HDF5 dataset "y": shape (5, 2), type "<f4">
 ```
 
-### CNN
+### CNN <a name="formatting_cnn"></a>
 
 We can work directly with the ms files since we're only using genotype matrices for the CNN.  Before formatting, you can find the max observed number of sites in your data:
 
@@ -240,9 +240,9 @@ Because we use seriation to sort the individuals in the genotype matrix (and pot
 mpirun -n 4 python3 src/data/format_genomat.py --idir data/recom/ --ofile ./recom_413.hdf5 --out_shape 1,50,413 --mode seriate --regression --pop_sizes 50,0
 ```
 
-## Training
+## Training <a name="training"></a>
 
-### GCN
+### GCN <a name="training_gcn"></a>
 
 Before running the training routines for the GCN it is required to compute the mean and standard deviation of the node features (and the y-variable in the case of regression) with the training set:
 
@@ -305,7 +305,7 @@ We'll find a plot of the training and validation loss, a log file, and a CSV con
 
 ![image](assets/training_loss.png)
 
-### CNN
+### CNN <a name="training_cnn"></a>
 
 The CNN training script has similar options:
 
