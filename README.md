@@ -11,13 +11,13 @@ This repository contains details and instructions for replicating results in the
     b. [Demography](#sims_demography)
     c. [Introgression](#sims_intro)
     d. [Selection](#sims_selection)
-3. [Formatting / pre-proccessing](#formatting)
+4. [Formatting / pre-proccessing](#formatting)
     a. [GCN](#formatting_gcn)
     b. [CNN](#formatting_cnn)
-4. [Training](#training)
+5. [Training](#training)
     a. [GCN](#training_gcn)
     b. [CNN](#training_cnn)
-5. [Evaluation](#eval)
+6. [Evaluation](#eval)
 
 
 ## Installation <a name="installation"></a>
