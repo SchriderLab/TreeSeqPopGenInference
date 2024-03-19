@@ -5,19 +5,19 @@ This repo and docs are still a work in progress, but hopefully should be finishe
 This repository contains details and instructions for replicating results in the associated manuscript, i.e. using GCN networks and inferred tree sequences from Relate (https://myersgroup.github.io/relate/) to predict demographic parameters or do model classification etc.
 
 # Table of contents
-1. [Installation](#installation)
-2. [Simulation and inference with Relate](#sims)
-    a. [Recombination](#sims_recom)
-    b. [Demography](#sims_demography)
-    c. [Introgression](#sims_intro)
-    d. [Selection](#sims_selection)
-4. [Formatting / pre-proccessing](#formatting)
-    a. [GCN](#formatting_gcn)
-    b. [CNN](#formatting_cnn)
-5. [Training](#training)
-    a. [GCN](#training_gcn)
-    b. [CNN](#training_cnn)
-6. [Evaluation](#eval)
+* [Installation](#installation)
+* [Simulation and inference with Relate](#sims)
+    * [Recombination](#sims_recom)
+    * [Demography](#sims_demography)
+    * [Introgression](#sims_intro)
+    * [Selection](#sims_selection)
+* [Formatting / pre-proccessing](#formatting)
+    * [GCN](#formatting_gcn)
+    * [CNN](#formatting_cnn)
+* [Training](#training)
+    * [GCN](#training_gcn)
+    * [CNN](#training_cnn)
+* [Evaluation](#eval)
 
 
 ## Installation <a name="installation"></a>
