@@ -117,6 +117,7 @@ class TreeSeqGeneratorV3(object):
             if self.y_ix is not None:
                 y_ = y_[:,[self.y_ix]]
             
+            # normalize the tree summary vectors
             x1 = (np.array(self.ifile[key]["x1"]) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]["edge_index"])
 
@@ -131,7 +132,7 @@ class TreeSeqGeneratorV3(object):
             edge_index_ = []
             
             # write down the indices of which graph belongs to which 
-            # example
+            # example (not sure if we use this anymore...)
             ii = 0
             for k in range(mask.shape[0]):
                 n_graphs = np.sum(mask[k])
@@ -143,7 +144,7 @@ class TreeSeqGeneratorV3(object):
             # number of graphs in sequence
             # some graphs are just 0s (we assume it's a padded sequence), but we put them in Batch object
             # with an empty list of edges
-            
+    
             # for each graph sequence
             for k in range(x.shape[0]):
                 _ = []
@@ -176,22 +177,21 @@ class TreeSeqGeneratorV3(object):
         if len(X) == 0:
             return None, None, None, None
 
+        # sort the batch in length descending (required for torchs pack and pad operations for the GRU)
         ii = np.argsort(lengths)[::-1]
         
+        # sort all the lists
         X = [X[u] for u in ii]
         y = [y[u] for u in ii]
-        
         X1 = [X1[u] for u in ii]
         X2 = [X2[u] for u in ii]
-        
         indices = [indices[u] for u in ii]
         
+        # cat to arrays
         X = np.concatenate(X, 0)
         y = np.concatenate(y, 0)
-        
         X1 = np.concatenate(X1, 0)
         X2 = np.concatenate(X2, 0)
-        
         indices = torch.cat(indices, 0)
 
         ii = 0
@@ -201,8 +201,6 @@ class TreeSeqGeneratorV3(object):
             batch_indices.append(torch.LongTensor(np.array(range(ii, ii + l))))
             ii += l
             
-        
-        
         if self.regression:
             if self.log_y:
                 y = np.log(np.array(y).astype(np.float32))
@@ -226,7 +224,7 @@ class TreeSeqGeneratorV3(object):
         )
         
         batch.rep_indices = torch.LongTensor(np.array(batch_))
-        batch.mask_indices = torch.LongTensor(mask_indices)
+        batch.mask_indices = torch.LongTensor(np.array(mask_indices, dtype = np.int32))
         
         batch.batch_indices = batch_indices
 

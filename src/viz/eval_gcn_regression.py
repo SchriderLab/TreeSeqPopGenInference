@@ -29,6 +29,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import time
+from tqdm import tqdm
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -102,7 +103,7 @@ def main():
         y_ix = int(args.y_ix)
 
     generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = True, 
-                                              chunk_size = int(args.chunk_size), y_ix = y_ix, log_y = args.log_y)
+                                               y_ix = y_ix, log_y = args.log_y)
     
     if args.model == 'gru':
         model = GATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
@@ -125,9 +126,7 @@ def main():
     
     classification = False
     
-    
-    ix = 0
-    while True:
+    for ix in tqdm(range(len(generator))):
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
             
@@ -146,35 +145,32 @@ def main():
             
             Y.extend(y)
             Y_pred.extend(y_pred)
-            
-        ix += 1
-            
+   
     Y = (np.array(Y) * generator.y_std + generator.y_mean)
     Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
 
-    print(Y.shape, Y_pred.shape)
+    logging.info('have {} predictions of shape {}'.format(*Y.shape))
     rmse = np.sqrt(np.mean((Y - Y_pred)**2, axis = 0))
-    print(rmse)
-    print(np.median(rmse))
+    logging.info('RMSE: {}'.format(rmse))
+    logging.info('median RMSE: {}'.format(np.median(rmse)))
 
     np.savez(args.ofile, y = Y, y_pred = Y_pred)
 
-    """
-    print(np.mean((Y - Y_pred)**2, axis = 0))
-
-    plot, axes = plt.subplots(1, 5)
-    plot.set_size_inches(25, 5)
+    plot, axes = plt.subplots(1, rmse.shape[0])
+    plot.set_size_inches(8, Y.shape[1] * 8)
         
-    for ix in range(Y.shape[1]):
-        axes[ix].plot([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
-        axes[ix].scatter(Y[:,ix], Y_pred[:,ix], alpha = 0.7)
-        print([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
-        
+    if Y.shape[1] == 1:
+        axes.plot([np.min(Y[:,0]), np.min(Y[:,0])], [np.max(Y[:,0]), np.max(Y[:,0])])
+        axes.scatter(Y[:,0], Y_pred[:,0], alpha = 0.7)
+    else:
+        for ix in range(Y.shape[1]):
+            axes[ix].plot([np.min(Y[:,ix]), np.min(Y[:,ix])], [np.max(Y[:,ix]), np.max(Y[:,ix])])
+            axes[ix].scatter(Y[:,ix], Y_pred[:,ix], alpha = 0.7)
         
     plt.tight_layout()
-    plt.savefig('demo_results.png', dpi = 100)
+    plt.savefig(args.ofile.replace('.npz', '.png'), dpi = 100)
     plt.close()
-    """
+    
     # ${code_blocks}
 
 if __name__ == '__main__':
