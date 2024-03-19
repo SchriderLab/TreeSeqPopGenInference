@@ -3,6 +3,24 @@
 This repo and docs are still a work in progress, but hopefully should be finished soon.  If you are trying to run this code now or have other questions about it please contact ddray@email.unc.edu.
 
 This repository contains details and instructions for replicating results in the associated manuscript, i.e. using GCN networks and inferred tree sequences from Relate (https://myersgroup.github.io/relate/) to predict demographic parameters or do model classification etc.
+
+# Table of contents
+[Installation](#installation)
+[Simulation and inference with Relate](#sims)
+    [Recombination](#sims_recom)
+    [Demography](#sims_demography)
+    [Introgression](#sims_intro)
+    [Selection](#sims_selection)
+[Formatting / pre-proccessing](#formatting)
+    [GCN](#formatting_gcn)
+    [CNN](#formatting_cnn)
+[Training](#training)
+    [GCN](#training_gcn)
+    [CNN](#training_cnn)
+[Evaluation](#eval)
+
+
+## Installation
 The code relies mostly on torch and torch-geometric.  We used torch==2.1.1+cu121 but any version compatible with the current torch-geometric should work. 
 
 Other python pre-requisites:
@@ -170,7 +188,7 @@ python3 src/SLURM/relate_distributed.py --idir /work/users/d/d/ddray/selection_s
                     --L 110000 --mu 1.5e-8 --r 1e-8 --N 10000 --n_samples 104 --slurm
 ```
 
-## Processing
+## Formatting / pre-proccessing
 
 ### GCN
 
@@ -331,6 +349,6 @@ Training a CNN to predict the recombination rate with the default ResNet34 archi
 python3 src/models/train_cnn.py --ifile recom_512.hdf5 --ifile_val recom_512_val.hdf5 --regression --in_channels 1 --n_classes 1 --y_ix 1 --means recom_means.npz --odir test_recom_cnn 
 ```
 
-## Testing
+## Evaluation / testing
 
 Models were run on testing data using the relevant scripts in `/src/viz` and resulting final plots for the manuscript are located in `/plots`.
