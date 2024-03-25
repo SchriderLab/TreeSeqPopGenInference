@@ -24,6 +24,8 @@ def parse_args():
     parser.add_argument("--ifile", default = "recom.runms.sh", help = "file of ms commands for running recombination rate estimation simulations")
     parser.add_argument("--chunk_size", default = "1000", help = "relevant for SLURM. how many simulation replicates to give each job submission")
     parser.add_argument("--slurm", action = "store_true", help = "are we using SLURM i.e. sbatch?")
+    parser.add_argument("--L", default = "20001", help = "size of the simulated chromosome in base pairs")
+    parser.add_argument("--n", default = "50", help = "number of individuals in the sample")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -46,9 +48,9 @@ def main():
     args = parse_args()
     
     if args.slurm:
-        cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms 50 {2} -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}"'
+        cmd = 'sbatch -t 02:00:00 --mem=8g --wrap "msdir/ms {4} {2} -t tbs -r tbs {3} < {0} | tee {1} && gzip {1}"'
     else:
-        cmd = 'msdir/ms 50 {2} -t tbs -r tbs 20001 < {0} | tee {1} && gzip {1}'
+        cmd = 'msdir/ms {4} {2} -t tbs -r tbs {3} < {0} | tee {1} && gzip {1}'
         
     lines = open(args.ifile, 'r').readlines()
     
@@ -67,7 +69,7 @@ def main():
             w.write(" ".join([t, r]) + "\n")
         w.close()
         
-        cmd_ = cmd.format(tbs_file, ofile, len(chunk))
+        cmd_ = cmd.format(tbs_file, ofile, len(chunk), args.L, args.n)
         
         print(cmd_)
         os.system(cmd_)
