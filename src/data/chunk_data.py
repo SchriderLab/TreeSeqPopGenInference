@@ -57,6 +57,8 @@ def main():
         #idir = os.path.join(idir, 'ms')
         
         ifiles = glob.glob(os.path.join(idir, '*.msOut.gz'))
+        print(len(ifiles))
+        
         random.shuffle(ifiles)
         
         ifiles = ifiles[:int(args.n_per_class)]
@@ -70,6 +72,8 @@ def main():
             
             for ifile in ifiles:
                 ifile_ = tag + '.' + ifile.split('/')[-1]
+                
+                cmd = 'cp {0} {1}'.format(ifile, os.path.join(odir, ifile_))
                 
                 os.system('cp {0} {1}'.format(ifile, os.path.join(odir, ifile_)))
             
