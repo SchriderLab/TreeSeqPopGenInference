@@ -75,6 +75,7 @@ def main():
                 ifile_ = tag + '.' + ifile.split('/')[-1]
                 
                 cmd = 'cp {0} {1}'.format(ifile, os.path.join(odir, ifile_))
+                print(cmd)
                 
                 os.system('cp {0} {1}'.format(ifile, os.path.join(odir, ifile_)))
             
