@@ -54,17 +54,13 @@ def main():
         logging.info('working on {}...'.format(idir))
         
         tag = idir.split('/')[-1]
-        #idir = os.path.join(idir, 'ms')
-        
+
         ifiles = glob.glob(os.path.join(idir, '*.msOut.gz'))
-        print(len(ifiles))
-        
         random.shuffle(ifiles)
         
         ifiles = ifiles[:int(args.n_per_class)]
         
         ifile_chunks = chunks(ifiles, int(args.n_per))
-        print(ifile_chunks)
         for ix in range(len(ifile_chunks)):
             ifiles = ifile_chunks[ix]
             
@@ -72,11 +68,12 @@ def main():
             os.system('mkdir -p {}'.format(odir))
             
             for ifile in ifiles:
-                ifile_ = tag + '.' + ifile.split('/')[-1]
-                
+                if tag != '':
+                    ifile_ = tag + '.' + ifile.split('/')[-1]
+                else:
+                    ifile_ = ifile.split('/')[-1]
                 cmd = 'cp {0} {1}'.format(ifile, os.path.join(odir, ifile_))
-                print(cmd)
-                
+
                 os.system('cp {0} {1}'.format(ifile, os.path.join(odir, ifile_)))
             
             counter += 1
