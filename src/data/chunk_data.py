@@ -64,6 +64,7 @@ def main():
         ifiles = ifiles[:int(args.n_per_class)]
         
         ifile_chunks = chunks(ifiles, int(args.n_per))
+        print(ifile_chunks)
         for ix in range(len(ifile_chunks)):
             ifiles = ifile_chunks[ix]
             
