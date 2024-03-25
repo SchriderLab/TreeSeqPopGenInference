@@ -47,7 +47,7 @@ def parse_args():
 def main():
     args = parse_args()
     
-    idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if os.path.isdir(os.path.join(args.idir, u))]
+    idirs = [os.path.join(args.idir, u) for u in os.listdir(args.idir) if os.path.isdir(os.path.join(args.idir, u))] + [args.idir]
 
     counter = 0
     for idir in idirs:
