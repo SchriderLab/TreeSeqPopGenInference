@@ -173,7 +173,7 @@ def main():
     os.system('mkdir -p {}'.format(odir))
     
     ix = 0
-    for ix in range(n_jobs):
+    while ix < n_jobs:
         x = np.random.uniform(0.03, 0.97)   
         if x >= 0.45 and x <= 0.55:
             continue

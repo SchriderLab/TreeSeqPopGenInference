@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument("--ifile", default = "recom.runms.sh", help = "file of ms commands for running recombination rate estimation simulations")
     parser.add_argument("--chunk_size", default = "1000", help = "relevant for SLURM. how many simulation replicates to give each job submission")
     parser.add_argument("--slurm", action = "store_true", help = "are we using SLURM i.e. sbatch?")
-    parser.add_argument("--L", default = "20001", help = "size of the simulated chromosome in base pairs")
+    parser.add_argument("--factor", default = "1", help = "factor to multiply theta and rho by")
     parser.add_argument("--n", default = "50", help = "number of individuals in the sample")
 
     parser.add_argument("--odir", default = "None")
@@ -53,8 +53,9 @@ def main():
         cmd = 'msdir/ms {4} {2} -t tbs -r tbs {3} < {0} | tee {1} && gzip {1}'
         
     lines = open(args.ifile, 'r').readlines()
-    
     c = chunks(lines, int(args.chunk_size))
+    
+    factor = float(args.factor)
     
     for ix, chunk in enumerate(c):
         tbs_file = os.path.join(args.odir, '{0:05d}.tbs'.format(ix))
@@ -63,10 +64,10 @@ def main():
 
         for c_ in chunk:
             c_ = c_.split()
-            t = c_[4]
-            r = c_[6]
+            t = float(c_[4]) * factor
+            r = float(c_[6]) * factor
             
-            w.write(" ".join([t, r]) + "\n")
+            w.write(" ".join([str(t), str(r)]) + "\n")
         w.close()
         
         cmd_ = cmd.format(tbs_file, ofile, len(chunk), args.L, args.n)
