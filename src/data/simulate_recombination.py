@@ -70,7 +70,7 @@ def main():
             w.write(" ".join([str(t), str(r)]) + "\n")
         w.close()
         
-        cmd_ = cmd.format(tbs_file, ofile, len(chunk), args.L, args.n)
+        cmd_ = cmd.format(tbs_file, ofile, len(chunk), '20001', args.n)
         
         print(cmd_)
         os.system(cmd_)
