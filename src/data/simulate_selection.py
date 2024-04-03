@@ -6,6 +6,10 @@ CMD_NEUTRAL = '{} 104 {} 200000 -Pt 220 2200 -Pre 1008.33 3025 -en 0.00936159 0 
 CMD_HARD = '{} 104 {} 200000 -Pt 220 2200 -Pre 1008.33 3025 -en 0.00936159 0 0.110131 -en 0.012239 0 0.110131 -en 0.0153697 0 0.0955665 -en 0.0187762 0 0.0955665 -en 0.022483 0 0.134382 -en 0.0265165 0 0.134382 -en 0.030905 0 0.221054 -en 0.03568 0 0.221054 -en 0.0408755 0 0.3969 -en 0.0465286 0 0.3969 -en 0.0526795 0 0.68908 -en 0.0593727 0 0.68908 -en 0.0666568 0 1.01323 -en 0.0745882 0 1.01323 -en 0.0832186 0 1.24956 -en 0.0926045 0 1.24956 -en 0.102815 0 1.37902 -en 0.113924 0 1.37902 -en 0.126015 0 1.34656 -en 0.139175 0 1.34656 -en 0.153495 0 1.18725 -en 0.169068 0 1.18725 -en 0.186004 0 1.00113 -en 0.204437 0 1.00113 -en 0.22449 0 0.846248 -en 0.246309 0 0.846248 -en 0.270055 0 0.73786 -en 0.295895 0 0.73786 -en 0.324016 0 0.671364 -en 0.354619 0 0.671364 -en 0.387919 0 0.635331 -en 0.424152 0 0.635331 -en 0.463623 0 0.620869 -en 0.506632 0 0.620869 -en 0.553436 0 0.627949 -en 0.604255 0 0.627949 -en 0.659555 0 0.660491 -en 0.719727 0 0.660491 -en 0.785173 0 0.732284 -en 0.856359 0 0.732284 -en 0.933891 0 0.86023 -en 1.01837 0 0.86023 -en 1.11023 0 1.04845 -en 1.21017 0 1.04845 -en 1.31894 0 1.25027 -en 1.43734 0 1.25027 -en 1.56617 0 1.37179 -en 1.70645 0 1.37179 -en 1.85919 0 1.36135 -en 2.02542 0 1.36135 -en 2.20633 0 1.2175 -en 2.40295 0 1.2175 -en 2.61655 0 1.2175 -en 2.84902 0 1.2175 -ws 0 -Pa 229.167 4583.33 -Pu 0 0.0218182 -x {} | tee {} && gzip {}'
 CMD_SOFT = '{} 104 {} 200000 -Pt 220 2200 -Pre 1008.33 3025 -en 0.00936159 0 0.110131 -en 0.012239 0 0.110131 -en 0.0153697 0 0.0955665 -en 0.0187762 0 0.0955665 -en 0.022483 0 0.134382 -en 0.0265165 0 0.134382 -en 0.030905 0 0.221054 -en 0.03568 0 0.221054 -en 0.0408755 0 0.3969 -en 0.0465286 0 0.3969 -en 0.0526795 0 0.68908 -en 0.0593727 0 0.68908 -en 0.0666568 0 1.01323 -en 0.0745882 0 1.01323 -en 0.0832186 0 1.24956 -en 0.0926045 0 1.24956 -en 0.102815 0 1.37902 -en 0.113924 0 1.37902 -en 0.126015 0 1.34656 -en 0.139175 0 1.34656 -en 0.153495 0 1.18725 -en 0.169068 0 1.18725 -en 0.186004 0 1.00113 -en 0.204437 0 1.00113 -en 0.22449 0 0.846248 -en 0.246309 0 0.846248 -en 0.270055 0 0.73786 -en 0.295895 0 0.73786 -en 0.324016 0 0.671364 -en 0.354619 0 0.671364 -en 0.387919 0 0.635331 -en 0.424152 0 0.635331 -en 0.463623 0 0.620869 -en 0.506632 0 0.620869 -en 0.553436 0 0.627949 -en 0.604255 0 0.627949 -en 0.659555 0 0.660491 -en 0.719727 0 0.660491 -en 0.785173 0 0.732284 -en 0.856359 0 0.732284 -en 0.933891 0 0.86023 -en 1.01837 0 0.86023 -en 1.11023 0 1.04845 -en 1.21017 0 1.04845 -en 1.31894 0 1.25027 -en 1.43734 0 1.25027 -en 1.56617 0 1.37179 -en 1.70645 0 1.37179 -en 1.85919 0 1.36135 -en 2.02542 0 1.36135 -en 2.20633 0 1.2175 -en 2.40295 0 1.2175 -en 2.61655 0 1.2175 -en 2.84902 0 1.2175 -ws 0 -Pa 229.167 4583.33 -Pu 0 0.0218182 -Pf 0 0.2 -x {} | tee {} && gzip {}'
 
+CMD_NEUTRAL_ = '{} 104 {} 200000 -Pt 123.60181818181817 1236.0181818181818 -Pre 566.5083333333333 1699.525 | tee {} && gzip {}'
+CMD_HARD_ = '{} 104 {} 200000 -Pt 123.60181818181817 1236.0181818181818 -Pre 566.5083333333333 1699.525 -ws 0 -Pa 128.75189393939394 2575.0378787878785 -Pu 0 0.038834380194466105 -x {} | tee {} && gzip {}'
+CMD_SOFT_ = '{} 104 {} 200000 -Pt 123.60181818181817 1236.0181818181818 -Pre 566.5083333333333 1699.525 -ws 0 -Pa 128.75189393939394 2575.0378787878785 -Pu 0 0.038834380194466105 -Pf 0 0.2 -x {} | tee {} && gzip {}'
+
 # notes
 """
 discoal_multipop 208 40 200000 -Pt 220 2200 -Pre 1008.33 3025 -en 0.00936159 0 0.110131 
@@ -73,6 +77,8 @@ def parse_args():
     parser.add_argument("--n_jobs", default = "10000")
     parser.add_argument("--n_replicates", default = "10")
     parser.add_argument("--near", action = "store_true")
+    
+    parser.add_argument("--no_demo", action = "store_true")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -106,7 +112,10 @@ def main():
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
         
-        cmd = CMD_NEUTRAL.format(binary, int(args.n_replicates), ofile, ofile)
+        if not args.no_demo:
+            cmd = CMD_NEUTRAL.format(binary, int(args.n_replicates), ofile, ofile)
+        else:
+            cmd = CMD_NEUTRAL_.format(binary, int(args.n_replicates), ofile, ofile)
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
@@ -122,8 +131,10 @@ def main():
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
-        
-        cmd = CMD_HARD.format(binary, int(args.n_replicates), x_, ofile, ofile)
+        if not args.no_demo:
+            cmd = CMD_HARD.format(binary, int(args.n_replicates), x_, ofile, ofile)
+        else:
+            cmd = CMD_HARD_.format(binary, int(args.n_replicates), x_, ofile, ofile)
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
@@ -139,8 +150,11 @@ def main():
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
+        if not args.no_demo:
+            cmd = CMD_SOFT.format(binary, int(args.n_replicates), x_, ofile, ofile)
+        else:
+            cmd = CMD_SOFT_.format(binary, int(args.n_replicates), x_, ofile, ofile)    
         
-        cmd = CMD_SOFT.format(binary, int(args.n_replicates), x_, ofile, ofile)
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
@@ -159,8 +173,10 @@ def main():
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
-        
-        cmd = CMD_HARD.format(binary, int(args.n_replicates), x, ofile, ofile)
+        if not args.no_demo:
+            cmd = CMD_HARD.format(binary, int(args.n_replicates), x, ofile, ofile)
+        else:
+            cmd = CMD_HARD_.format(binary, int(args.n_replicates), x, ofile, ofile)
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
@@ -180,8 +196,10 @@ def main():
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
-        
-        cmd = CMD_SOFT.format(binary, int(args.n_replicates), x, ofile, ofile)
+        if not args.no_demo:
+            cmd = CMD_SOFT.format(binary, int(args.n_replicates), x, ofile, ofile)
+        else:
+            cmd = CMD_SOFT_.format(binary, int(args.n_replicates), x, ofile, ofile)
         cmd = slurm_cmd.format(slurm_out, cmd)
         
         print(cmd)
