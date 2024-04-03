@@ -1312,19 +1312,5 @@ class Res1dBlock(nn.Module):
         else:
             return x
         
-from data_loaders import AutoGenerator
-import h5py        
-
-if __name__ == '__main__':
-    gen = AutoGenerator(h5py.File('seln_trees_auto.hdf5', 'r'))
-    
-    batch, y = gen[0]
-
-    model = GATVAE()
-    y_pred, mu, logvar = model(batch.x, batch.edge_index, batch.batch)
-    
-    rec_loss, kl_loss = model.loss_l1(y_pred, y, mu, logvar)
-    print(rec_loss.item(), kl_loss.item())
-
 
 
