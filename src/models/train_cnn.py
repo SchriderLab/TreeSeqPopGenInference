@@ -47,28 +47,24 @@ def parse_args():
     
     parser.add_argument("--in_channels", default = "1", help = "number of population channels in the image")
     parser.add_argument("--n_classes", default = "1", help = "number of classes to predict or the dimension of the y variable")
-    parser.add_argument("--y_ix", default = "None")
+    parser.add_argument("--y_ix", default = "None", help = "for regression.  if predicting a single scalar, its the desired index of the y vectors in the h5 file")
     parser.add_argument("--log_y", action = "store_true", help = "whether the y variables should be in log space.  only applicable to regression tasks")
     parser.add_argument("--means", default = "None", help = "y means and stds for normalization.  only applicable to regression tasks")
     
+    parser.add_argument("--n_epochs", default = "100", help = "number of training epochs to perform")
+    parser.add_argument("--n_steps", default = "3000", help = "the number of optimizer steps to take each epoch. -1 for all the training examples.")
+    parser.add_argument("--lr", default = "0.001", help = "learning rate for the Adam optimizer")
+    parser.add_argument("--weight_decay", default = "0.0", help = "weight decay for Adam optimizer.  see https://pytorch.org/docs/stable/generated/torch.optim.Adam.html")
+    parser.add_argument("--label_smoothing", default = "0.0", help = "whether to use label smoothing in classification tasks if non zero. see the module in src/models/train_gcn.py")
+    parser.add_argument("--n_early", default = "10", help = "number of epochs to early stop if validation loss hasn't gone down")
     
-    parser.add_argument("--n_epochs", default = "100")
-    parser.add_argument("--lr", default = "0.001")
-    parser.add_argument("--weight_decay", default = "0.0")
-    parser.add_argument("--label_smoothing", default = "0.0")
+    parser.add_argument("--model", default = "res", help = "res | lex.  'res' for resnet34 architecture or 'lex' for a architecture similiar to the one used inhttps://academic.oup.com/mbe/article/36/2/220/5229930?login=false")
+    parser.add_argument("--batch_size", default = "32", help = "batch sized used each gradient step")
     
-    parser.add_argument("--n_steps", default = "None")
-    parser.add_argument("--n_early", default = "10")
-    
-    parser.add_argument("--model", default = "res")
-    
-    parser.add_argument("--batch_size", default = "32")
-    
-    parser.add_argument("--weights", default = "None")
-    
-    parser.add_argument("--regression", action = "store_true")
+    parser.add_argument("--weights", default = "None", help = "pre-trained weights to load to resume training or fine tune a model")
+    parser.add_argument("--regression", action = "store_true", help = "pre-trained weights to load to resume training or fine tune a model")
 
-    parser.add_argument("--odir", default = "None")
+    parser.add_argument("--odir", default = "None", help = "output directory where we save weights and logs of training progress")
     args = parser.parse_args()
 
     if args.verbose:
@@ -147,9 +143,11 @@ def main():
     accuracies = deque(maxlen=500)
     
     if int(args.n_classes) > 1 and not args.regression:
+        loss_str = 'nll loss'
         criterion = LabelSmoothing(float(args.label_smoothing))
         classification = True
     else:
+        loss_str = 'l1 loss'
         criterion = nn.SmoothL1Loss()
         classification = False
         
@@ -164,7 +162,6 @@ def main():
         t0 = time.time()
         
         model.train()
-
         for j in range(n_steps):
             x, y = generator[j]
             
@@ -266,7 +263,6 @@ def main():
             if classification:
                 cm_analysis(Y, np.round(Y_pred), os.path.join(args.odir, 'confusion_matrix_best.png'), classes)
             
-            
             early_count = 0
         else:
             early_count += 1
@@ -277,6 +273,22 @@ def main():
     
         df = pd.DataFrame(result)
         df.to_csv(os.path.join(args.odir, 'metric_history.csv'), index = False)
+        
+        plt.rc('font', family = 'Helvetica', size = 12)
+        plt.rcParams.update({'figure.autolayout': True})
+        fig = plt.figure(figsize=(12, 8), dpi=100)
+        
+        ax = fig.add_subplot(1, 1, 1)
+        ax.set_xlabel('epoch')
+
+        ax.set_ylabel(loss_str)
+        ax.set_title('training loss history')
+        
+        ax.plot(result['epoch'], result['loss'], label = 'training')
+        ax.plot(result['epoch'], result['val_loss'], label = 'validation')
+        ax.legend()
+        plt.savefig(os.path.join(args.odir, 'training_loss.png'), dpi = 100)
+        plt.close()
 
     # ${code_blocks}
 
