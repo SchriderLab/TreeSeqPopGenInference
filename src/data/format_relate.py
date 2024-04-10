@@ -186,18 +186,15 @@ def main():
         ifile = ifiles[ii]
         
         if len([u for u in os.listdir(args.idir) if '.anc' in u]) > 1:
-            anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[1] == ifile.split('/')[-1].split('.')[1])])
+            anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if ((u.split('.')[-1] == 'gz') and \
+                               (tuple(u.split('.')[:2]) == tuple(ifile.split('/')[-1].split('.')[:2])))])
             if len(anc_file) == 1:
                 anc_file = anc_file[0]
             else:
-                anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if ((u.split('.')[-1] == 'gz') and \
-                                   (tuple(u.split('.')[:2]) == tuple(ifile.split('/')[-1].split('.')[:2])))])
-        
-                if len(anc_file) == 1:
-                    anc_file = anc_file[0]
-                else:
-                    print('for file {}...'.format(ifile))
-                    print('couldnt match ms and anc files!...exiting')
+                
+                print('for file {}...'.format(ifile))
+                print('couldnt match ms and anc files!...')
+                continue
         else:
             anc_file = os.path.join(args.idir, [u for u in os.listdir(args.idir) if '.anc' in u][0])
         
