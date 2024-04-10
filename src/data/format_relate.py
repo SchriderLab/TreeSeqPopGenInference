@@ -3,8 +3,6 @@ import os
 import argparse
 import logging
 
-import networkx as nx
-
 import sys
 import copy
 import h5py
@@ -19,11 +17,9 @@ from skbio.tree import TreeNode
 import matplotlib.pyplot as plt
 import random
 
-from ete3 import Tree
 import itertools
 from scipy.spatial.distance import squareform
 import time
-
 
 import gzip
 
@@ -176,7 +172,12 @@ def main():
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
-    s0, s1 = pop_sizes
+    # we currently only support 2 populations
+    if len(pop_sizes) == 2:
+        s0, s1 = pop_sizes
+    else: 
+        s0 = pop_sizes[0]
+        s1 = 0
     
     ix = 0
     
@@ -189,7 +190,8 @@ def main():
             if len(anc_file) == 1:
                 anc_file = anc_file[0]
             else:
-                anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if (u.split('.')[-1] == 'gz') and (u.split('.')[0] == ifile.split('/')[-1].split('.')[0])])
+                anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if ((u.split('.')[-1] == 'gz') and \
+                                   (tuple(u.split('.')[:2]) == tuple(ifile.split('/')[-1].split('.')[:2])))])
         
                 if len(anc_file) == 1:
                     anc_file = anc_file[0]
