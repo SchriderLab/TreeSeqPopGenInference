@@ -196,6 +196,7 @@ def main():
                 if len(anc_file) == 1:
                     anc_file = anc_file[0]
                 else:
+                    print('for file {}...'.format(ifile))
                     print('couldnt match ms and anc files!...exiting')
         else:
             anc_file = os.path.join(args.idir, [u for u in os.listdir(args.idir) if '.anc' in u][0])
