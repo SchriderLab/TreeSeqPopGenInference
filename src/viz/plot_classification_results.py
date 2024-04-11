@@ -94,7 +94,7 @@ def main():
     L = int(args.L)
 
     generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
-                                              chunk_size = int(args.chunk_size), models = args.classes)
+                                              models = args.classes)
     
     n_nodes = int(args.n_samples) * 2 - 1
     
