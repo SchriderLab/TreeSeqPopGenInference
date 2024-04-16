@@ -93,7 +93,7 @@ def main():
     print("Using " + str(device) + " as device")
     
     logging.info('reading data keys...')
-    generator = GenomatClassGenerator(args.ifile)
+    generator = GenomatClassGenerator(args.ifile, batch_size = 1)
     
     classes = generator.classes
     args.n_classes = len(classes)
