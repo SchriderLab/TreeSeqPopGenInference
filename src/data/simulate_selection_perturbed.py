@@ -57,13 +57,13 @@ def main():
     os.system('mkdir -p {}'.format(odir))
     
     for ix in range(n_jobs):
-        factor = np.random.uniform(0.5, 2) 
+        factor = np.random.uniform(0.5, 1.5, 2) 
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
         
-        cmd = CMD_NEUTRAL.format(binary, int(args.n_replicates), theta_range[0] * factor, theta_range[1] * factor,
-                                 rho_range[0] * factor, rho_range[1] * factor,
+        cmd = CMD_NEUTRAL.format(binary, int(args.n_replicates), theta_range[0] * factor[0], theta_range[1] * factor[0],
+                                 rho_range[0] * factor[1], rho_range[1] * factor[1],
                                  ofile, ofile)
         
         cmd = slurm_cmd.format(slurm_out, cmd)
@@ -77,14 +77,15 @@ def main():
     os.system('mkdir -p {}'.format(odir))
     
     for ix in range(n_jobs):
-        factor = np.random.uniform(0.5, 2) 
+        factor = np.random.uniform(0.5, 1.5, 2) 
+
         x_ = x[ix]
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
         
-        cmd = CMD_HARD.format(binary, int(args.n_replicates), theta_range[0] * factor, theta_range[1] * factor,
-                                 rho_range[0] * factor, rho_range[1] * factor,
+        cmd = CMD_HARD.format(binary, int(args.n_replicates), theta_range[0] * factor[0], theta_range[1] * factor[0],
+                                 rho_range[0] * factor[1], rho_range[1] * factor[1],
                               x_, ofile, ofile)
        
         cmd = slurm_cmd.format(slurm_out, cmd)
@@ -98,14 +99,14 @@ def main():
     os.system('mkdir -p {}'.format(odir))
     
     for ix in range(n_jobs):
-        factor = np.random.uniform(0.5, 2) 
+        factor = np.random.uniform(0.5, 1.5, 2)
         x_ = x[ix]
         
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
 
-        cmd = CMD_SOFT.format(binary, int(args.n_replicates), theta_range[0] * factor, theta_range[1] * factor,
-                                 rho_range[0] * factor, rho_range[1] * factor,
+        cmd = CMD_SOFT.format(binary, int(args.n_replicates), theta_range[0] * factor[0], theta_range[1] * factor[0],
+                                 rho_range[0] * factor[1], rho_range[1] * factor[1],
                                  x_, ofile, ofile)
        
         cmd = slurm_cmd.format(slurm_out, cmd)
@@ -124,12 +125,14 @@ def main():
         if x >= 0.45 and x <= 0.55:
             continue
         
-        factor = np.random.uniform(0.5, 2) 
+        factor = np.random.uniform(0.5, 1.5, 2)
+        
+        
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
 
-        cmd = CMD_HARD.format(binary, int(args.n_replicates), theta_range[0] * factor, theta_range[1] * factor,
-                                 rho_range[0] * factor, rho_range[1] * factor,
+        cmd = CMD_HARD.format(binary, int(args.n_replicates), theta_range[0] * factor[0], theta_range[1] * factor[0],
+                                 rho_range[0] * factor[1], rho_range[1] * factor[1],
                                  x, ofile, ofile)
 
         cmd = slurm_cmd.format(slurm_out, cmd)
@@ -149,12 +152,13 @@ def main():
         if x >= 0.45 and x <= 0.55:
             continue
         
-        factor = np.random.uniform(0.5, 2) 
+        factor = np.random.uniform(0.5, 1.5, 2)
+        
         slurm_out = os.path.join(odir, '{0:06d}_slurm.out'.format(ix))
         ofile = os.path.join(odir, '{0:06d}.msOut'.format(ix))
 
-        cmd = CMD_SOFT.format(binary, int(args.n_replicates), theta_range[0] * factor, theta_range[1] * factor,
-                                 rho_range[0] * factor, rho_range[1] * factor,
+        cmd = CMD_SOFT.format(binary, int(args.n_replicates), theta_range[0] * factor[0], theta_range[1] * factor[0],
+                                 rho_range[0] * factor[1], rho_range[1] * factor[1],
                                  x, ofile, ofile)
         
         cmd = slurm_cmd.format(slurm_out, cmd)
