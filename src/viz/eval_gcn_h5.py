@@ -93,7 +93,7 @@ def main():
 
     model.eval()
     
-    for ifile in ifiles[:2]:
+    for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, means = args.means, sequence_length = L, pad = True, categorical = True)
         
@@ -141,6 +141,7 @@ def main():
     
         Y_pred = np.array(Y_pred)
         print(Y_pred.shape)
+        np.savez(ifile.replace('.hdf5', '.npz'), y_pred = Y_pred)
     
     # ${code_blocks}
 
