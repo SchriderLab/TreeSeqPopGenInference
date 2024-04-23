@@ -93,13 +93,14 @@ def main():
 
     model.eval()
     
-    for ifile in ifiles:
+    for ifile in ifiles[:1]:
         logging.info('working on {}...'.format(ifile))
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, means = args.means, sequence_length = L, pad = True, categorical = True)
         
         hfile = h5py.File(ifile, 'r')
         keys = list(hfile.keys())
         
+        Y_pred = []
         for key in keys:
             skeys = hfile[key].keys()
             # each is a tree seq
@@ -136,12 +137,12 @@ def main():
                 batch = batch.to(device)
                 
                 y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
-                print(y_pred.shape)
                 
-                print(mask.shape)
-                print(x.shape)
-                sys.exit()
-                
+                y_pred = y_pred.detach().cpu().numpy()
+                Y_pred.append(y_pred[0])
+    
+        Y_pred = np.array(Y_pred)
+        print(Y_pred.shape)
     
     # ${code_blocks}
 
