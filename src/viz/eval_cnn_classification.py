@@ -154,8 +154,8 @@ def main():
     df = pd.DataFrame(result)
     df.to_csv(args.ofile, index = False)
     
-    print(Y.shape, Y_pred.shape)
-    print(np.mean(accs))
+    logging.info('have shape of predictions: {}'.format(Y_pred.shape))
+    logging.info('mean accuracy score: {}'.format(np.mean(accs)))
     
 if __name__ == '__main__':
     main()
