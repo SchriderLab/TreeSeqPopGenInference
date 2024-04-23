@@ -13,7 +13,7 @@ from data_loaders import TreeSeqGenerator
 import glob
 
 from torch_geometric.data import Data, Batch, DataLoader
-
+import numpy as np
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -110,9 +110,17 @@ def main():
                 # use PyTorch Geometrics batch object to make one big graph
                 batch = Batch.from_data_list(
                     [
-                        Data(x=torch.FloatTensor(x), edge_index=edge_index)
+                        Data(x=torch.FloatTensor(x[k]), edge_index=edge_index[k]) for k in range()
                     ]
                 )
+                ii = 0
+                
+                batch_indices = []
+                l = x.shape[0]
+                batch_indices.append(torch.LongTensor(np.array(range(ii, ii + l))))
+                ii += l
+                batch.batch_indices = batch_indices
+                
                 x1 = torch.FloatTensor(x1).to(device)
                 x2 = torch.FloatTensor(x2).to(device)
                 batch = batch.to(device)
