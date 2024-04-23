@@ -44,7 +44,7 @@ def parse_args():
     
     parser.add_argument("--L", default = "128")
     parser.add_argument("--odir", default = "None")
-    parser.add_argument("--sampling_mode", default = "equi")
+    parser.add_argument("--sampling_mode", default = "none")
     
     args = parser.parse_args()
 
