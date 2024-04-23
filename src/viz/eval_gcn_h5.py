@@ -110,7 +110,7 @@ def main():
                 # use PyTorch Geometrics batch object to make one big graph
                 batch = Batch.from_data_list(
                     [
-                        Data(x=torch.FloatTensor(x[k]), edge_index=edge_index[k]) for k in range()
+                        Data(x=torch.FloatTensor(x[k]), edge_index=edge_index[k]) for k in range(x.shape[0])
                     ]
                 )
                 ii = 0
