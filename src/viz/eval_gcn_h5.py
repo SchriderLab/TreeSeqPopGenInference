@@ -25,11 +25,26 @@ def parse_args():
 
     parser.add_argument("--weights", default = "None")
     parser.add_argument("--means", default = "None")
-    
-    parser.add_argument("--n_samples", default = "34")
-    parser.add_argument("--odir", default = "None")
+
     parser.add_argument("--model", default = "gru")
+    
+    # data parameter
+    parser.add_argument("--in_dim", default = "4")
+    parser.add_argument("--n_classes", default = "5")
+    parser.add_argument("--n_samples", default = "104")
+    
+    # hyper-parameters
+    parser.add_argument("--use_conv", action = "store_true")
+    parser.add_argument("--hidden_dim", default = "128")
+    parser.add_argument("--n_gru_layers", default = "1")
+    parser.add_argument("--n_gcn_iter", default = "6")
+    parser.add_argument("--gcn_dim", default = "26")
+    parser.add_argument("--conv_dim", default = "4")
+    parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
+    
     parser.add_argument("--L", default = "128")
+    parser.add_argument("--odir", default = "None")
+    
     args = parser.parse_args()
 
     if args.verbose:
