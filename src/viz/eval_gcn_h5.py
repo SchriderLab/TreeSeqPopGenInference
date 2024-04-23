@@ -131,7 +131,7 @@ def main():
                 ii += l
                 batch.batch_indices = batch_indices
                 
-                x1 = torch.FloatTensor(x1).to(device).unsqueeze(0)
+                x1 = torch.FloatTensor(x1).to(device)
                 x2 = torch.FloatTensor(x2).to(device).unsqueeze(0)
                 batch = batch.to(device)
                 
