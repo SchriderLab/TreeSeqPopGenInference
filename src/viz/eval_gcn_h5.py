@@ -107,10 +107,20 @@ def main():
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode)
                 
+                # we have to remove the root node edge
+                _ = []
+                for k in range(edge_index.shape[0]):
+                    e = edge_index[k]
+                    ii = np.where(e >= 0)[0]
+                
+                    _.append(torch.LongTensor(e[:, ii]))
+                    
+                    print(_[-1].shape)
+                    
                 # use PyTorch Geometrics batch object to make one big graph
                 batch = Batch.from_data_list(
                     [
-                        Data(x=torch.FloatTensor(x[k]), edge_index=torch.LongTensor(edge_index[k])) for k in range(x.shape[0])
+                        Data(x=torch.FloatTensor(x[k]), edge_index=torch.LongTensor(_[k])) for k in range(x.shape[0])
                     ]
                 )
                 ii = 0
