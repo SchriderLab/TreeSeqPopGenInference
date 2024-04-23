@@ -28,6 +28,7 @@ def parse_args():
     
     parser.add_argument("--n_samples", default = "34")
     parser.add_argument("--odir", default = "None")
+    parser.add_argument("--model", default = "gru")
     parser.add_argument("--L", default = "128")
     args = parser.parse_args()
 
