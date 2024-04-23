@@ -4,6 +4,8 @@ from torch_geometric.data import Data, Batch, DataLoader
 import torch
 import random
 
+import time
+import logging
 
 def chunks(lst, n):
     ret = dict()
@@ -17,10 +19,6 @@ def chunks(lst, n):
         ix += 1
 
     return ret
-
-
-import time
-import logging
 
 class TreeSeqGeneratorV3(object):
     def __init__(
@@ -401,13 +399,19 @@ class TreeSeqGenerator(object):
         try:
             means = np.load(means)
 
-            self.pad = pad
+            self.info_mean = means["v_mean"].reshape(1, 1, -1)
+            self.info_std = means["v_std"].reshape(1, 1, -1)
 
-            self.info_mean = means["v_mean"].reshape(1, -1)
-            self.info_std = means["v_std"].reshape(1, -1)
+            self.global_mean = means["v2_mean"].reshape(1, -1)
+            self.global_std = means["v2_std"].reshape(1, -1)
 
-            self.info_std[np.where(self.info_std == 0.0)] = 1.0
+            self.regression = (not categorical)
+
+            if self.regression:
+                self.y_mean = means["y_mean"].reshape(1, -1)
+                self.y_std = means["y_std"].reshape(1, -1)
         except:
+            self.info_mean = None            
             pass
 
         # how many tree sequences from each demographic model are included in a batch?
@@ -429,7 +433,7 @@ class TreeSeqGenerator(object):
 
         return
     
-    def get_seq(self, model, key, sample_mode = "sequential"):
+    def get_seq(self, model, key, sample_mode = "sequential", normalize = False):
         X_ = np.array(self.ifile[model][key]["x"])
         X1_ = np.array(self.ifile[model][key]["info"])
 
@@ -464,11 +468,17 @@ class TreeSeqGenerator(object):
                     
                 ii = range(X_.shape[0])
                 padding = True
+        else:
+            pad_size = (0, 0)
+            ii = range(X_.shape[0])
 
         edges = np.array(self.ifile[model][key]["edge_index"], dtype=np.int32)
         global_vec = np.array(
             self.ifile[model][key]["global_vec"], dtype=np.float32
         )
+        if normalize and (self.info_mean is not None):
+            global_vec = (global_vec - self.global_mean) / self.global_std
+            X1_ = (X1_ - self.info_mean) / self.info_std
 
         # n_nodes, n_features
         s = (X_.shape[1], X_.shape[2])
