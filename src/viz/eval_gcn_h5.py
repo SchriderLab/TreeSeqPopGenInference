@@ -104,6 +104,7 @@ def main():
             for skey in skeys:
                 x, x1, edge_index, mask, global_vec, y = generator.get_seq(key, skey, args.sampling_mode)
                 
+                print(mask.shape)
                 print(x.shape)
                 sys.exit()
                 
