@@ -93,7 +93,7 @@ def main():
 
     model.eval()
     
-    for ifile in ifiles[:1]:
+    for ifile in ifiles[:2]:
         logging.info('working on {}...'.format(ifile))
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, means = args.means, sequence_length = L, pad = True, categorical = True)
         
@@ -115,9 +115,7 @@ def main():
                     ii = np.where(e >= 0)[0]
                 
                     _.append(torch.LongTensor(e[:, ii]))
-                    
-                    print(_[-1].shape)
-                    
+    
                 # use PyTorch Geometrics batch object to make one big graph
                 batch = Batch.from_data_list(
                     [
