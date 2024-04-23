@@ -44,7 +44,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import inits
 import math
 
-#from torch_sparse import SparseTensor, set_diag
+from torch_sparse import SparseTensor, set_diag
 
 # not sure what I patched here...
 # I'm assuming it was something...
