@@ -148,13 +148,18 @@ def main():
             os.system(cmd_)
             
             f = open(os.path.join(odir, ofile) + '.anc', 'a')
-            c_ix = int(re.findall(r'chr\d+', haps[ix].split('/')[-1])[0].replace('chr', ''))
-            f.write('chromosome: {}\n'.format(c_ix))
-            f.close()
-            
-            cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
-            print(cmd_)
-            os.system(cmd_)
+            try:
+                
+                c_ix = int(re.findall(r'chr\d+', haps[ix].split('/')[-1])[0].replace('chr', ''))
+                f.write('chromosome: {}\n'.format(c_ix))
+                f.close()
+                
+                cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
+                print(cmd_)
+                os.system(cmd_)
+            except:
+                print('Relate failed for sample {}...'.format(ix))
+                print('skipping...')
                    
             os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
         
