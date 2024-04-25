@@ -166,9 +166,10 @@ def main():
     
     ofile = h5py.File(args.ofile, 'w')
 
-    ifiles = glob.glob(os.path.join(args.ms_dir, '*.msOut.gz'))
+    ifiles = sorted(glob.glob(os.path.join(args.ms_dir, '*.msOut.gz')))
     logging.info('have {} files to parse...'.format(len(ifiles)))
     
+    # relevant only for classification problems
     tags = [u.split('/')[-1].split('.')[0] for u in ifiles]
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     
@@ -294,12 +295,10 @@ def main():
             global_vec = np.array(list(np.mean(infos, axis = 0)) + list(np.std(infos, axis = 0)) + list(np.median(infos, axis = 0)) + [infos.shape[0]], dtype = np.float32)
             
             if len(Xs) > 0:
-                
                 ofile.create_dataset('{1}/{0}/global_vec'.format(ix, tag), data = global_vec, compression = 'lzf')
                 ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                 ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                 ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
-                
             
             Xg = x[iix]
             #A = np.array(As)
