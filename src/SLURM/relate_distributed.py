@@ -61,7 +61,7 @@ def main():
                     if os.path.isdir(os.path.join(directory, sub))]) == 0:
                 idirs.append(directory)
                 
-    for idir in idirs[:1]:
+    for idir in idirs:
         odir = os.path.join(args.odir, idir.split('/')[-1])
         os.system('mkdir -p {}'.format(odir))
         
