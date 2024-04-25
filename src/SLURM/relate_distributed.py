@@ -21,6 +21,7 @@ def parse_args():
     
     parser.add_argument("--N", default = "2000")
     
+    parser.add_argument("--slurm", action = "store_true")
     parser.add_argument("--debug", action = "store_true")
 
     parser.add_argument("--odir", default = "None")
@@ -45,7 +46,10 @@ def parse_args():
 def main():
     args = parse_args()
     
-    cmd = 'sbatch --mem=8G -t 2-00:00:00 -o {2} --wrap "python3 src/data/relate.py --idir {0} --odir {1} --L {3} --mu {4} --r {5} --n_samples {6} --N {7}"'
+    if args.slurm:
+        cmd = 'sbatch --mem=16G -t 2-00:00:00 -o {7} --wrap "python3 src/data/relate.py --idir {0} --odir {1} --L {2} --mu {3} --r {4} --n_samples {5} --N {6}"'
+    else:
+        cmd = 'python3 src/data/relate.py --idir {0} --odir {1} --L {2} --mu {3} --r {4} --n_samples {5} --N {6}'
     idirs = []
     
     # traverse root directory, and list directories as dirs and files as files
@@ -57,16 +61,15 @@ def main():
                     if os.path.isdir(os.path.join(directory, sub))]) == 0:
                 idirs.append(directory)
                 
-    print(idirs)
-                
-    for idir in idirs:
+    for idir in idirs[:1]:
         odir = os.path.join(args.odir, idir.split('/')[-1])
-        print(odir)
         os.system('mkdir -p {}'.format(odir))
         
-        log_file = os.path.join(odir, 'slurm.out')
-        
-        cmd_ = cmd.format(idir, odir, log_file, args.L, args.mu, args.r, args.n_samples, args.N)
+        if args.slurm:
+            log_file = os.path.join(odir, 'slurm.out')
+            cmd_ = cmd.format(idir, odir, args.L, args.mu, args.r, args.n_samples, args.N, log_file)
+        else:
+            cmd_ = cmd.format(idir, odir, args.L, args.mu, args.r, args.n_samples, args.N)
         print(cmd_)
         if not args.debug:
             os.system(cmd_)
