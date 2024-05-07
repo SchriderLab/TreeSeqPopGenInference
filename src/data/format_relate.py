@@ -205,6 +205,10 @@ def main():
         # load the genotype matrices that correspond to the trees
         logging.info('reading data, {}...'.format(ifile))
         try:
+            msFile = gzip.open(ifile)
+            cmd_line = msFile.readline().decode('utf-8')
+            msFile.close()
+            
             x, y, p, params = load_data(ifile, None)
         except:
             logging.info('could not read matrices from {}!!...skipping...'.format(ifile))
@@ -303,6 +307,7 @@ def main():
                 ofile.create_dataset('{1}/{0}/x'.format(ix, tag), data = np.array(Xs), compression = 'lzf')
                 ofile.create_dataset('{1}/{0}/edge_index'.format(ix, tag), data = np.array(Edges).astype(np.int32), compression = 'lzf')
                 ofile.create_dataset('{1}/{0}/info'.format(ix, tag), data = np.array(infos), compression = 'lzf')
+                ofile['{1}/{0}'.format(ix, tag)].attrs['cmd'] = cmd_line
             
             Xg = x[iix]
             #A = np.array(As)
