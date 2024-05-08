@@ -100,6 +100,8 @@ def main():
 
     model.eval()
     
+    classes = list(sorted(args.classes.split(',')))
+    
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
         generator = TreeSeqGenerator(h5py.File(ifile, 'r'), n_samples_per = 1, means = args.means, sequence_length = L, pad = True, categorical = True)
@@ -108,13 +110,14 @@ def main():
         keys = list(hfile.keys())
         
         Y_pred = []
+        Y = []
         for key in keys:
             skeys = hfile[key].keys()
             # each is a tree seq
             
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode)
-                print(key, skey)
+                Y.append(classes.index(key))
                 
                 # we have to remove the root node edge
                 _ = []
@@ -148,8 +151,10 @@ def main():
                 Y_pred.append(y_pred[0])
     
         Y_pred = np.array(Y_pred)
+        Y = np.array(Y)
+        
         print(Y_pred.shape)
-        np.savez(ifile.replace('.hdf5', '.npz'), y_pred = Y_pred)
+        np.savez(ifile.replace('.hdf5', '.npz'), y_pred = Y_pred, y = Y)
     
     # ${code_blocks}
 
