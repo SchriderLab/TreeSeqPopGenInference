@@ -111,6 +111,7 @@ def main():
         
         Y_pred = []
         Y = []
+        params = []
         for key in keys:
             skeys = hfile[key].keys()
             # each is a tree seq
@@ -118,6 +119,9 @@ def main():
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode)
                 Y.append(classes.index(key))
+                cmd = hfile[key][skey].attrs['cmd']
+                
+                params.append(get_params(cmd))
                 
                 # we have to remove the root node edge
                 _ = []
@@ -152,9 +156,10 @@ def main():
     
         Y_pred = np.array(Y_pred)
         Y = np.array(Y)
+        params = np.array(params)
         
         print(Y_pred.shape)
-        np.savez(ifile.replace('.hdf5', '.npz'), y_pred = Y_pred, y = Y)
+        np.savez(ifile.replace('.hdf5', '.npz'), y_pred = Y_pred, y = Y, params = params)
     
     # ${code_blocks}
 
