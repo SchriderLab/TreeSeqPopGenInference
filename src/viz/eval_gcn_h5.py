@@ -19,6 +19,13 @@ import numpy as np
 # where to insert certain parts of the script
 # ${imports}
 
+def get_params(cmd):
+    cmd = cmd.split()
+    theta_factor = float(cmd[5]) / 220.
+    rho_factor = float(cmd[8]) / 1008.33
+    
+    return theta_factor, rho_factor
+
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
@@ -107,6 +114,7 @@ def main():
             
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode)
+                print(key, skey)
                 
                 # we have to remove the root node edge
                 _ = []
