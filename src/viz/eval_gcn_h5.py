@@ -154,8 +154,7 @@ def main():
                 y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
                 
                 y_pred = y_pred.detach().cpu().numpy()
-                print(y_pred)
-                
+
                 Y_pred.append(y_pred[0])
     
         Y_pred = np.array(Y_pred)
