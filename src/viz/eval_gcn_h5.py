@@ -14,6 +14,7 @@ import glob
 
 from torch_geometric.data import Data, Batch, DataLoader
 import numpy as np
+from sklearn.metrics import accuracy_score
 
 # use this format to tell the parsers
 # where to insert certain parts of the script
@@ -118,6 +119,7 @@ def main():
             
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode)
+                
                 Y.append(classes.index(key))
                 cmd = hfile[key][skey].attrs['cmd']
                 
@@ -158,6 +160,9 @@ def main():
     
         Y_pred = np.array(Y_pred)
         Y = np.array(Y)
+        
+        print(accuracy_score(Y, np.argmax(Y_pred, axis = -1)))
+        
         params = np.array(params)
         
         print(Y_pred.shape)
