@@ -100,7 +100,7 @@ def main():
 
     model.eval()
     
-    classes = list(sorted(args.classes.split(',')))
+    classes = list(args.classes.split(','))
     
     for ifile in ifiles:
         logging.info('working on {}...'.format(ifile))
@@ -152,6 +152,8 @@ def main():
                 y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
                 
                 y_pred = y_pred.detach().cpu().numpy()
+                print(y_pred)
+                
                 Y_pred.append(y_pred[0])
     
         Y_pred = np.array(Y_pred)
