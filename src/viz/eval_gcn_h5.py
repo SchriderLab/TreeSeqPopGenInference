@@ -118,7 +118,7 @@ def main():
             # each is a tree seq
             
             for skey in skeys:
-                x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode, normalize = True)
+                x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode)
                 
                 Y.append(classes.index(key))
                 cmd = hfile[key][skey].attrs['cmd']
