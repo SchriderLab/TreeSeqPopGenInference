@@ -133,7 +133,8 @@ def main():
                 batch, x1, x2, y = generator[ix]
             else:
                 batch, x1, x2, y, params_ = generator[ix]
-                params.extend(params_)
+                if params_ is not None:
+                    params.extend(params_)
                 
             if batch is None:
                 break
