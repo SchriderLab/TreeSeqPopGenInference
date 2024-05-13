@@ -140,7 +140,7 @@ def main():
                 if args.write_params:
                     cmd = hfile[key][skey].attrs['cmd']
                     
-                    params = locals()[args.cmd_parser](cmd)
+                    params = globals()[args.cmd_parser](cmd)
                 
                 if classification:
                     c = y
