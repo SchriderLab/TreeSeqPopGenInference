@@ -439,7 +439,7 @@ class TreeSeqGenerator(object):
     
     def get_seq(self, model, key, sample_mode = "sequential", normalize = False):
         X_ = np.array(self.ifile[model][key]["x"])
-        X1_ = np.array(self.ifile[model][key]["info"])[0]
+        X1_ = np.array(self.ifile[model][key]["info"])
         
         # log scale and normalize times
         X_ = np.array(self.ifile[model][key]["x"])
