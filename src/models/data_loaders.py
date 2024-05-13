@@ -452,8 +452,6 @@ class TreeSeqGenerator(object):
         ii = np.where(X_[:, :, -1] > 0)
         X_[ii[0], ii[1], -1] = np.log(X_[ii[0], ii[1], -1])
 
-        print(X_.shape, X1_.shape)        
-
         if X_.shape[0] == 0:
             return None, None, None, None, None, None
         
