@@ -178,7 +178,10 @@ class TreeSeqGeneratorV3(object):
                 indices.append(torch.cat([torch.unsqueeze(u,0) for u in _]))
 
         if len(X) == 0:
-            return None, None, None, None
+            if not self.return_params:
+                return None, None, None, None
+            else:
+                return None, None, None, None, None
 
         # sort the batch in length descending (required for torchs pack and pad operations for the GRU)
         ii = np.argsort(lengths)[::-1]
