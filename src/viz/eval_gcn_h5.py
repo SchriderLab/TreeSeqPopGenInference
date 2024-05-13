@@ -120,7 +120,7 @@ def main():
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode, normalize = True)
                 
-                print(x.shape, x1.shape, edge_index.shape)
+                print(x.shape, x1.shape, edge_index.shape, x2.shape)
                 
                 Y.append(classes.index(key))
                 cmd = hfile[key][skey].attrs['cmd']
