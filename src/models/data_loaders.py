@@ -493,12 +493,13 @@ class TreeSeqGenerator(object):
         global_vec = np.array(
             self.ifile[model][key]["global_vec"], dtype=np.float32
         )
-
+        
         global_vec = (global_vec - self.global_mean) / self.global_std
         X1_ = (X1_ - self.info_mean) / self.info_std
 
         print(global_vec.shape)
         print(X1_.shape)
+        print(len(ii))
 
         # n_nodes, n_features
         s = (X_.shape[1], X_.shape[2])
