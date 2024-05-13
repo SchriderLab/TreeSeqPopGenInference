@@ -441,6 +441,8 @@ class TreeSeqGenerator(object):
         X_ = np.array(self.ifile[model][key]["x"])
         X1_ = np.array(self.ifile[model][key]["info"])
         
+        print(X_.shape, X1_.shape)
+        
         # log scale and normalize times
         X_ = np.array(self.ifile[model][key]["x"])
         ii = np.where(X_[:, :, 0] > 0)
