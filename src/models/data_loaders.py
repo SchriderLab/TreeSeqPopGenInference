@@ -29,7 +29,8 @@ class TreeSeqGeneratorV3(object):
         n_samples_per=4,
         models="none",
         log_y = True,
-        y_ix = None
+        y_ix = None,
+        return_params = False
     ):  # must be in order, see combine_h5s_v2
         self.ifile = ifile
 
@@ -47,6 +48,7 @@ class TreeSeqGeneratorV3(object):
         self.global_mean = means["v2_mean"].reshape(1, -1)
         self.global_std = means["v2_std"].reshape(1, -1)
 
+        self.return_params = return_params
         self.regression = regression
 
         if self.regression:
@@ -84,6 +86,7 @@ class TreeSeqGeneratorV3(object):
         indices = []
         y = []
         X2 = []
+        params = []
         
         lengths = []
         
@@ -169,6 +172,8 @@ class TreeSeqGeneratorV3(object):
             
                 X1.append(x1[k][np.where(mask[k] == 1)[0]])
                 X2.append(np.expand_dims(global_vec[k], 0))
+                if self.return_params:
+                    params.append(self.ifile[key]['params'])
                 
                 indices.append(torch.cat([torch.unsqueeze(u,0) for u in _]))
 
@@ -191,6 +196,8 @@ class TreeSeqGeneratorV3(object):
         X1 = np.concatenate(X1, 0)
         X2 = np.concatenate(X2, 0)
         indices = torch.cat(indices, 0)
+        if self.return_params:
+            params = np.concatenate(params, 0)
 
         ii = 0
         
@@ -227,7 +234,10 @@ class TreeSeqGeneratorV3(object):
         batch.batch_indices = batch_indices
 
         logging.debug('clocked at {} s'.format(time.time() - t0))
-        return batch, X1, X2, y
+        if self.return_params:
+            return batch, X1, X2, y, params
+        else:        
+            return batch, X1, X2, y
 
 class TreeSeqGeneratorV2(object):
     def __init__(
@@ -425,6 +435,10 @@ class TreeSeqGenerator(object):
         # internal list for original sequence lengths observed
         self.lengths = []
 
+        return
+    
+    # takes a single tree sequence and normalizes it / prepares it for inference
+    def prepare_seq(self, x, x1, edge_index, mask, global_vec, y):
         return
     
     def get_seq(self, model, key, sample_mode = "sequential"):
