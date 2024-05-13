@@ -21,6 +21,13 @@ from collections import deque
 import glob
 import random
 
+def get_params(cmd):
+    cmd = cmd.split()
+    theta_factor = float(cmd[5]) / 220.
+    rho_factor = float(cmd[8]) / 1008.33
+    
+    return theta_factor, rho_factor
+
 # use this format to tell the parsers
 # where to insert certain parts of the script
 # ${imports}
@@ -40,6 +47,8 @@ def parse_args():
     parser.add_argument("--sampling_mode", default = "sequential", help = "sequential | equi, if equi sample trees with replacement based on how much of the chrom they take up")
     
     parser.add_argument("--val_prop", default = "0.1", help = "proportion of data to put in val file which is saved with the suffix _val.hdf5")
+    parser.add_argument("--cmd_parser", default = "get_params")
+    parser.add_argument("--write_params", action = "store_true")
     
     args = parser.parse_args()
 
@@ -75,6 +84,9 @@ def main():
             data[c]['mask'] = deque()
             data[c]['global_vec'] = deque()
             
+            if args.write_params:
+                data[c]['params'] = deque()
+            
         classification = True
     # regression
     else:
@@ -87,6 +99,9 @@ def main():
         data['mask'] = deque()
         data['global_vec'] = deque()
         data['y'] = deque()
+        
+        if args.write_params:
+            data['params'] = deque()
         
     ofile = h5py.File(args.ofile, 'w')
     if float(args.val_prop) > 0:
@@ -122,6 +137,10 @@ def main():
             
             for skey in skeys:
                 x, x1, edge_index, mask, global_vec, y = generator.get_seq(key, skey, args.sampling_mode)
+                if args.write_params:
+                    cmd = hfile[key][skey].attrs['cmd']
+                    
+                    params = locals()[args.cmd_parser](cmd)
                 
                 if classification:
                     c = y
@@ -131,6 +150,9 @@ def main():
                     data[c]['edge_index'].append(edge_index)
                     data[c]['mask'].append(mask)
                     data[c]['global_vec'].append(global_vec)
+                
+                    if args.write_params:
+                        data[c]['params'].append(params)
                 else:
                     data['x'].append(x)
                     data['x1'].append(x1)
@@ -138,6 +160,9 @@ def main():
                     data['mask'].append(mask)
                     data['global_vec'].append(global_vec)
                     data['y'].append(y)
+                    
+                    if args.write_params:
+                        data['params'].append(params)
         
         
             if classification:
@@ -153,6 +178,7 @@ def main():
                 X1 = []
                 global_vec = []
                 y = []
+                params = []
                 
                 if classification:
                     for c in classes:
@@ -162,6 +188,8 @@ def main():
                         y.append(classes.index(c))
                         global_vec.append(data[c]['global_vec'].pop())
                         masks.append(data[c]['mask'].pop())
+                        if args.write_params:
+                            params.append(data[c]['params'].pop())
                 else:
                     for c in range(chunk_size):
                         if len(data['x']) == 0:
@@ -173,7 +201,8 @@ def main():
                         y.append(data['y'].pop()[0])
                         global_vec.append(data['global_vec'].pop())
                         masks.append(data['mask'].pop())
-                        
+                        if args.write_params:
+                            params.append(data['params'].pop())
                         
                     
     
@@ -188,6 +217,9 @@ def main():
                 global_vec = np.array(global_vec, dtype = np.float32)
                 masks = np.array(masks, dtype = np.uint8)
                 
+                if args.write_params:
+                    params = np.array(params, dtype = np.float32)
+                
                 val = np.random.uniform() < val_prop
                 
                 if not val:
@@ -197,6 +229,9 @@ def main():
                     ofile.create_dataset('{0:06d}/mask'.format(counter), data = np.array(masks), compression = 'lzf')
                     ofile.create_dataset('{0:06d}/global_vec'.format(counter), data = global_vec, compression = 'lzf')
                     ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
+                    if args.write_params:
+                        ofile.create_dataset('{0:06d}/params'.format(counter), data = params, compression = 'lzf')
+                    
                     ofile.flush()
                 
                     counter += 1
@@ -207,6 +242,9 @@ def main():
                     ofile_val.create_dataset('{0:06d}/mask'.format(val_counter), data = np.array(masks), compression = 'lzf')
                     ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
+                    if args.write_params:
+                        ofile_val.create_dataset('{0:06d}/params'.format(counter), data = params, compression = 'lzf')
+                    
                     ofile_val.flush()
                 
                     val_counter += 1
