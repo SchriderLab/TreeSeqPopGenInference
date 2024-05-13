@@ -413,6 +413,10 @@ class TreeSeqGenerator(object):
         except:
             self.info_mean = None            
             pass
+        
+        self.info_std[np.where(self.info_std == 0.0)] = 1.0
+        self.global_std[np.where(self.global_std == 0.0)] = 1.0
+        self.t_mean, self.t_std = tuple(means["times"])
 
         # how many tree sequences from each demographic model are included in a batch?
         self.n_samples_per = n_samples_per
@@ -436,6 +440,17 @@ class TreeSeqGenerator(object):
     def get_seq(self, model, key, sample_mode = "sequential", normalize = False):
         X_ = np.array(self.ifile[model][key]["x"])
         X1_ = np.array(self.ifile[model][key]["info"])
+        
+        # log scale and normalize times
+        X_ = np.array(self.ifile[key]["x"])
+        ii = np.where(X_[:, :, :, 0] > 0)
+        X_[ii[0], ii[1], ii[2], 0] = (
+            np.log(X_[ii[0], ii[1], ii[2], 0]) - self.t_mean
+        ) / self.t_std
+
+        # log scale n_mutations
+        ii = np.where(X_[:, :, :, -1] > 0)
+        X_[ii[0], ii[1], ii[2], -1] = np.log(X_[ii[0], ii[1], ii[2], -1])
 
         if X_.shape[0] == 0:
             return None, None, None, None, None, None
@@ -476,9 +491,12 @@ class TreeSeqGenerator(object):
         global_vec = np.array(
             self.ifile[model][key]["global_vec"], dtype=np.float32
         )
-        if normalize and (self.info_mean is not None):
-            global_vec = (global_vec - self.global_mean) / self.global_std
-            X1_ = (X1_ - self.info_mean) / self.info_std
+
+        global_vec = (global_vec - self.global_mean) / self.global_std
+        X1_ = (X1_ - self.info_mean) / self.info_std
+
+        print(global_vec.shape)
+        print(X1_.shape)
 
         # n_nodes, n_features
         s = (X_.shape[1], X_.shape[2])
