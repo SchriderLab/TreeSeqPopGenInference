@@ -399,24 +399,14 @@ class TreeSeqGenerator(object):
         try:
             means = np.load(means)
 
-            self.info_mean = means["v_mean"].reshape(1, 1, -1)
-            self.info_std = means["v_std"].reshape(1, 1, -1)
+            self.pad = pad
 
-            self.global_mean = means["v2_mean"].reshape(1, -1)
-            self.global_std = means["v2_std"].reshape(1, -1)
+            self.info_mean = means["v_mean"].reshape(1, -1)
+            self.info_std = means["v_std"].reshape(1, -1)
 
-            self.regression = (not categorical)
-
-            if self.regression:
-                self.y_mean = means["y_mean"].reshape(1, -1)
-                self.y_std = means["y_std"].reshape(1, -1)
+            self.info_std[np.where(self.info_std == 0.0)] = 1.0
         except:
-            self.info_mean = None            
             pass
-        
-        self.info_std[np.where(self.info_std == 0.0)] = 1.0
-        self.global_std[np.where(self.global_std == 0.0)] = 1.0
-        self.t_mean, self.t_std = tuple(means["times"])
 
         # how many tree sequences from each demographic model are included in a batch?
         self.n_samples_per = n_samples_per
@@ -437,20 +427,9 @@ class TreeSeqGenerator(object):
 
         return
     
-    def get_seq(self, model, key, sample_mode = "sequential", normalize = False):
+    def get_seq(self, model, key, sample_mode = "sequential"):
         X_ = np.array(self.ifile[model][key]["x"])
         X1_ = np.array(self.ifile[model][key]["info"])
-        
-        # log scale and normalize times
-        X_ = np.array(self.ifile[model][key]["x"])
-        ii = np.where(X_[:, :, 0] > 0)
-        X_[ii[0], ii[1], 0] = (
-            np.log(X_[ii[0], ii[1], 0]) - self.t_mean
-        ) / self.t_std
-
-        # log scale n_mutations
-        ii = np.where(X_[:, :, -1] > 0)
-        X_[ii[0], ii[1], -1] = np.log(X_[ii[0], ii[1], -1])
 
         if X_.shape[0] == 0:
             return None, None, None, None, None, None
@@ -483,18 +462,11 @@ class TreeSeqGenerator(object):
                     
                 ii = range(X_.shape[0])
                 padding = True
-        else:
-            pad_size = (0, 0)
-            ii = range(X_.shape[0])
 
         edges = np.array(self.ifile[model][key]["edge_index"], dtype=np.int32)
         global_vec = np.array(
             self.ifile[model][key]["global_vec"], dtype=np.float32
         )
-        
-        global_vec = (global_vec - self.global_mean) / self.global_std
-        X1_ = (X1_ - self.info_mean) / self.info_std
-        X1_ = X1_[0]
 
         # n_nodes, n_features
         s = (X_.shape[1], X_.shape[2])
@@ -516,6 +488,9 @@ class TreeSeqGenerator(object):
 
         for ii_ in ii:
             x = X_[ii_]
+
+            ik = list(np.where(x[:, 0] > 0))
+            x[ik, 0] = np.log(x[ik, 0])
 
             X.append(x)
             mask.append(1.0)
