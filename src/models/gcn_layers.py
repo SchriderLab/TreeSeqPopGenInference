@@ -1119,8 +1119,7 @@ class GATSeqClassifier(nn.Module):
         if self.use_conv:
             xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
             h = torch.cat([h, xc], dim = 1)
-        
-        print(h.shape, x2.shape)
+
         
         h = torch.cat([h, x2], dim = 1)
         

@@ -120,8 +120,6 @@ def main():
             for skey in skeys:
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode, normalize = True)
                 
-                print(x.shape, x1.shape, edge_index.shape, x2.shape)
-
                 Y.append(classes.index(key))
                 cmd = hfile[key][skey].attrs['cmd']
                 
@@ -150,7 +148,7 @@ def main():
                 batch.batch_indices = batch_indices
                 
                 x1 = torch.FloatTensor(x1).to(device)
-                x2 = torch.FloatTensor(x2).to(device).unsqueeze(0)
+                x2 = torch.FloatTensor(x2).to(device)
                 batch = batch.to(device)
                 
                 y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
