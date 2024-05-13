@@ -67,6 +67,8 @@ def parse_args():
     parser.add_argument("--model", default = "gru")
 
     parser.add_argument("--odir", default = "None")
+    parser.add_argument("--return_params", action = "store_true")
+    
     parser.add_argument("--ofile", default = "result.csv")
     args = parser.parse_args()
 
@@ -94,7 +96,7 @@ def main():
     L = int(args.L)
 
     generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
-                                              models = args.classes)
+                                              models = args.classes, return_params = args.return_params)
     
     n_nodes = int(args.n_samples) * 2 - 1
     
@@ -120,14 +122,19 @@ def main():
     
     Y = []
     Y_pred = []
+    params = []
 
     accs = []
     
     ix = 0
     while True:
         with torch.no_grad():
-            batch, x1, x2, y = generator[ix]
-            
+            if not args.return_params:
+                batch, x1, x2, y = generator[ix]
+            else:
+                batch, x1, x2, y, params_ = generator[ix]
+                params.extend(params_)
+                
             if batch is None:
                 break
             
@@ -153,6 +160,7 @@ def main():
     
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
+    params = np.array(params)
     
     result = dict()
     
@@ -160,6 +168,9 @@ def main():
         result[c] = []
    
     result['y'] = Y
+    if args.return_params:
+        for ix in range(params.shape[1]):
+            result['param_{0:02d}'.format(ix)] = params[:,ix]
     
     for ix, c in enumerate(classes):    
         result[c] = Y_pred[:,ix]
