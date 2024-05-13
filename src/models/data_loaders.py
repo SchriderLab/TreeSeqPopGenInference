@@ -439,9 +439,7 @@ class TreeSeqGenerator(object):
     
     def get_seq(self, model, key, sample_mode = "sequential", normalize = False):
         X_ = np.array(self.ifile[model][key]["x"])
-        X1_ = np.array(self.ifile[model][key]["info"])
-        
-        print(X_.shape, X1_.shape)
+        X1_ = np.array(self.ifile[model][key]["info"])[0]
         
         # log scale and normalize times
         X_ = np.array(self.ifile[model][key]["x"])
@@ -496,10 +494,7 @@ class TreeSeqGenerator(object):
         
         global_vec = (global_vec - self.global_mean) / self.global_std
         X1_ = (X1_ - self.info_mean) / self.info_std
-
-        print(global_vec.shape)
-        print(X1_.shape)
-        print(len(ii))
+        X1_ = X1_[0]
 
         # n_nodes, n_features
         s = (X_.shape[1], X_.shape[2])
@@ -521,9 +516,6 @@ class TreeSeqGenerator(object):
 
         for ii_ in ii:
             x = X_[ii_]
-
-            ik = list(np.where(x[:, 0] > 0))
-            x[ik, 0] = np.log(x[ik, 0])
 
             X.append(x)
             mask.append(1.0)
