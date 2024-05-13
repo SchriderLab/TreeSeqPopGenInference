@@ -443,14 +443,14 @@ class TreeSeqGenerator(object):
         
         # log scale and normalize times
         X_ = np.array(self.ifile[model][key]["x"])
-        ii = np.where(X_[:, :, :, 0] > 0)
-        X_[ii[0], ii[1], ii[2], 0] = (
-            np.log(X_[ii[0], ii[1], ii[2], 0]) - self.t_mean
+        ii = np.where(X_[:, :, 0] > 0)
+        X_[ii[0], ii[1], 0] = (
+            np.log(X_[ii[0], ii[1], 0]) - self.t_mean
         ) / self.t_std
 
         # log scale n_mutations
-        ii = np.where(X_[:, :, :, -1] > 0)
-        X_[ii[0], ii[1], ii[2], -1] = np.log(X_[ii[0], ii[1], ii[2], -1])
+        ii = np.where(X_[:, :, -1] > 0)
+        X_[ii[0], ii[1], -1] = np.log(X_[ii[0], ii[1], -1])
 
         if X_.shape[0] == 0:
             return None, None, None, None, None, None
