@@ -121,6 +121,8 @@ def main():
                 x, x1, edge_index, mask, x2, y = generator.get_seq(key, skey, args.sampling_mode, normalize = True)
                 
                 print(x.shape, x1.shape, edge_index.shape, x2.shape)
+                x = np.expand_dims(x, 0)
+                x1 = np.expand_dims(x1, 0)
                 
                 Y.append(classes.index(key))
                 cmd = hfile[key][skey].attrs['cmd']
