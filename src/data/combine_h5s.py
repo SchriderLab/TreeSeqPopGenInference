@@ -141,7 +141,7 @@ def main():
                     cmd = hfile[key][skey].attrs['cmd']
                     
                     params = globals()[args.cmd_parser](cmd)
-                    print(params.shape)
+                    print(params, x.shape, x1.shape, y.shape)
                 
                 if classification:
                     c = y
