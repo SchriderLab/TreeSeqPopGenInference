@@ -172,10 +172,12 @@ class TreeSeqGeneratorV3(object):
             
                 X1.append(x1[k][np.where(mask[k] == 1)[0]])
                 X2.append(np.expand_dims(global_vec[k], 0))
-                if self.return_params:
-                    params.append(self.ifile[key]['params'])
+                
                 
                 indices.append(torch.cat([torch.unsqueeze(u,0) for u in _]))
+            
+            if self.return_params:
+                params.append(self.ifile[key]['params'])
 
         if len(X) == 0:
             if not self.return_params:
