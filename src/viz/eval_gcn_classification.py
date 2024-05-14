@@ -134,7 +134,7 @@ def main():
             else:
                 batch, x1, x2, y, params_ = generator[ix]
                 print(params_.shape)
-                print(x1.shape, x2.shape)
+                print(x1.shape, x2.shape, y.shape)
                 
                 if params_ is not None:
                     params.extend(params_)
