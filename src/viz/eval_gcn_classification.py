@@ -132,10 +132,7 @@ def main():
             if not args.return_params:
                 batch, x1, x2, y = generator[ix]
             else:
-                batch, x1, x2, y, params_ = generator[ix]
-                print(params_.shape)
-                print(x1.shape, x2.shape, y.shape)
-                
+                batch, x1, x2, y, params_ = generator[ix]                
                 if params_ is not None:
                     params.extend(params_)
                 
