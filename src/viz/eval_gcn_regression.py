@@ -149,7 +149,7 @@ def main():
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
     
-    logging.info('normalized rmse: {}'.format(np.mean((Y - Y_pred)**2)))
+    logging.info('normalized l1: {}'.format(np.mean(np.abs(Y - Y_pred))))
     Y = (Y * generator.y_std + generator.y_mean)
     Y_pred = (Y_pred * generator.y_std + generator.y_mean)
 
