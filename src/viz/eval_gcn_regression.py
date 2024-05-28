@@ -146,8 +146,12 @@ def main():
             Y.extend(y)
             Y_pred.extend(y_pred)
    
-    Y = (np.array(Y) * generator.y_std + generator.y_mean)
-    Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
+    Y = np.array(Y)
+    Y_pred = np.array(Y_pred)
+    
+    logging.info('normalized rmse: {}'.format(np.mean((Y - Y_pred)**2)))
+    Y = (Y * generator.y_std + generator.y_mean)
+    Y_pred = (Y_pred * generator.y_std + generator.y_mean)
 
     logging.info('have {} predictions of shape {}'.format(*Y.shape))
     rmse = np.sqrt(np.mean((Y - Y_pred)**2, axis = 0))
