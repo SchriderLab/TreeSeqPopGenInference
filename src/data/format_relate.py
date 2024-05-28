@@ -189,7 +189,7 @@ def main():
         if len([u for u in os.listdir(args.idir) if '.anc' in u]) > 1:
             anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if ((u.split('.')[-1] == 'gz') and \
                                (tuple(u.split('.')[:2]) == tuple(ifile.split('/')[-1].split('.')[:2])))])
-            print(anc_file)
+            
             if len(anc_file) == 1:
                 anc_file = anc_file[0]
             else:
