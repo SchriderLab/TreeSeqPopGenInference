@@ -60,7 +60,7 @@ def main():
     else:
         cmd = 'msdir/ms {4} {2} -t tbs -r tbs {3} < {0} | tee {1} && gzip {1}'
     
-    N = [5e3, 10e3, 15e3, 20e3, 50e3]
+    N = [1e3, 2e3, 5e3, 10e3, 15e3, 20e3, 50e3]
     mu = 1.5e-8
     
     for ix in range(int(args.n_jobs)):
@@ -72,8 +72,8 @@ def main():
         for ix in range(int(args.n_replicates)):
             N_ = np.random.choice(N)
             
-            t = 4 * N_ * mu * 20000 
-            r = 4 * N_ * rejection_sample() * 20000
+            t = 4 * N_ * mu * 20001 
+            r = 4 * N_ * rejection_sample() * 20001
             
             w.write(" ".join([str(t), str(r)]) + "\n")
         w.close()
