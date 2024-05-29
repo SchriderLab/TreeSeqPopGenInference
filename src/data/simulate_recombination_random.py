@@ -18,7 +18,7 @@ def chunks(lst, n):
         
     return _
 
-def rejection_sample(scale = 661038.9851980766 ** (-1)):
+def rejection_sample(scale = 4641167.677653745 ** (-1)):
     while True:
         x = np.random.exponential(scale)
         if x > 10**(-8) and x < 10**-6:
