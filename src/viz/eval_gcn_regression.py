@@ -152,6 +152,12 @@ def main():
     logging.info('normalized l1: {}'.format(np.mean(np.abs(Y - Y_pred))))
     Y = (Y * generator.y_std + generator.y_mean)
     Y_pred = (Y_pred * generator.y_std + generator.y_mean)
+    
+    Y = (np.array(Y) * generator.y_std + generator.y_mean)
+    Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
+    if args.log_y:
+        Y = np.exp(Y)
+        Y_pred = np.exp(Y_pred)
 
     logging.info('have {} predictions of shape {}'.format(*Y.shape))
     rmse = np.sqrt(np.mean((Y - Y_pred)**2, axis = 0))
