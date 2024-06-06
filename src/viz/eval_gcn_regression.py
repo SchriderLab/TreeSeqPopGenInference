@@ -144,7 +144,7 @@ def main():
             y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
             
             loss = l1(y_pred, y).item()
-            
+            losses.append(loss)
             
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy()
