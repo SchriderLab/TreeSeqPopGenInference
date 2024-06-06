@@ -126,6 +126,9 @@ def main():
     
     classification = False
     
+    l1 = nn.SmoothL1Loss()
+    losses = []
+    
     for ix in tqdm(range(len(generator))):
         with torch.no_grad():
             batch, x1, x2, y = generator[ix]
@@ -140,6 +143,9 @@ def main():
 
             y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
             
+            loss = l1(y_pred, y).item()
+            
+            
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy()
             
@@ -149,12 +155,13 @@ def main():
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
     
+    print(np.mean(losses))
+    
     logging.info('normalized l1: {}'.format(np.mean(np.abs(Y - Y_pred))))
+    
     Y = (Y * generator.y_std + generator.y_mean)
     Y_pred = (Y_pred * generator.y_std + generator.y_mean)
     
-    Y = (np.array(Y) * generator.y_std + generator.y_mean)
-    Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
     if args.log_y:
         Y = np.exp(Y)
         Y_pred = np.exp(Y_pred)
