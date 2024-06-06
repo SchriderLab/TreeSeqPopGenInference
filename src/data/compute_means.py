@@ -94,8 +94,20 @@ def main():
     v_mean = np.mean(vs, axis = 0)
     v_std = np.std(vs, axis = 0)
     
+    logging.info('v_mean: ')
+    logging.info(v_mean)
+    
+    logging.info('v_std: ')
+    logging.info(v_std)
+    
     v2_mean = np.mean(v2s, axis = 0)
     v2_std = np.std(v2s, axis = 0)
+    
+    logging.info('v2_mean: ')
+    logging.info(v_mean)
+    
+    logging.info('v2_std: ')
+    logging.info(v_std)
     
     if args.regression:
         np.savez(args.ofile, v_mean = v_mean, v_std = v_std, v2_mean = v2_mean, v2_std = v2_std, 
