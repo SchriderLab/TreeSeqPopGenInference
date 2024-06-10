@@ -125,6 +125,7 @@ def parse_args():
     parser.add_argument("--n_val_steps", default="-1",
                         help="in the case you want to validate on a smaller set than the one written")
     parser.add_argument("--skip_info", action = "store_true", help = "skip the graph level features passed the GRU")
+    parser.add_argument("--skip_global", action = "store_true", help = "skip the sequence level features passed to the GRU")
 
     args = parser.parse_args()
 
@@ -176,7 +177,8 @@ def main():
     if args.model == 'gru':
         model = GATSeqClassifier(generator.batch_size, n_classes=int(args.n_classes), L=L,
                                  n_gcn_iter=int(args.n_gcn_iter), in_dim=int(args.in_dim), hidden_size=int(args.hidden_dim),
-                                 use_conv=False, num_gru_layers=int(args.n_gru_layers), gcn_dim=int(args.gcn_dim), skip_info = args.skip_info)
+                                 use_conv=False, num_gru_layers=int(args.n_gru_layers), gcn_dim=int(args.gcn_dim), 
+                                 skip_info = args.skip_info, skip_global = args.skip_global)
     elif args.model == 'conv':
         model = GATConvClassifier(generator.batch_size, n_classes=int(args.n_classes), L=L, n_nodes=n_nodes,
                                   n_gcn_iter=int(args.n_gcn_iter), in_dim=int(args.in_dim), hidden_size=int(args.hidden_dim),

@@ -1016,7 +1016,7 @@ from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 class GATSeqClassifier(nn.Module):
     def __init__(self, n_nodes, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
                              num_gru_layers = 2, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 6,
-                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8, skip_info = False): 
+                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8, skip_info = False, skip_global = False): 
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -1024,6 +1024,7 @@ class GATSeqClassifier(nn.Module):
         self.act = nn.ReLU()
         
         self.skip_info = skip_info
+        self.skip_global = skip_global
         
         self.n_nodes = n_nodes
         
@@ -1070,10 +1071,11 @@ class GATSeqClassifier(nn.Module):
         self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, num_layers = num_gru_layers, batch_first = True, bidirectional = False)
         self.graph_gru.name = 'graph_gru'
         
-        print(hidden_size * num_gru_layers, )
-        
         if not self.use_conv:
-            self.out = MLP(hidden_size * num_gru_layers + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers)
+            if not self.skip_global:
+                self.out = MLP(hidden_size * num_gru_layers + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers)
+            else:
+                self.out = MLP(hidden_size * num_gru_layers, n_classes, dim = hidden_size * num_gru_layers)
         else:
             self.out = MLP(hidden_size * num_gru_layers + L * conv_dim + global_embedding_dim, n_classes, dim = hidden_size * num_gru_layers)
         self.out.name = 'out_mlp'
@@ -1101,7 +1103,6 @@ class GATSeqClassifier(nn.Module):
         n_batch = x1.shape[0]
         
         x = torch.cat([self.embedding(x0), x0], dim = -1)
-        x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
         
         for ix in range(self.n_gcn_iter):
             x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
@@ -1126,8 +1127,9 @@ class GATSeqClassifier(nn.Module):
             xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
             h = torch.cat([h, xc], dim = 1)
 
-        
-        h = torch.cat([h, x2], dim = 1)
+        if not self.skip_global:
+            x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
+            h = torch.cat([h, x2], dim = 1)
         
         return self.out(h)
         
