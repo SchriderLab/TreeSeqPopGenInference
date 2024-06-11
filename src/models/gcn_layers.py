@@ -1016,7 +1016,7 @@ from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 class GATSeqClassifier(nn.Module):
     def __init__(self, n_nodes, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
                              num_gru_layers = 2, hidden_size = 256, L = 32, n_heads = 1, n_gcn_iter = 6,
-                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8, skip_info = False, skip_global = False): 
+                             use_conv = False, conv_k = 5, conv_dim = 4, momenta_gamma = 0.8, skip_info = False, skip_global = False, skip_gcn = False): 
         super(GATSeqClassifier, self).__init__()
 
         self.gcns = nn.ModuleList()
@@ -1025,6 +1025,7 @@ class GATSeqClassifier(nn.Module):
         
         self.skip_info = skip_info
         self.skip_global = skip_global
+        self.skip_gcn = skip_gcn
         
         self.n_nodes = n_nodes
         
@@ -1104,10 +1105,11 @@ class GATSeqClassifier(nn.Module):
         
         x = torch.cat([self.embedding(x0), x0], dim = -1)
         
-        for ix in range(self.n_gcn_iter):
-            x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
-            x = self.act(x)
-            
+        if not self.skip_gcn:
+            for ix in range(self.n_gcn_iter):
+                x = self.norms[ix](self.gcns[ix](x, edge_index) + x)    
+                x = self.act(x)
+                
         x = torch.cat([x0, x], dim = -1)
        
         x = to_dense_batch(x, batch.batch)[0]
