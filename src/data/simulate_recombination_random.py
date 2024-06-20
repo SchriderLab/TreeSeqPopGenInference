@@ -34,6 +34,7 @@ def parse_args():
     
     parser.add_argument("--slurm", action = "store_true", help = "are we using SLURM i.e. sbatch?")
     parser.add_argument("--n", default = "50", help = "number of individuals in the sample")
+    parser.add_argument("--factor", default = "1.0")
 
     parser.add_argument("--odir", default = "None")
     args = parser.parse_args()
@@ -63,6 +64,8 @@ def main():
     N = [1e3, 2e3, 5e3, 10e3, 15e3, 20e3, 50e3]
     mu = 1.5e-8
     
+    factor = float(args.factor)
+    
     for ix in range(int(args.n_jobs)):
         tbs_file = os.path.join(args.odir, '{0:05d}.tbs'.format(ix))
         w = open(tbs_file, 'w')
@@ -74,6 +77,9 @@ def main():
             
             t = 4 * N_ * mu * 20001 
             r = 4 * N_ * rejection_sample() * 20001
+            
+            t *= factor
+            r *= factor
             
             w.write(" ".join([str(t), str(r)]) + "\n")
         w.close()
