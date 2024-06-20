@@ -127,6 +127,7 @@ def main():
     if args.weights != "None":
         checkpoint = torch.load(args.weights, map_location = device)
         model.load_state_dict(checkpoint)
+        logging.info('loaded weights: {}'.format(args.weights))
     
     optimizer = torch.optim.Adam(model.parameters(), lr=float(args.lr), weight_decay = float(args.weight_decay))
     
