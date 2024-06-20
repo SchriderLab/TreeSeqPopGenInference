@@ -139,11 +139,18 @@ def main():
         
         ix += 1
 
+    logging.info('normalized l1: {}'.format(np.mean(np.abs(Y - Y_pred))))
+
     Y = (np.array(Y) * generator.y_std + generator.y_mean)
     Y_pred = (np.array(Y_pred) * generator.y_std + generator.y_mean)
-    print(Y.shape, Y_pred.shape)
-
-    print(np.sqrt(np.mean((Y - Y_pred)**2, axis = 0)))
+    if args.log_y:
+        Y = np.exp(Y)
+        Y_pred = np.exp(Y_pred)
+        
+    logging.info('have {} predictions of shape {}'.format(*Y.shape))
+    rmse = np.sqrt(np.mean((Y - Y_pred)**2, axis = 0))
+    logging.info('RMSE: {}'.format(rmse))
+    logging.info('median RMSE: {}'.format(np.median(rmse)))
 
     np.savez(args.ofile, y = Y, y_pred = Y_pred)
     
