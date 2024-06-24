@@ -145,6 +145,8 @@ def main():
         
         ix += 1
 
+    logging.info('smooth l1: {}'.format(np.mean(losses)))
+
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
 
