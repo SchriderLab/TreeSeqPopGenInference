@@ -180,8 +180,6 @@ def main():
         s0 = pop_sizes[0]
         s1 = 0
     
-    ix = 0
-    
     for ii in range(len(ifiles)):
         tag = tags[ii]
         ifile = ifiles[ii]
@@ -220,8 +218,11 @@ def main():
         
         del y
         
+        ix = 0
+        
         times = []
-                
+        
+        logging.info('have {} genotype matrices...'.format(len(x)))        
         logging.info('writing...')
         while True:            
             # we're at the beginning of a block
@@ -323,6 +324,7 @@ def main():
 
             ix += 1
                 
+        logging.info('got {} tree sequences...'.format(ix))
           
     ofile.close()
     
