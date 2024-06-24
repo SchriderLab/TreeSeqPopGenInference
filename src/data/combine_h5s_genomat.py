@@ -109,7 +109,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # my args
     parser.add_argument("--verbose", action = "store_true", help = "display messages")
-    parser.add_argument("--idir", default = "None")
+    parser.add_argument("--i", default = "None")
     parser.add_argument("--mode", default = "pad")
     
     parser.add_argument("--pop_sizes", default = "20,14")
@@ -142,13 +142,12 @@ def main():
     args = parse_args()
     
     counts = dict()
-    ifiles = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if u.split('.')[-1] == 'hdf5'])
+    ifiles = [args.i]
     
     if comm.rank == 0:
         counts = dict()
         
         ofile = h5py.File(args.ofile, 'w')
-        ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
 
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     chunk_size = int(args.chunk_size)
@@ -176,6 +175,8 @@ def main():
         cases = sorted(keys)
         
         for case in cases:
+            logging.info('working on {}...'.format(case))
+            
             comm.Barrier()
                 
             keys = list(ifile[case].keys())
@@ -227,23 +228,16 @@ def main():
                             y_ = np.concatenate([Y.pop() for k in range(chunk_size)])
                         else:
                             y_ = None
-                        
-                        if val:
-                            ofile_val.create_dataset('{0}/{1}/x'.format(case, counts[case][1]), data = x_.astype(np.uint8), compression = 'lzf')
-                            if y_ is not None:
-                                ofile_val.create_dataset('{0}/{1}/y'.format(case, counts[case][1]), data = y_.astype(np.float32), compression = 'lzf')
-                            
-                            counts[case][1] += 1
-                        else:
-                            ofile.create_dataset('{0}/{1}/x'.format(case, counts[case][0]), data = x_.astype(np.uint8), compression = 'lzf')
-                            if y_ is not None:
-                                ofile.create_dataset('{0}/{1}/y'.format(case, counts[case][0]), data = y_.astype(np.float32), compression = 'lzf')
-                            counts[case][0] += 1
+                     
+                       
+                        ofile.create_dataset('{0}/x'.format(counts[case][0]), data = x_.astype(np.uint8), compression = 'lzf')
+                        if y_ is not None:
+                            ofile.create_dataset('{0}/y'.format(counts[case][0]), data = y_.astype(np.float32), compression = 'lzf')
+                        counts[case][0] += 1
                 
     if comm.rank == 0:
         ofile.close()
-        ofile_val.close()
-        
+
         logging.info('mean seq length: {}'.format(np.mean(Ls)))
         logging.info('median seq length: {}'.format(np.median(Ls)))
         logging.info('min seq length: {}'.format(np.min(Ls)))
