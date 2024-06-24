@@ -179,6 +179,8 @@ def main():
     else: 
         s0 = pop_sizes[0]
         s1 = 0
+        
+    ix = 0
     
     for ii in range(len(ifiles)):
         tag = tags[ii]
@@ -217,9 +219,7 @@ def main():
             continue
         
         del y
-        
-        ix = 0
-        
+                
         times = []
         
         logging.info('have {} genotype matrices...'.format(len(x)))        
@@ -324,7 +324,7 @@ def main():
 
             ix += 1
                 
-        logging.info('got {} tree sequences...'.format(ix))
+        logging.info('have {} tree sequences thus far...'.format(ix))
           
     ofile.close()
     
