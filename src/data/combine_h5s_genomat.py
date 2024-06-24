@@ -173,9 +173,9 @@ def main():
             continue
         
         cases = sorted(keys)
+        ix = 0
         
         for case in cases:
-            logging.info('working on {}...'.format(case))
             
             comm.Barrier()
                 
@@ -230,10 +230,10 @@ def main():
                             y_ = None
                      
                        
-                        ofile.create_dataset('{0}/x'.format(counts[case][0]), data = x_.astype(np.uint8), compression = 'lzf')
+                        ofile.create_dataset('{0}/x'.format(ix), data = x_.astype(np.uint8), compression = 'lzf')
                         if y_ is not None:
-                            ofile.create_dataset('{0}/y'.format(counts[case][0]), data = y_.astype(np.float32), compression = 'lzf')
-                        counts[case][0] += 1
+                            ofile.create_dataset('{0}/y'.format(ix), data = y_.astype(np.float32), compression = 'lzf')
+                        ix += 1
                 
     if comm.rank == 0:
         ofile.close()
