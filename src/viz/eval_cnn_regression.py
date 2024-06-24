@@ -114,6 +114,9 @@ def main():
     Y = []
     Y_pred = []
     
+    l1 = nn.SmoothL1Loss()
+    losses = []
+    
     ix = 0
     while True:
         with torch.no_grad():
@@ -129,6 +132,9 @@ def main():
             y_pred = model(x)
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
+            
+            loss = l1(y_pred, y).item()
+            losses.append(loss)
             
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy()
