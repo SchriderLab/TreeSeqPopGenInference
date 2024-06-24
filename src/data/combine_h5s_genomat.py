@@ -244,7 +244,7 @@ def main():
         if len(X) > 0:
             x_ = np.array([X.pop() for k in range(len(X))])
             if args.regression:
-                y_ = np.concatenate([Y.pop() for k in range(chunk_size)])
+                y_ = np.concatenate([Y.pop() for k in range(len(Y))])
             else:
                 y_ = None
             ofile.create_dataset('{0}/x'.format(ix), data = x_.astype(np.uint8), compression = 'lzf')
