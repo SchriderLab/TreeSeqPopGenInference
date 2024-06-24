@@ -239,16 +239,17 @@ def main():
                         if y_ is not None:
                             ofile.create_dataset('{0}/y'.format(ix), data = y_.astype(np.float32), compression = 'lzf')
                         ix += 1
-                        
-    if len(X) > 0:
-        x_ = np.array([X.pop() for k in range(len(X))])
-        if args.regression:
-            y_ = np.concatenate([Y.pop() for k in range(chunk_size)])
-        else:
-            y_ = None
-        ofile.create_dataset('{0}/x'.format(ix), data = x_.astype(np.uint8), compression = 'lzf')
-        if y_ is not None:
-            ofile.create_dataset('{0}/y'.format(ix), data = y_.astype(np.float32), compression = 'lzf')
+      
+    if comm.rank == 0:
+        if len(X) > 0:
+            x_ = np.array([X.pop() for k in range(len(X))])
+            if args.regression:
+                y_ = np.concatenate([Y.pop() for k in range(chunk_size)])
+            else:
+                y_ = None
+            ofile.create_dataset('{0}/x'.format(ix), data = x_.astype(np.uint8), compression = 'lzf')
+            if y_ is not None:
+                ofile.create_dataset('{0}/y'.format(ix), data = y_.astype(np.float32), compression = 'lzf')
                 
     if comm.rank == 0:
         ofile.close()
