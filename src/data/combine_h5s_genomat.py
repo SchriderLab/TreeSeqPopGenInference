@@ -180,6 +180,11 @@ def main():
             comm.Barrier()
                 
             keys = list(ifile[case].keys())
+            
+            if comm.rank == 0:
+                logging.info('working on {}...'.format(case))
+                logging.info('have {} keys...'.format(len(keys)))
+            
             if comm.rank != 0:
                 for ij in range(comm.rank - 1, len(keys), comm.size - 1):
                     key = keys[ij]
