@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import time
 
 from train_gcn import LabelSmoothing
-from torchvision_mod_layers import resnet34, LexStyleNet
+from torchvision_mod_layers import resnet34, resnet50, resnet101, LexStyleNet
 
 from datetime import datetime
 
@@ -36,6 +36,8 @@ from datetime import datetime
 Trains a CNN on either a regression or classification task with data already formatted as an h5 file.
  
 """
+
+import sys
 
 def parse_args():
     # Argument Parser
@@ -60,6 +62,7 @@ def parse_args():
     
     parser.add_argument("--model", default = "res", help = "res | lex.  'res' for resnet34 architecture or 'lex' for a architecture similiar to the one used inhttps://academic.oup.com/mbe/article/36/2/220/5229930?login=false")
     parser.add_argument("--batch_size", default = "32", help = "batch sized used each gradient step")
+    parser.add_argument("--depth", default = "34", help = "resnet depth. 34 | 50 | 101")
     
     parser.add_argument("--weights", default = "None", help = "pre-trained weights to load to resume training or fine tune a model")
     parser.add_argument("--regression", action = "store_true", help = "pre-trained weights to load to resume training or fine tune a model")
@@ -113,7 +116,16 @@ def main():
             
     logging.info('making model...')
     if args.model == "res":
-        model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+        if args.depth == "34":
+            model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+        elif args.depth == "50":
+            model = resnet50(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+        elif args.depth == "101":
+            model = resnet101(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+        else:
+            logging.info('--depth must be in one of [34, 50, 101]!  Aborting!...')
+            sys.exit()
+            
     elif args.model == "lex":
         _, c, n_pop, n_sites = x.shape
         model = LexStyleNet(h = c * n_pop, n_classes = int(args.n_classes)).to(device)
