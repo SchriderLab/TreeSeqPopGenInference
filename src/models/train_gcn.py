@@ -127,6 +127,7 @@ def parse_args():
     parser.add_argument("--skip_info", action = "store_true", help = "skip the graph level features passed the GRU")
     parser.add_argument("--skip_global", action = "store_true", help = "skip the sequence level features passed to the GRU")
     parser.add_argument("--skip_gcn", action = "store_true")
+    parser.add_argument("--loss", default = "smooth_l1", help = "smooth_l1 | l1 | l2.  specifies the loss for regression problems")
 
     args = parser.parse_args()
 
@@ -225,8 +226,15 @@ def main():
         criterion = LabelSmoothing(float(args.label_smoothing))
         classification = True
     else:
-        loss_str = 'l1 loss'
-        criterion = nn.SmoothL1Loss()
+        if args.loss == 'smooth_l1':
+            loss_str = 'l1 loss'
+            criterion = nn.SmoothL1Loss()
+        elif args.loss == 'l1':
+            loss_str = 'l1'
+            criterion = nn.L1Loss()
+        elif args.loss == 'l2':
+            loss_str = 'mse'
+            criterion = nn.MSELoss()
         classification = False
 
     # print(criterion)
