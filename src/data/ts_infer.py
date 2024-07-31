@@ -74,14 +74,14 @@ def main():
             
             print(p)
             print(x.shape)
-            sys.stdout.flush()
             
             # x (samples, sites)
             with tsinfer.SampleData(sequence_length=L) as sample_data:
                 for k in range(x.shape[1]):
                     try:
                         sample_data.add_site(p[k], x[:,k], ["A", "T"], ancestral_allele = 0)
-                    except:
+                    except Exception as e:
+                        print(e)
                         pass
             
             inferred_ts = tsinfer.infer(sample_data, recombination_rate = r)
