@@ -72,6 +72,8 @@ def main():
             p = (L * p).astype(np.int32)
             
             
+            print(x.shape)
+            sys.stdout.flush()
             
             # x (samples, sites)
             with tsinfer.SampleData(sequence_length=L) as sample_data:
