@@ -72,6 +72,7 @@ def main():
             p = (L * p).astype(np.int32)
             
             
+            print(p)
             print(x.shape)
             sys.stdout.flush()
             
