@@ -56,3 +56,6 @@ def main():
         print(cmd_)
         if not args.debug:
             os.system(cmd_)
+            
+if __name__ == '__main__':
+    main()
