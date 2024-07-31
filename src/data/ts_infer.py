@@ -67,6 +67,7 @@ def main():
         for x, p, y in zip(X, P, params):
             p = (L * p).astype(np.int32)
             
+            print(x.shape)
             
             # x (samples, sites)
             with tsinfer.SampleData(sequence_length=L) as sample_data:
