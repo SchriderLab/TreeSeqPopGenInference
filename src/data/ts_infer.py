@@ -59,7 +59,11 @@ def main():
     
     print(ifiles)
     for ifile in ifiles:
+        print('working on {}...'.format(ifile))
+        sys.stdout.flush()
+        
         tag = ifile.split('/')[-1].split('.')[0]
+        
         
         X, Y, P, params = load_data(ifile)
 
@@ -67,7 +71,7 @@ def main():
         for x, p, y in zip(X, P, params):
             p = (L * p).astype(np.int32)
             
-            print(x.shape)
+            
             
             # x (samples, sites)
             with tsinfer.SampleData(sequence_length=L) as sample_data:
@@ -171,6 +175,7 @@ def main():
             
             ix_ += 1
             ofile.flush()
+            sys.stdout.flush()
             
     ofile.close()
             
