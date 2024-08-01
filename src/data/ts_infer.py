@@ -70,16 +70,12 @@ def main():
         ix_ = 0
         for x, p, y in zip(X, P, params):
             p = (L * p).astype(np.int32)
-            
-            
-            print(p)
-            print(x.shape)
-            
+
             # x (samples, sites)
             with tsinfer.SampleData(sequence_length=L) as sample_data:
                 for k in range(x.shape[1]):
                     try:
-                        sample_data.add_site(p[k], x[:,k], ["A", "T"], ancestral_allele = 0)
+                        sample_data.add_site(p[k] - 1, x[:,k], ["A", "T"])
                     except Exception as e:
                         print(e)
                         pass
