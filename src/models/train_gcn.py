@@ -267,6 +267,7 @@ def main():
             y = y.to(device)
             x1 = x1.to(device)
             x2 = x2.to(device)
+            print(batch.edge_index.shape, batch.x.shape, torch.max(batch.edge_index))
 
             optimizer.zero_grad()
 
