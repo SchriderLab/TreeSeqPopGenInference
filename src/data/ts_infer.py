@@ -69,7 +69,11 @@ def main():
 
         ix_ = 0
         for x, p, y in zip(X, P, params):
+            if x is None:
+                continue
+            
             p = (L * p).astype(np.int32)
+            
 
             # x (samples, sites)
             with tsinfer.SampleData(sequence_length=L) as sample_data:
