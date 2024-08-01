@@ -121,8 +121,7 @@ class TreeSeqGeneratorV3(object):
             # normalize the tree summary vectors
             x1 = (np.array(self.ifile[key]["x1"]) - self.info_mean) / self.info_std
             edge_index = np.array(self.ifile[key]["edge_index"])
-            if edge_index.shape[-1] != 2:
-                edge_index = edge_index.transpose(0, 1, 3, 2)
+
 
             mask = np.array(self.ifile[key]["mask"])
             mask_indices.extend(np.concatenate([np.expand_dims(u, 0) for u in np.where(mask == 1)]).T + np.array([[batch_ii, 0]]))
@@ -175,7 +174,7 @@ class TreeSeqGeneratorV3(object):
                 X1.append(x1[k][np.where(mask[k] == 1)[0]])
                 X2.append(np.expand_dims(global_vec[k], 0))
                 
-                
+                print([u.shape for u in _])
                 indices.append(torch.cat([torch.unsqueeze(u,0) for u in _]))
             
             if self.return_params:
