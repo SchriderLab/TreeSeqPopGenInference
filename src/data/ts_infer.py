@@ -156,7 +156,7 @@ def main():
                                          position, w, l])
                     
                     X1.append(info_vec)
-                    Edges.append(e)
+                    Edges.append(e.T)
 
             #logging.info('iteration took {} seconds...'.format(time.time() - t0))
             infos = np.array(X1)
