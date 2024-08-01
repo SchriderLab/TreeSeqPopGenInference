@@ -104,6 +104,11 @@ def main():
                     
                     tree = tree.split_polytomies()
                     nodes = list(tree.nodes())
+                    times = [tree.time(u) for u in nodes]
+                    ii = np.argsort(times)
+                    
+                    nodes = [nodes[u] for u in ii]
+                    
                     
                     mutation_ix = [nodes.index(u.node) for u in list(tree.mutations())]
                     
@@ -161,6 +166,8 @@ def main():
                     
                     X1.append(info_vec)
                     Edges.append(e.T)
+                    
+                    print(np.max(Edges[-1]), Xs[-1].shape)
 
             #logging.info('iteration took {} seconds...'.format(time.time() - t0))
             infos = np.array(X1)
