@@ -137,7 +137,7 @@ def main():
 
                     X_ = np.array(X_)
                     X_[mutation_ix, -1] += 1.
-                    e = np.array(e, dtype = np.int32) + current_node
+                    e = np.array(e, dtype = np.int32)
                     
                     current_node += X_.shape[0]
 
