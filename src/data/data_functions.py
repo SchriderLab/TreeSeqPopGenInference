@@ -162,8 +162,10 @@ def load_data(msFile, ancFile = None, n = None, leave_out_last = False):
             intros.append(False)
         
         pos = np.array([u for u in chunk[2].split(' ')[1:-1] if u != ''], dtype = np.float32)
-        print([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]])
-        x = np.array([list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]], dtype = np.uint8)
+        _ = [list(map(int, split(u.replace('\n', '')))) for u in chunk[3:-1]]
+        _ = [u for u in _ if len(u) > 0]
+        
+        x = np.array(_, dtype = np.uint8)
         
         if x.shape[0] == 0:
             X.append(None)
