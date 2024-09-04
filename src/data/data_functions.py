@@ -154,10 +154,12 @@ def load_data(msFile, ancFile = None, n = None, leave_out_last = False):
     
     for chunk in ms_chunks:
         line = chunk[0]
-        params_ = list(map(float, line.replace('//', '').replace('\n', '').split('\t')[1:]))
+        params_ = list(map(float, line.replace('\n', '').split('\t')[1:]))
         
         if len(params_) == 0:
-            params_ = list(map(float, line.replace('//', '').replace('\n', '').split()[1:]))
+            params_ = list(map(float, line.replace('\n', '').split()[1:]))
+        
+        
         
         if '*' in line:
             intros.append(True)
