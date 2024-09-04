@@ -317,6 +317,7 @@ def main():
             Xg = x[iix]
             #A = np.array(As)
             y = params[iix]
+            print(y)
             
             ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
             ofile.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
