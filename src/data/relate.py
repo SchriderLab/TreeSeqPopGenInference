@@ -113,7 +113,8 @@ def main():
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
         print(cmd_)
-        os.system(cmd_)        
+        os.system(cmd_)      
+        os.system('ls')
         
         L = float(args.L)  
         r = float(args.r)
