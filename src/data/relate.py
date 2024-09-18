@@ -164,12 +164,12 @@ def main():
                 cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
                 print(cmd_)
                 os.system(cmd_)
+                os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
             except:
                 print('Relate failed for sample {}...'.format(ix))
                 print('skipping...')
                    
-            os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
-        
+            
         os.system('gzip {0}'.format(m_ofile))
         
         os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
