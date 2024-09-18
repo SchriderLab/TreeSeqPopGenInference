@@ -112,6 +112,7 @@ def main():
         logging.info('working on {}...'.format(ifile))
         logging.info('converting to haps / sample files via Rscript...')
         cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
+        print(cmd_)
         os.system(cmd_)        
         
         L = float(args.L)  
@@ -140,6 +141,9 @@ def main():
         
         for ix in range(len(samples)):
             ofile = haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', '')
+            if ofile[-1] == '_':
+                ofile = ofile[:-1]
+            
             cmd_ = relate_cmd.format(mu, int(args.N), haps[ix], 
                                      samples[ix], map_file, 
                                      ofile, odir)
@@ -165,8 +169,8 @@ def main():
         
         os.system('gzip {0}'.format(m_ofile))
         
-        os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
-        os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
+        #os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
+        #os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
     # compress back
     logging.info('compressing back...')
