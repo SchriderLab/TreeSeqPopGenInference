@@ -114,7 +114,7 @@ def main():
         cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
         print(cmd_)
         os.system(cmd_)      
-        os.system('ls')
+        print(os.listdir('.'))
         
         L = float(args.L)  
         r = float(args.r)
