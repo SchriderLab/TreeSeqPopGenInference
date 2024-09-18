@@ -104,7 +104,7 @@ def main():
     rcmd = 'cd {3} && Rscript ' + rscript_path + ' {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
-    for ifile in ifiles:
+    for ifile in ifiles[:1]:
         m_ofile = os.path.join(odir, ifile.split('/')[-1].replace('.msOut', '.anc'))
         
         tag = ifile.split('/')[-1].split('.')[0]
@@ -172,12 +172,14 @@ def main():
         #os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
         #os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
+    """
     # compress back
     logging.info('compressing back...')
     ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
     for ifile in ifiles:
         if '.gz' not in ifile:
             os.system('gzip {}'.format(ifile))
+    """
 
 if __name__ == '__main__':
     main()
