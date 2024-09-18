@@ -114,7 +114,7 @@ def main():
         cmd_ = rcmd.format(ifile, tag, int(args.L), odir)
         print(cmd_)
         os.system(cmd_)      
-        print(os.listdir('.'))
+        print(os.listdir(odir))
         
         L = float(args.L)  
         r = float(args.r)
@@ -139,6 +139,8 @@ def main():
             f.write('0    0    0\n')
             for k in range(int(args.n_samples)):
                 f.write('UNR{} NA 0\n'.format(k + 1))
+        
+        f.close()
         
         for ix in range(len(samples)):
             ofile = haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', '')
@@ -170,17 +172,17 @@ def main():
         
         os.system('gzip {0}'.format(m_ofile))
         
-        #os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
-        #os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
         
-    """
+    
     # compress back
     logging.info('compressing back...')
     ifiles = [os.path.join(idir, u) for u in os.listdir(idir) if (('.ms' in u) or ('.msOut' in u))]
     for ifile in ifiles:
         if '.gz' not in ifile:
             os.system('gzip {}'.format(ifile))
-    """
+    
 
 if __name__ == '__main__':
     main()
