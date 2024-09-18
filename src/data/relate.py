@@ -104,7 +104,7 @@ def main():
     rcmd = 'cd {3} && Rscript ' + rscript_path + ' {0} {1} {2}'
     relate_cmd = 'cd {6} && ' + args.relate_path + ' --mode All -m {0} -N {1} --haps {2} --sample {3} --map {4} --output {5}'
     
-    for ifile in ifiles[:1]:
+    for ifile in ifiles:
         m_ofile = os.path.join(odir, ifile.split('/')[-1].replace('.msOut', '.anc'))
         
         tag = ifile.split('/')[-1].split('.')[0]
