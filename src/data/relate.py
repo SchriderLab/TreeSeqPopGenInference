@@ -132,6 +132,7 @@ def main():
         haps = list(map(os.path.abspath, sorted(glob.glob(os.path.join(odir, '*.haps')))))
         samples = list(map(os.path.abspath, [u.replace('.haps', '.sample') for u in haps if os.path.exists(u.replace('.haps', '.sample'))]))
         
+        print(samples)
         # we need to rewrite the haps files (for haploid organisms)
         for sample in samples:
             f = open(sample, 'w')
@@ -140,7 +141,7 @@ def main():
             for k in range(int(args.n_samples)):
                 f.write('UNR{} NA 0\n'.format(k + 1))
         
-        f.close()
+            f.close()
         
         for ix in range(len(samples)):
             ofile = haps[ix].split('/')[-1].replace('.haps', '') + '_' + map_file.split('/')[-1].replace('.map', '').replace(tag, '').replace('.', '')
@@ -155,19 +156,17 @@ def main():
             os.system(cmd_)
             
             f = open(os.path.join(odir, ofile) + '.anc', 'a')
-            try:
                 
-                c_ix = int(re.findall(r'chr\d+', haps[ix].split('/')[-1])[0].replace('chr', ''))
-                f.write('chromosome: {}\n'.format(c_ix))
-                f.close()
-                
-                cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
-                print(cmd_)
-                os.system(cmd_)
-                os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
-            except:
-                print('Relate failed for sample {}...'.format(ix))
-                print('skipping...')
+            c_ix = int(re.findall(r'chr\d+', haps[ix].split('/')[-1])[0].replace('chr', ''))
+            f.write('chromosome: {}\n'.format(c_ix))
+            f.close()
+            
+            cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
+            print(cmd_)
+            os.system(cmd_)
+            os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
+            
+            f.close()
                    
             
         os.system('gzip {0}'.format(m_ofile))
