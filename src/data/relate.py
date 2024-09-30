@@ -164,7 +164,7 @@ def main():
             cmd_ = 'cat {} >> {}'.format(os.path.join(odir, ofile) + '.anc', m_ofile)
             print(cmd_)
             os.system(cmd_)
-            os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
+            #os.system('rm -rf {}*'.format(os.path.join(odir, ofile)))
             
             f.close()
                    
