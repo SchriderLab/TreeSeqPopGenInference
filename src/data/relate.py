@@ -173,7 +173,12 @@ def main():
         
         os.system('rm -rf {}'.format(os.path.join(odir, '*.sample')))
         os.system('rm -rf {}'.format(os.path.join(odir, '*.haps')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.anc')))
+        os.system('rm -rf {}'.format(os.path.join(odir, '*.mut')))
+    
+        dirs_ = [u for u in glob.glob(os.path.join(odir, '*')) if os.path.isdir(u)]
         
+        os.system('rm -r {}'.format(' '.join(dirs_)))
     
     # compress back
     logging.info('compressing back...')
