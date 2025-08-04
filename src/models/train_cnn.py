@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import time
 
 from train_gcn import LabelSmoothing
-from torchvision_mod_layers import resnet34, resnet50, resnet101, LexStyleNet
+from torchvision_mod_layers import resnet34, resnet50, resnet101, LexStyleNet, resnet18
 
 from datetime import datetime
 
@@ -66,6 +66,8 @@ def parse_args():
     
     parser.add_argument("--weights", default = "None", help = "pre-trained weights to load to resume training or fine tune a model")
     parser.add_argument("--regression", action = "store_true", help = "pre-trained weights to load to resume training or fine tune a model")
+    parser.add_argument("--final_dim", default = 512, type = int)
+
 
     parser.add_argument("--odir", default = "None", help = "output directory where we save weights and logs of training progress")
     args = parser.parse_args()
@@ -116,12 +118,14 @@ def main():
             
     logging.info('making model...')
     if args.model == "res":
+        if args.depth == "18":
+            model = resnet18(in_channels = int(args.in_channels), num_classes = int(args.n_classes), final_dim = args.final_dim).to(device)
         if args.depth == "34":
-            model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+            model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes), final_dim = args.final_dim).to(device)
         elif args.depth == "50":
-            model = resnet50(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+            model = resnet50(in_channels = int(args.in_channels), num_classes = int(args.n_classes), final_dim = args.final_dim).to(device)
         elif args.depth == "101":
-            model = resnet101(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+            model = resnet101(in_channels = int(args.in_channels), num_classes = int(args.n_classes), final_dim = args.final_dim).to(device)
         else:
             logging.info('--depth must be in one of [34, 50, 101]!  Aborting!...')
             sys.exit()
