@@ -26,7 +26,7 @@ from torch_geometric.utils import to_dense_batch
 #from torch_scatter import scatter_max, scatter, scatter_mean, scatter_std
 
 #from sparsenn.models.gcn.layers import DynamicGraphResBlock, GraphCyclicGRUBlock, GraphInceptionBlock
-from torch_geometric.nn import global_mean_pool, MessageNorm, ASAPooling
+from torch_geometric.nn import global_mean_pool, global_add_pool, MessageNorm, ASAPooling
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree, softmax, remove_self_loops
 
@@ -1012,6 +1012,65 @@ class GATVAE(nn.Module):
         return x
     
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
+
+# Attention-based graph pooling
+class AttentionPooling(nn.Module):
+    """Attention-based graph-level pooling mechanism"""
+    def __init__(self, in_channels, hidden_channels=None):
+        super(AttentionPooling, self).__init__()
+        if hidden_channels is None:
+            hidden_channels = in_channels
+        self.att = nn.Sequential(
+            nn.Linear(in_channels, hidden_channels),
+            nn.Tanh(),
+            nn.Linear(hidden_channels, 1)
+        )
+        
+    def forward(self, x, batch):
+        # x: (num_nodes, in_channels)
+        # batch: (num_nodes,) tensor indicating which graph each node belongs to
+        # Compute attention scores
+        att_scores = self.att(x)  # (num_nodes, 1)
+        att_scores = softmax(att_scores.squeeze(-1), batch, dim=0).unsqueeze(-1)
+        # Weighted sum
+        out = x * att_scores
+        # Aggregate per graph using global_add_pool
+        return global_add_pool(out, batch)
+    
+# Enhanced GAT layer with improved residual connections
+class EnhancedGATLayer(nn.Module):
+    """GAT layer with learnable residual gating"""
+    def __init__(self, in_channels, out_channels, heads=4, dropout=0.1, 
+                 negative_slope=0.2, share_weights=True, name='gat'):
+        super(EnhancedGATLayer, self).__init__()
+        self.gat = GATv2Conv(
+            in_channels, out_channels // heads, heads=heads, 
+            dropout=dropout, negative_slope=negative_slope,
+            share_weights=share_weights, name=name
+        )
+        self.norm = nn.LayerNorm(out_channels)
+        self.dropout = nn.Dropout(dropout)
+        self.act = nn.ELU()  # ELU often works better than ReLU for GATs
+        
+        # Learnable gating for residual connection
+        if in_channels == out_channels:
+            self.residual_gate = nn.Parameter(torch.ones(1))
+        else:
+            self.residual_proj = nn.Linear(in_channels, out_channels)
+            self.residual_gate = nn.Parameter(torch.ones(1))
+            
+    def forward(self, x, edge_index):
+        residual = x
+        out = self.gat(x, edge_index)
+        
+        # Project residual if dimensions don't match
+        if hasattr(self, 'residual_proj'):
+            residual = self.residual_proj(residual)
+        
+        # Learnable gated residual connection
+        out = self.norm(out + self.residual_gate * residual)
+        out = self.dropout(self.act(out))
+        return out
     
 class GATSeqClassifier(nn.Module):
     def __init__(self, n_nodes, n_classes = 3, in_dim = 6, info_dim = 12, global_dim = 37, global_embedding_dim = 128, gcn_dim = 26, n_gcn_layers = 4, gcn_dropout = 0.,
@@ -1132,6 +1191,186 @@ class GATSeqClassifier(nn.Module):
         if not self.skip_global:
             x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
             h = torch.cat([h, x2], dim = 1)
+        
+        return self.out(h)
+
+
+class EnhancedGATSeqClassifier(nn.Module):
+    """
+    Enhanced GAT + RNN classifier with:
+    - Multi-head attention (default 4-8 heads)
+    - Attention-based graph pooling
+    - Improved residual connections with learnable gating
+    - Layer-wise attention aggregation
+    """
+    def __init__(self, n_nodes, n_classes=3, in_dim=6, info_dim=12, global_dim=37, 
+                 global_embedding_dim=128, gcn_dim=64, n_gcn_layers=4, gcn_dropout=0.1,
+                 num_gru_layers=2, hidden_size=256, L=32, n_heads=4, n_gcn_iter=6,
+                 use_conv=False, conv_k=5, conv_dim=4, momenta_gamma=0.8, 
+                 skip_info=False, skip_global=False, skip_gcn=False,
+                 use_attention_pooling=True, use_layer_aggregation=True): 
+        super(EnhancedGATSeqClassifier, self).__init__()
+
+        self.gcns = nn.ModuleList()
+        self.norms = nn.ModuleList()
+        self.act = nn.ELU()  # ELU often works better for GATs
+        
+        self.skip_info = skip_info
+        self.skip_global = skip_global
+        self.skip_gcn = skip_gcn
+        self.use_attention_pooling = use_attention_pooling
+        self.use_layer_aggregation = use_layer_aggregation
+        
+        self.n_nodes = n_nodes
+        self.n_gcn_iter = n_gcn_iter
+        self.n_heads = n_heads
+        
+        # Ensure gcn_dim is divisible by n_heads
+        if gcn_dim % n_heads != 0:
+            gcn_dim = ((gcn_dim // n_heads) + 1) * n_heads
+        
+        self.embedding = nn.Linear(in_dim, gcn_dim, bias=True)
+        self.global_embedding = nn.Linear(global_dim, global_embedding_dim, bias=True)
+        self.global_embedding.name = 'global_embedding'
+        self.embedding.name = 'node_embedding'
+        
+        # Store original input for residual connections
+        self.in_dim = in_dim
+        self.gcn_dim = gcn_dim
+        
+        self.embedding_norm = nn.LayerNorm((gcn_dim, ))
+        self.global_embedding_norm = nn.LayerNorm((global_embedding_dim, ))
+        self.dropout = nn.Dropout(0.15)
+        
+        self.L = L
+        
+        # Enhanced GAT layers with multi-head attention
+        for ix in range(n_gcn_iter):    
+            self.gcns.append(EnhancedGATLayer(
+                gcn_dim + in_dim if ix == 0 else gcn_dim,
+                gcn_dim, 
+                heads=n_heads, 
+                dropout=gcn_dropout, 
+                name='enhanced_gat_layer_{}'.format(ix)
+            ))
+        
+        # Attention-based pooling for graph-level features
+        if self.use_attention_pooling:
+            self.attention_pool = AttentionPooling(gcn_dim + in_dim, hidden_channels=gcn_dim)
+        else:
+            self.attention_pool = None  # Will use global_mean_pool directly
+        
+        # Layer-wise attention aggregation (if enabled)
+        if self.use_layer_aggregation:
+            self.layer_weights = nn.Parameter(torch.ones(n_gcn_iter) / n_gcn_iter)
+        
+        self.use_conv = use_conv
+        if self.use_conv:
+            self.conv = Res1dBlock(hidden_size * num_gru_layers + info_dim, conv_dim, conv_k)
+            
+        # GRU for sequence processing
+        if not self.skip_info:
+            self.gru = nn.GRU(hidden_size * num_gru_layers + info_dim, hidden_size, 
+                            num_layers=num_gru_layers, batch_first=True, bidirectional=False)
+        else:
+            self.gru = nn.GRU(hidden_size * num_gru_layers, hidden_size, 
+                            num_layers=num_gru_layers, batch_first=True, bidirectional=False)
+        self.gru.name = 'gru'
+        
+        # Graph-level GRU
+        self.graph_gru = nn.GRU(gcn_dim + in_dim, hidden_size, 
+                               num_layers=num_gru_layers, batch_first=True, bidirectional=False)
+        self.graph_gru.name = 'graph_gru'
+        
+        # Output MLP
+        if not self.use_conv:
+            if not self.skip_global:
+                self.out = MLP(hidden_size * num_gru_layers + global_embedding_dim, n_classes, 
+                             dim=hidden_size * num_gru_layers)
+            else:
+                self.out = MLP(hidden_size * num_gru_layers, n_classes, 
+                             dim=hidden_size * num_gru_layers)
+        else:
+            self.out = MLP(hidden_size * num_gru_layers + L * conv_dim + global_embedding_dim, 
+                         n_classes, dim=hidden_size * num_gru_layers)
+        self.out.name = 'out_mlp'
+            
+        self.soft = nn.LogSoftmax(dim=-1)
+        self.relu = nn.ReLU(inplace=False)
+        
+        self.momenta_gamma = momenta_gamma
+        self.init_momenta()
+        
+    def init_momenta(self):
+        self.momenta = dict()
+        
+    def update_momenta(self, grads):
+        for key in grads.keys():
+            if key not in self.momenta.keys():
+                self.momenta[key] = np.abs(grads[key])
+            else:
+                self.momenta[key] = self.momenta_gamma * np.abs(grads[key]) + (1 - self.momenta_gamma) * self.momenta[key]
+        
+    def forward(self, x0, edge_index, batch, x1, x2):
+        n_batch = x1.shape[0]
+        
+        # Embed node features
+        x_emb = self.embedding(x0)
+        x = torch.cat([x_emb, x0], dim=-1)  # Concatenate embedding with original features
+        
+        # Store layer outputs for aggregation
+        layer_outputs = []
+        
+        if not self.skip_gcn:
+            for ix in range(self.n_gcn_iter):
+                x = self.gcns[ix](x, edge_index)
+                if self.use_layer_aggregation:
+                    layer_outputs.append(x)
+        
+        # Layer-wise attention aggregation
+        if self.use_layer_aggregation and len(layer_outputs) > 0:
+            # Normalize layer weights
+            weights = torch.softmax(self.layer_weights, dim=0)
+            # Weighted combination of layer outputs
+            x_aggregated = sum(w * out for w, out in zip(weights, layer_outputs))
+            x = x_aggregated
+        
+        # Concatenate with original features
+        x = torch.cat([x0, x], dim=-1)
+       
+        # Graph-level pooling (attention-based or mean)
+        if self.use_attention_pooling:
+            x_pooled = self.attention_pool(x, batch.batch)
+        else:
+            x_pooled = global_mean_pool(x, batch.batch)
+        
+        # Reshape for GRU
+        x = to_dense_batch(x, batch.batch)[0]
+        _, h = self.graph_gru(x)
+        x = torch.flatten(h.transpose(0, 1), 1, 2)
+        
+        # Add pooled features
+        x = torch.cat([x, x_pooled], dim=-1)
+        
+        if not self.skip_info:
+            x = torch.cat([x, x1], dim=-1)
+
+        # Sequence processing with GRU
+        x = pad_sequence([x[batch.batch_indices[k]].clone() for k in range(len(batch.batch_indices))], 
+                        batch_first=True)
+        x = pack_padded_sequence(x, [len(batch.batch_indices[k]) for k in range(len(batch.batch_indices))], 
+                                batch_first=True)
+        
+        _, h = self.gru(x)
+        h = torch.flatten(h.transpose(0, 1), 1, 2)
+
+        if self.use_conv:
+            xc = self.conv(x.transpose(1, 2)).flatten(1, 2)
+            h = torch.cat([h, xc], dim=1)
+
+        if not self.skip_global:
+            x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
+            h = torch.cat([h, x2], dim=1)
         
         return self.out(h)
         

@@ -15,7 +15,7 @@ import configparser
 from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2, TreeSeqGeneratorV3
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
-from gcn_layers import GATSeqClassifier, GATConvClassifier
+from gcn_layers import GATSeqClassifier, GATConvClassifier, EnhancedGATSeqClassifier
 
 from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel, BCEWithLogitsLoss
 from collections import deque
@@ -65,6 +65,8 @@ def parse_args():
 
     parser.add_argument("--means", default = "None")
     parser.add_argument("--model", default = "gru")
+    parser.add_argument("--n_heads", default = "4")
+    parser.add_argument("--enhanced", action = "store_true", help = "use enhanced GAT model")
 
     parser.add_argument("--odir", default = "None")
     parser.add_argument("--return_params", action = "store_true")
@@ -104,9 +106,18 @@ def main():
     args.n_classes = len(classes)
     
     if args.model == 'gru':
-        model = GATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
-                             n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
-                             use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
+        if args.enhanced:
+            model = EnhancedGATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
+                                             n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), 
+                                             hidden_size = int(args.hidden_dim), n_heads = int(args.n_heads),
+                                             use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), 
+                                             gcn_dim = int(args.gcn_dim))
+        else:
+            model = GATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
+                                 n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), 
+                                 hidden_size = int(args.hidden_dim), n_heads = int(args.n_heads),
+                                 use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), 
+                                 gcn_dim = int(args.gcn_dim))
     elif args.model == 'conv':
         model = GATConvClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
