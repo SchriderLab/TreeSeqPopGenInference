@@ -106,7 +106,7 @@ def main():
     args.n_classes = len(classes)
     
     if args.model == 'gru':
-        model = GATSeqClassifier(n_nodes, n_classes = int(args.n_classes), L = L, 
+        model = GATSeqClassifier(n_classes = int(args.n_classes), L = L, 
                              n_gcn_iter = int(args.n_gcn_iter), in_dim = int(args.in_dim), hidden_size = int(args.hidden_dim),
                              use_conv = args.use_conv, num_gru_layers = int(args.n_gru_layers), gcn_dim = int(args.gcn_dim))
     elif args.model == 'conv':
