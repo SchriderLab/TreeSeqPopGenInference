@@ -120,8 +120,12 @@ def main():
 
     model.eval()
     
+    f_model = torch.nn.Sequential(*list(model.children()))[:-1]
+    
     Y = []
     Y_pred = []
+    Yf = []
+    
     params = []
 
     accs = []
@@ -146,6 +150,8 @@ def main():
             x2 = x2.to(device)
 
             y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
+            yf = f_model(batch.x, batch.edge_index, batch, x1, x2)
+            
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
             y_pred = y_pred.detach().cpu().numpy()
@@ -156,11 +162,16 @@ def main():
             Y.extend(y)
             Y_pred.extend(softmax(y_pred, axis = -1))
             
-    
+            Yf.extend(yf)
+            
         ix += 1
     
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
+    Yf = np.array(Yf)
+    
+    np.savez(args.ofile.replace('.csv', '.npz'), f = Yf)
+    
     params = np.array(params)
     
     result = dict()
