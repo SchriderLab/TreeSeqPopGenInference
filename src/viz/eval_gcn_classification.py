@@ -15,7 +15,9 @@ import configparser
 from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2, TreeSeqGeneratorV3
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
-from gcn_layers import GATSeqClassifier, GATConvClassifier
+from gcn_layers import GATConvClassifier
+from popgenml.models.gcn_layers import GATSeqClassifier
+
 
 from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel, BCEWithLogitsLoss
 from collections import deque
@@ -119,9 +121,7 @@ def main():
     model.load_state_dict(checkpoint)
 
     model.eval()
-    
-    f_model = torch.nn.Sequential(*list(model.children()))[:-1]
-    
+        
     Y = []
     Y_pred = []
     Yf = []
@@ -150,12 +150,13 @@ def main():
             x2 = x2.to(device)
 
             y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
-            yf = f_model(batch.x, batch.edge_index, batch, x1, x2)
+            yf = model(batch.x, batch.edge_index, batch, x1, x2, return_features = True)
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy().flatten()
+            yf = yf.detach().cpu().numpy()
         
             accs.append(accuracy_score(y, np.argmax(y_pred, axis=1)))
     
