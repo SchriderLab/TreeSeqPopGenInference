@@ -224,7 +224,7 @@ def main():
         #logging.info('could not read matrices from {}!!...skipping...'.format(ifile))
         
         xv = []
-        ifiles_v = sorted(glob.glob(os.path.join(idirs[ix], '*')))
+        ifiles_v = sorted(glob.glob(os.path.join(idir, '*')))
         
         xv = pd.read_csv(ifiles_v[0], delimiter = '\t').to_numpy()
         
