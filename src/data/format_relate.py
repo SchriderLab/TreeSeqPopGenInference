@@ -139,6 +139,8 @@ def parse_line(line, s0, s1):
 # where to insert certain parts of the script
 # ${imports}
 
+import pandas as pd
+
 def parse_args():
     # Argument Parser
     parser = argparse.ArgumentParser()
@@ -150,6 +152,7 @@ def parse_args():
     parser.add_argument("--pop_sizes", default = "20,14", help = "population sizes (for single populations pass in N,0) doesn't support more than two at current")
 
     parser.add_argument("--bidirectional", action = "store_true", help = "saves the edges twice, once in each direction")
+    parser.add_argument("--tag", default = "None")
     parser.add_argument("--ofile", default = "None")
     args = parser.parse_args()
 
@@ -182,9 +185,12 @@ def main():
         
     ix = 0
     
+    idirs = [u.replace('.msOut.gz', '') for u in ifiles]
+    
     for ii in range(len(ifiles)):
-        tag = tags[ii]
+        tag = args.tag
         ifile = ifiles[ii]
+        idir = idirs[ii]
         
         if len([u for u in os.listdir(args.idir) if '.anc' in u]) > 1:
             anc_file = sorted([os.path.join(args.idir, u) for u in os.listdir(args.idir) if ((u.split('.')[-1] == 'gz') and \
@@ -217,7 +223,14 @@ def main():
 
         #logging.info('could not read matrices from {}!!...skipping...'.format(ifile))
         
+        xv = []
+        ifiles_v = sorted(glob.glob(os.path.join(idirs[ix], '*')))
         
+        xv = pd.read_csv(ifiles_v[0], delimiter = '\t').to_numpy()
+        
+        for ifile in ifiles_v[1:]:
+            xv = np.concatenate([xv, pd.read_csv(ifile, delimiter = '\t').to_numpy()], axis = 1)
+            
         del y
                 
         times = []
@@ -315,11 +328,13 @@ def main():
                 ofile['{1}/{0}'.format(ix, tag)].attrs['cmd'] = cmd_line
             
             Xg = x[iix]
+            xv_ = xv[iix]
             #A = np.array(As)
             y = params[iix]
             print(y)
             
             ofile.create_dataset('{1}/{0}/x_0'.format(ix, tag), data = Xg.astype(np.uint8), compression = 'lzf')
+            ofile.create_dataset('{1}/{0}/xv'.format(ix, tag), data = xv_, compression = 'lzf') # stat vector
             ofile.create_dataset('{1}/{0}/y'.format(ix, tag), data = np.array([y]), compression = 'lzf')
             ofile.flush()
 
