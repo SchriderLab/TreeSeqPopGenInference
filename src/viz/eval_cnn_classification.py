@@ -99,7 +99,7 @@ def main():
     classes = generator.classes
     args.n_classes = len(classes)
     
-    model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes)).to(device)
+    model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes), final_dim = args.final_dim).to(device)
         
     model = model.to(device)
     checkpoint = torch.load(args.weights, map_location = device)
