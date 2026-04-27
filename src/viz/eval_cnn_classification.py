@@ -102,8 +102,9 @@ def main():
     model = resnet34(in_channels = int(args.in_channels), num_classes = int(args.n_classes), final_dim = args.final_dim).to(device)
         
     model = model.to(device)
-    checkpoint = torch.load(args.weights, map_location = device)
-    model.load_state_dict(checkpoint)
+    if args.weights != "None":
+        checkpoint = torch.load(args.weights, map_location = device)
+        model.load_state_dict(checkpoint)
 
     model.eval()
     
