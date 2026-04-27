@@ -246,7 +246,7 @@ class TreeSeqGeneratorV3(object):
         XV = np.array(XV)
         
         if self.return_features:
-            return batch, X1, X2, y, params, XV
+            return batch, X1, X2, y, XV
 
         logging.debug('clocked at {} s'.format(time.time() - t0))
         if self.return_params:
