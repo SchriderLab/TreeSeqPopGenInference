@@ -30,7 +30,8 @@ class TreeSeqGeneratorV3(object):
         models="none",
         log_y = True,
         y_ix = None,
-        return_params = False
+        return_params = False,
+        return_features = True,
     ):  # must be in order, see combine_h5s_v2
         self.ifile = ifile
 
@@ -67,7 +68,7 @@ class TreeSeqGeneratorV3(object):
         
         self.chunk_size = x.shape[0]
         self.batch_size = self.chunk_size * self.n_per
-         
+        self.return_features = return_features
 
     def on_epoch_end(self, shuffle=True):
         self.keys = sorted(list(self.ifile.keys()))
@@ -87,6 +88,7 @@ class TreeSeqGeneratorV3(object):
         y = []
         X2 = []
         params = []
+        XV = []
         
         lengths = []
         
@@ -178,6 +180,9 @@ class TreeSeqGeneratorV3(object):
             
             if self.return_params:
                 params.append(self.ifile[key]['params'])
+                
+            if self.return_features:
+                XV.append(self.ifile[key]['xv'])
 
         if len(X) == 0:
             if not self.return_params:
@@ -237,6 +242,11 @@ class TreeSeqGeneratorV3(object):
         batch.mask_indices = torch.LongTensor(np.array(mask_indices, dtype = np.int32))
         
         batch.batch_indices = batch_indices
+        
+        XV = np.array(XV)
+        
+        if self.return_features:
+            return batch, X1, X2, y, params, XV
 
         logging.debug('clocked at {} s'.format(time.time() - t0))
         if self.return_params:
@@ -304,6 +314,7 @@ class TreeSeqGeneratorV2(object):
         y = []
         X2 = []
         batch_ = []
+        XV = []
 
         t0 = time.time()
         for ix in range(self.n_per):

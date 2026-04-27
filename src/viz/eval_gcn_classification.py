@@ -70,6 +70,7 @@ def parse_args():
 
     parser.add_argument("--odir", default = "None")
     parser.add_argument("--return_params", action = "store_true")
+    parser.add_argument("--return_features", action = "store_true")
     
     parser.add_argument("--ofile", default = "result.csv")
     args = parser.parse_args()
@@ -98,7 +99,7 @@ def main():
     L = int(args.L)
 
     generator = TreeSeqGeneratorV3(h5py.File(args.ifile, 'r'), means = args.means, n_samples_per = int(args.n_per_batch), regression = False, 
-                                              models = args.classes, return_params = args.return_params)
+                                              models = args.classes, return_params = args.return_params, return_features = args.return_features)
     
     n_nodes = int(args.n_samples) * 2 - 1
     
@@ -125,6 +126,7 @@ def main():
     Y = []
     Y_pred = []
     Yf = []
+    Yv = []
     
     params = []
 
@@ -133,12 +135,17 @@ def main():
     ix = 0
     while True:
         with torch.no_grad():
-            if not args.return_params:
-                batch, x1, x2, y = generator[ix]
+            if args.return_features:
+                batch, x1, x2, y, xv = generator[ix]
             else:
-                batch, x1, x2, y, params_ = generator[ix]                
-                if params_ is not None:
-                    params.extend(params_)
+                if not args.return_params:
+                    batch, x1, x2, y = generator[ix]
+                else:
+                    batch, x1, x2, y, params_ = generator[ix]                
+                    if params_ is not None:
+                        params.extend(params_)  
+                
+                xv = None
                 
             if batch is None:
                 break
@@ -157,6 +164,8 @@ def main():
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy().flatten()
             yf = yf.detach().cpu().numpy()
+            
+            Yv.extend(xv)
         
             accs.append(accuracy_score(y, np.argmax(y_pred, axis=1)))
     
@@ -171,7 +180,7 @@ def main():
     Y_pred = np.array(Y_pred)
     Yf = np.array(Yf)
     
-    np.savez(args.ofile.replace('.csv', '.npz'), f = Yf)
+    np.savez(args.ofile.replace('.csv', '.npz'), f = Yf, fs = np.array(Yv))
     
     params = np.array(params)
     
