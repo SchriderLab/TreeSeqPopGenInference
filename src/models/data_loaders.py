@@ -185,6 +185,9 @@ class TreeSeqGeneratorV3(object):
                 XV.append(self.ifile[key]['xv'])
 
         if len(X) == 0:
+            if self.return_features:
+                return None, None, None, None, None
+            
             if not self.return_params:
                 return None, None, None, None
             else:
