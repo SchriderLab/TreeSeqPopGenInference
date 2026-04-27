@@ -118,8 +118,10 @@ def main():
     
 
     model = model.to(device)
-    checkpoint = torch.load(args.weights, map_location = device)
-    model.load_state_dict(checkpoint)
+    
+    if args.weights != "None":
+        checkpoint = torch.load(args.weights, map_location = device)
+        model.load_state_dict(checkpoint)
 
     model.eval()
         
