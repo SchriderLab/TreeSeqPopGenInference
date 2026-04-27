@@ -891,7 +891,7 @@ class DemoGenotypeMatrixGenerator(object):
 import h5py
 
 class GenomatClassGenerator(object):
-    def __init__(self, ifile, batch_size = 2):
+    def __init__(self, ifile, batch_size = 2, return_features = False):
         self.ifile = h5py.File(ifile, 'r')
         self.classes = sorted(list(self.ifile.keys()))
         
@@ -907,6 +907,7 @@ class GenomatClassGenerator(object):
         self.l = min([len(self.keys[u]) for u in self.classes]) // batch_size
         
         self.batch_size = batch_size        
+        self.return_features = return_features
         
         self.on_epoch_end()
         
@@ -921,6 +922,7 @@ class GenomatClassGenerator(object):
     
     def __getitem__(self, index):
         X = []
+        Xv = []
         y = []
         
         for k in range(self.batch_size):
@@ -932,14 +934,20 @@ class GenomatClassGenerator(object):
                 key = self.keys[c][self.ix]
                 
                 x = np.array(self.ifile[c][key]['x'])
+                if self.return_features:
+                    Xv.extend(np.array(self.ifile[c][key]['xv']))
                 
                 X.extend(x)
                 y.extend([ix for u in range(x.shape[0])])
                 
             self.ix += 1
         
+        
         if len(X) == 0:
-            return None, None
+            if self.return_features:
+                return None, None, None
+            else:
+                return None, None
             
         X = torch.FloatTensor(np.array(X))
         
@@ -948,7 +956,10 @@ class GenomatClassGenerator(object):
         
         y = torch.LongTensor(np.array(y))
             
-        return X, y
+        if self.return_features:
+            return X, y, np.array(Xv)
+        else:
+            return X, y
 
 class GenomatGenerator(object):
     def __init__(self, ifile, means, y_ix = None, batch_size = 4, classification = False, log_y = False):

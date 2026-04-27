@@ -94,7 +94,7 @@ def main():
     print("Using " + str(device) + " as device")
     
     logging.info('reading data keys...')
-    generator = GenomatClassGenerator(args.ifile, batch_size = 1)
+    generator = GenomatClassGenerator(args.ifile, batch_size = 1, return_features = True)
     
     classes = generator.classes
     args.n_classes = len(classes)
@@ -107,9 +107,13 @@ def main():
 
     model.eval()
     
+    fmodel = torch.nn.Sequential(*list(model.children())[:-1])
+    fmodel.eval()
+    
     Y = []
     Y_pred = []
-
+    Yv = []
+    Yf = []
     
     accs = []
     
@@ -117,7 +121,7 @@ def main():
     while True:
         with torch.no_grad():
             t0 = time.time()
-            x, y = generator[ix]
+            x, y, xv = generator[ix]
             
             if x is None:
                 break
@@ -126,21 +130,27 @@ def main():
             y = y.to(device)
             
             y_pred = model(x)
+            f = fmodel(x)
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
             y_pred = y_pred.detach().cpu().numpy()
             y = y.detach().cpu().numpy().flatten()
+            f = f.detach().cpu().numpy()
         
             accs.append(accuracy_score(y, np.argmax(y_pred, axis=1)))
     
             Y.extend(y)
             Y_pred.extend(softmax(y_pred, axis = -1))
+            Yv.extend(xv)
+            Yf.extend(f)
             
         ix += 1
                 
     Y = np.array(Y)
     Y_pred = np.array(Y_pred)
+    
+    np.savez(args.ofile.replace('.csv', '.npz'), f = np.array(Yf), fs = np.array(Yv))
     
     result = dict()
     
