@@ -242,7 +242,9 @@ def main():
                 
                 for ifile in ifiles_v[1:]:
                     xv = np.concatenate([xv, pd.read_csv(ifile, delimiter = '\t').to_numpy()], axis = 1)
-            except:
+            except Exception as e:
+                print(e)
+                
                 logging.info('could not read {}!'.format(ifile))
                 comm.send([None, None, None, None], dest = 0)
                 continue
