@@ -15,6 +15,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from scipy.optimize import linear_sum_assignment
 
 from collections import deque
+from mpi4py import MPI
 
 """
 
@@ -166,20 +167,23 @@ def parse_args():
     return args
 
 import time
+import pandas as pd
 
 def main():
-    from mpi4py import MPI
-    
     args = parse_args()
+    logging.info('hey im here...')
     
     # configure MPI
     comm = MPI.COMM_WORLD
     
     if comm.rank == 0:
         ofile = h5py.File(args.ofile, 'w')
+        logging.info('created file {}...'.format(args.ofile))
+        
         if float(args.val_prop) > 0:
             ofile_val = h5py.File('/'.join(args.ofile.split('/')[:-1]) + '/' + args.ofile.split('/')[-1].split('.')[0] + '_val.hdf5', 'w')
-
+            logging.info('created val file...')
+            
     pop_sizes = list(map(int, args.pop_sizes.split(',')))
     chunk_size = int(args.chunk_size)
     
@@ -208,11 +212,16 @@ def main():
             idir = os.path.join(args.idir, c)
             ifiles.extend([(None, u) for u in find_files(idir)])
             
+        if len(ifiles) == 0:
+            ifiles = [(None, u) for u in find_files(args.idir)]
+            
         count = 0
         count_val = 0
             
         if comm.rank == 0:
             logging.info('have {} files to parse...'.format(len(ifiles)))
+    
+    comm.Barrier()
     
     if comm.rank != 0:
         for ij in range(comm.rank - 1, len(ifiles), comm.size - 1):
@@ -223,12 +232,23 @@ def main():
             
             try:
                 X, Y, P, params = load_data(ifile)
+                
+                idir = ifile.replace('.msOut.gz', '')
+                
+                xv = []
+                ifiles_v = sorted(glob.glob(os.path.join(idir, '*')))
+                
+                xv = pd.read_csv(ifiles_v[0], delimiter = '\t').to_numpy()
+                
+                for ifile in ifiles_v[1:]:
+                    xv = np.concatenate([xv, pd.read_csv(ifile, delimiter = '\t').to_numpy()], axis = 1)
             except:
                 logging.info('could not read {}!'.format(ifile))
-                comm.send([None, None, None], dest = 0)
+                comm.send([None, None, None, None], dest = 0)
                 continue
             
             X_ = []
+            Xv_ = []
             P_ = []
             params_ = []
             ls = []
@@ -243,9 +263,9 @@ def main():
                     pass
                 
                 x, p = format_matrix(x, P[ix], pop_sizes, out_shape = tuple(map(int, args.out_shape.split(','))), mode = args.mode)
-                                
+                xv_ = xv[ix]                
                 if x is not None:
-
+                    Xv_.append(xv_)
                     X_.append(x)
                     P_.append(p)
                     params_.append(params[ix])
@@ -255,7 +275,7 @@ def main():
             
             
             if not args.regression:
-                comm.send([X_, P_, tag], dest = 0)
+                comm.send([X_, P_, Xv_, tag], dest = 0)
             else:
                 comm.send([X_, P_, params_], dest = 0)
                 
@@ -266,9 +286,10 @@ def main():
                 
         while n_received < len(ifiles):
             if not args.regression:
-                Xf, p, tag = comm.recv(source = MPI.ANY_SOURCE)
+                Xf, p, Xv, tag = comm.recv(source = MPI.ANY_SOURCE)
             else:
                 Xf, p, y = comm.recv(source = MPI.ANY_SOURCE)
+                
                 
             if Xf is None:
                 n_received += 1
@@ -295,6 +316,7 @@ def main():
                     if not args.regression:
                         ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf[-chunk_size:], dtype = np.uint8), compression = 'lzf')
                         ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p[-chunk_size:], dtype = np.float32), compression = 'lzf')
+                        ofile.create_dataset('{}/{}/xv'.format(tag, counts[tag]), data = np.array(Xv[-chunk_size:], dtype = np.float32), compression = 'lzf')
                         
                         counts[tag] += 1
                     else:
@@ -308,6 +330,7 @@ def main():
             
                 del Xf[-chunk_size:]
                 del p[-chunk_size:]
+                del Xv[-chunk_size:]
                 
                 if args.regression:
                     del y[-chunk_size:]
@@ -320,6 +343,7 @@ def main():
             if not args.regression:
                 ofile.create_dataset('{}/{}/x'.format(tag, counts[tag]), data = np.array(Xf, dtype = np.uint8), compression = 'lzf')
                 ofile.create_dataset('{}/{}/p'.format(tag, counts[tag]), data = np.array(p, dtype = np.float32), compression = 'lzf')
+                ofile.create_dataset('{}/{}/xv'.format(tag, counts[tag]), data = np.array(Xv[-chunk_size:], dtype = np.float32), compression = 'lzf')
                 
                 counts[tag] += 1
             else:
