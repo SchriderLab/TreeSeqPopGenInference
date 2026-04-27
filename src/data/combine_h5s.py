@@ -49,6 +49,7 @@ def parse_args():
     parser.add_argument("--val_prop", default = "0.1", help = "proportion of data to put in val file which is saved with the suffix _val.hdf5")
     parser.add_argument("--cmd_parser", default = "get_params")
     parser.add_argument("--write_params", action = "store_true")
+    parser.add_argument("--write_features", action = "store_true")
     
     args = parser.parse_args()
 
@@ -86,6 +87,9 @@ def main():
             
             if args.write_params:
                 data[c]['params'] = deque()
+            
+            if args.write_features:
+                data[c]['xv'] = deque()
             
         classification = True
     # regression
@@ -137,6 +141,10 @@ def main():
             
             for skey in skeys:
                 x, x1, edge_index, mask, global_vec, y = generator.get_seq(key, skey, args.sampling_mode)
+                
+                if args.write_features:
+                    xv = hfile[key][skey]['xv']
+                
                 if args.write_params:
                     cmd = hfile[key][skey].attrs['cmd']
                     
@@ -153,6 +161,9 @@ def main():
                 
                     if args.write_params:
                         data[c]['params'].append(params)
+                        
+                    if args.write_features:
+                        data[c]['xv'].append(xv)
                 else:
                     data['x'].append(x)
                     data['x1'].append(x1)
@@ -179,6 +190,7 @@ def main():
                 global_vec = []
                 y = []
                 params = []
+                features = []
                 
                 if classification:
                     for c in classes:
@@ -190,6 +202,8 @@ def main():
                         masks.append(data[c]['mask'].pop())
                         if args.write_params:
                             params.append(data[c]['params'].pop())
+                        if args.write_features:
+                            features.append(data[c]['xv'].pop())
                 else:
                     for c in range(chunk_size):
                         if len(data['x']) == 0:
@@ -219,6 +233,9 @@ def main():
                 
                 if args.write_params:
                     params = np.array(params, dtype = np.float32)
+                    
+                if args.write_features:
+                    features = np.array(features, dtype = np.float32)
                 
                 val = np.random.uniform() < val_prop
                 
@@ -231,7 +248,9 @@ def main():
                     ofile.create_dataset('{0:06d}/y'.format(counter), data = y, compression = 'lzf')
                     if args.write_params:
                         ofile.create_dataset('{0:06d}/params'.format(counter), data = params, compression = 'lzf')
-                    
+                        
+                    if args.write_features:
+                        ofile.create_dataset('{0:06d}/xv'.format(counter), data = features, compression = 'lzf')
                     ofile.flush()
                 
                     counter += 1
@@ -243,8 +262,10 @@ def main():
                     ofile_val.create_dataset('{0:06d}/global_vec'.format(val_counter), data = global_vec, compression = 'lzf')
                     ofile_val.create_dataset('{0:06d}/y'.format(val_counter), data = y, compression = 'lzf')
                     if args.write_params:
-                        ofile_val.create_dataset('{0:06d}/params'.format(counter), data = params, compression = 'lzf')
+                        ofile_val.create_dataset('{0:06d}/params'.format(val_counter), data = params, compression = 'lzf')
                     
+                    if args.write_features:
+                        ofile_val.create_dataset('{0:06d}/xv'.format(val_counter), data = features, compression = 'lzf')
                     ofile_val.flush()
                 
                     val_counter += 1
