@@ -62,6 +62,7 @@ def parse_args():
     parser.add_argument("--gcn_dim", default = "26")
     parser.add_argument("--conv_dim", default = "4")
     parser.add_argument("--classes", default = "hard,hard-near,neutral,soft,soft-near")
+    parser.add_argument("--final_dim", default = 64, type = int)
 
     parser.add_argument("--chunk_size", default = "4")
 
