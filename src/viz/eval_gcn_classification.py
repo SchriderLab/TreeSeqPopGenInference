@@ -157,7 +157,7 @@ def main():
             x2 = x2.to(device)
 
             y_pred, yf = model(batch.x, batch.edge_index, batch, x1, x2, return_features = True)
-            print(y_pred.shape, yf.shape)
+            print(y_pred.shape, yf.shape, xv.shape)
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             
