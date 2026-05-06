@@ -182,11 +182,9 @@ class TreeSeqGeneratorV3(object):
                 params.append(self.ifile[key]['params'])
                 
             if self.return_features:
-                xv = self.ifile[key]['xv']
-                
-                print(xv.shape)
-                
-                XV.extend(self.ifile[key]['xv'])
+                xv = np.array(self.ifile[key]['xv'])
+                                
+                XV.extend(xv)
 
         if len(X) == 0:
             if self.return_features:
@@ -206,6 +204,8 @@ class TreeSeqGeneratorV3(object):
         X1 = [X1[u] for u in ii]
         X2 = [X2[u] for u in ii]
         indices = [indices[u] for u in ii]
+        
+        print([u.shape for u in XV])
         XV = [XV[u] for u in ii]
         
         # cat to arrays
