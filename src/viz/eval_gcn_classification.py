@@ -15,9 +15,7 @@ import configparser
 from data_loaders import TreeSeqGenerator, TreeSeqGeneratorV2, TreeSeqGeneratorV3
 #from gcn import GCN, Classifier, SequenceClassifier
 import torch.nn as nn
-from gcn_layers import GATConvClassifier
-from popgenml.models.gcn_layers import GATSeqClassifier
-
+from gcn_layers import GATConvClassifier, GATSeqClassifier
 
 from torch.nn import CrossEntropyLoss, NLLLoss, DataParallel, BCEWithLogitsLoss
 from collections import deque
@@ -158,8 +156,7 @@ def main():
             x1 = x1.to(device)
             x2 = x2.to(device)
 
-            y_pred = model(batch.x, batch.edge_index, batch, x1, x2)
-            yf = model(batch.x, batch.edge_index, batch, x1, x2, return_features = True)
+            y_pred, yf = model(batch.x, batch.edge_index, batch, x1, x2, return_features = True)
             
             logging.debug('took {} s to forward...'.format(time.time() - t0))
             

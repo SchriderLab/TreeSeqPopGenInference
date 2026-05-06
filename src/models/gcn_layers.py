@@ -919,11 +919,12 @@ class MLPDecoder(nn.Module):
         super(MLPDecoder, self).__init__()
         
         self.mlp = nn.Sequential(nn.Linear(latent_dim, 4096), nn.LayerNorm(4096), nn.Dropout(0.2), nn.LeakyReLU(), 
-                                 nn.Linear(4096, 4096), nn.LayerNorm(4096), nn.Dropout(0.2), nn.LeakyReLU(),
-                                 nn.Linear(4096, out_dim))
-        
+                                 nn.Linear(4096, 4096), nn.LayerNorm(4096), nn.Dropout(0.2), nn.LeakyReLU())
+        self.out = nn.Linear(4096, out_dim)
     def forward(self, x):
-        return self.mlp(x)
+        f = self.mlp(x)
+        
+        return self.mlp(x), f
     
 class InnerProductDecoder(nn.Module):
     def __init__(self, latent_dim = 256):
@@ -1099,7 +1100,7 @@ class GATSeqClassifier(nn.Module):
         
 
         
-    def forward(self, x0, edge_index, batch, x1, x2):
+    def forward(self, x0, edge_index, batch, x1, x2, return_features = True):
         #n_batch = x0.shape[0] // self.L // self.n_nodes
         n_batch = x1.shape[0]
         
@@ -1119,7 +1120,6 @@ class GATSeqClassifier(nn.Module):
             x = torch.cat([x, x1], dim = -1)
 
         x = pad_sequence([x[batch.batch_indices[k]].clone() for k in range(len(batch.batch_indices))], batch_first = True)
-
         x = pack_padded_sequence(x, [len(batch.batch_indices[k]) for k in range(len(batch.batch_indices))], batch_first = True)
         
         _, h = self.gru(x)
@@ -1132,9 +1132,13 @@ class GATSeqClassifier(nn.Module):
         if not self.skip_global:
             x2 = self.relu(self.global_embedding_norm(self.global_embedding(x2)))
             h = torch.cat([h, x2], dim = 1)
+            
+        h, f = self.out(h)
         
-        return self.out(h)
-        
+        if not return_features:
+            return h
+        else:
+            return h, f
 
 class Res1dGraphBlock(nn.Module):
     def __init__(self, in_shape, out_channels, n_layers, gcn_channels = 4,
