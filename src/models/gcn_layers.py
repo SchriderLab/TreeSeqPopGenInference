@@ -742,12 +742,14 @@ class MLP(nn.Module):
         layers = [nn.Linear(input_dim, dim), norm(dim), activation(inplace=True), nn.Dropout(dropout)]
         for _ in range(n_blk - 2):
             layers += [nn.Linear(dim, dim), norm(dim), activation(inplace=True), nn.Dropout(dropout)]
-        layers += [nn.Linear(dim, output_dim)]
+        self.out = nn.Linear(dim, output_dim)
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
-        return self.model(x.view(x.size(0), -1))
-   
+        x = self.model(x.view(x.size(0), -1))
+        
+        return self.out(x), x
+          
 import logging
 
 class GATConvClassifier(nn.Module):
