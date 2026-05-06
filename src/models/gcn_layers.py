@@ -736,20 +736,32 @@ class GATv2Conv(MessagePassing):
     
 # a basic MLP module
 class MLP(nn.Module):
-    def __init__(self, input_dim, output_dim, dim = 256, n_blk = 3, norm = nn.BatchNorm1d,
-                 activation = nn.ReLU, dropout = 0.0):
+    def __init__(self, input_dim, output_dim, dim=256, n_blk=3, norm=nn.BatchNorm1d,
+                 activation=nn.ReLU, dropout=0.0):
         super(MLP, self).__init__()
         layers = [nn.Linear(input_dim, dim), norm(dim), activation(inplace=True), nn.Dropout(dropout)]
         for _ in range(n_blk - 2):
             layers += [nn.Linear(dim, dim), norm(dim), activation(inplace=True), nn.Dropout(dropout)]
-        self.out = nn.Linear(dim, output_dim)
+        layers += [nn.Linear(dim, output_dim)]
+        
+        # Kept exactly the same to preserve state_dict keys
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.model(x.view(x.size(0), -1))
+        x = x.view(x.size(0), -1)
         
-        return self.out(x), x
-          
+        # 1. Pass through all layers EXCEPT the last one
+        for i in range(len(self.model) - 1):
+            x = self.model[i](x)
+            
+        features = x # This is your second-to-last output
+        
+        # 2. Pass the features through the final layer
+        output = self.model[-1](features)
+        
+        # 3. Return both as a tuple
+        return output, features
+   
 import logging
 
 class GATConvClassifier(nn.Module):
