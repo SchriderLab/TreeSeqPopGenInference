@@ -202,12 +202,14 @@ class TreeSeqGeneratorV3(object):
         X1 = [X1[u] for u in ii]
         X2 = [X2[u] for u in ii]
         indices = [indices[u] for u in ii]
+        XV = [XV[u] for u in ii]
         
         # cat to arrays
         X = np.concatenate(X, 0)
         y = np.concatenate(y, 0)
         X1 = np.concatenate(X1, 0)
         X2 = np.concatenate(X2, 0)
+        XV = np.concatenate(XV, 0)
         indices = torch.cat(indices, 0)
         if self.return_params:
             params = np.concatenate(params, 0)
@@ -245,9 +247,7 @@ class TreeSeqGeneratorV3(object):
         batch.mask_indices = torch.LongTensor(np.array(mask_indices, dtype = np.int32))
         
         batch.batch_indices = batch_indices
-        
-        XV = np.array(XV)
-        
+                
         if self.return_features:
             return batch, X1, X2, y, XV
 
