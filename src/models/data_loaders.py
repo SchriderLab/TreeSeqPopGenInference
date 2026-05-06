@@ -182,7 +182,7 @@ class TreeSeqGeneratorV3(object):
                 params.append(self.ifile[key]['params'])
                 
             if self.return_features:
-                XV.append(self.ifile[key]['xv'])
+                XV.extend(self.ifile[key]['xv'])
 
         if len(X) == 0:
             if self.return_features:
